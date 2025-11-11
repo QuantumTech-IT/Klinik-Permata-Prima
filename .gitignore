@@ -1,0 +1,32 @@
+﻿# --- build artifacts / output ---
+dist/
+dist2/
+build/
+out/
+target/
+.cache/
+.gradle/
+*.log
+
+# --- arsip & file besar ---
+*.rar
+*.zip
+*.7z
+*.iso
+
+# --- audio/video besar (opsional, kalau tidak perlu di repo) ---
+*.mp3
+*.wav
+*.mp4
+
+# --- JDK/JRE & artefak aplikasi yang tidak perlu di repo ---
+lib/rt.jar
+*/SIMRSKhanza.jar
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+nbproject/private/
+*.iml
+.DS_Store
+.env

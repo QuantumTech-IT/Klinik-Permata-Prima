@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <comment>Settingan Tambahan</comment> 
+
+    
+    <!--misal https://domain.com/webapps/-->
+    <entry key="URLWEBAPPS">5tHBSR0f8vcTZIHXgxbOv19csag2w7Fb1b1ksh+1afTmZ3GTEBY/Mo/l5kMMLzau</entry> 
+    <!-- fonnte -->
+    <entry key="TOKENWA">CqcfZGfweKv8DEKRA7TQ2IQfBAtR8zVo3cIRyu36/Bo=</entry> <!-- Yahya-->>
+    
+
+</properties>
