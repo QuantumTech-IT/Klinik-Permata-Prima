@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<JposEntries>
+  <JposEntry logicalName="UareU_FP">
+    <creation factoryClass="jpos.config.simple.SimpleEntryFactory"/>
+    <vendor name="DigitalPersona" url="https://www.digitalpersona.com"/>
+    <deviceCategory>Biometrics</deviceCategory>
+
+    <!-- serviceClass HARUS cocok dengan SDK-mu.
+         Coba ini dulu; kalau gagal, buka sample jpos.xml bawaan SDK dan salin nilai aslinya. -->
+    <property name="serviceClass" value="com.digitalpersona.uareu.jpos.service.BiometricService"/>
+
+    <!-- opsional: kalau mau, arahkan ke folder BIN SDK -->
+    <!-- <property name="libraryLocation" value="C:\Program Files\DigitalPersona\U.are.U SDK\Windows\Bin\"/> -->
+  </JposEntry>
+</JposEntries>
