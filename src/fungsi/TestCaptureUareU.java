@@ -15,7 +15,7 @@ public class TestCaptureUareU {
         // Paksa pakai jpos config sample yang sudah terbukti jalan
         String jposPath = "C:\\Program Files\\DigitalPersona\\U.are.U SDK\\Windows\\Samples\\UareUSampleJavaPOS\\config\\jpos\\res\\jposUareU.xml";
         try {
-            ensureJposConfigAndInject(jposPath, UareUHelper.LOGICAL_NAME);
+            //ensureJposConfigAndInject(jposPath, UareUHelper.LOGICAL_NAME);
 
             System.out.println("Silakan tempelkan jari di sensor... (maks 30 detik)");
             byte[] tpl = UareUHelper.captureOnce(30);
