@@ -1367,4 +1367,20 @@ public class koneksiDB {
         }
         return var;
     } 
+       public static String URLKFAV2SATUSEHAT() {
+//        try (FileInputStream fs = new FileInputStream("setting/database.xml")) {
+//            prop.loadFromXML(fs);
+//            return prop.getProperty("URLKFAV2SATUSEHAT", "");
+//        } catch (Exception e) {
+//            return "";
+//        }
+//    }
+        try{
+            prop.loadFromXML(new FileInputStream("setting/database.xml"));
+            var=prop.getProperty("URLKFAV2SATUSEHAT");
+        }catch(Exception e){
+            var=""; 
+        }
+        return var;
+    }
 }

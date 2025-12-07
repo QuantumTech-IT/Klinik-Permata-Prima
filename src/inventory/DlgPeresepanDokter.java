@@ -30,6 +30,8 @@ import java.awt.event.WindowListener;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import static java.time.Instant.now;
 import java.util.Calendar;
 import java.util.Date;
 import javax.swing.JComboBox;
@@ -104,24 +106,24 @@ private int TAB_IDX_RACIKAN     = -1;
     public DlgPeresepanDokter(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        hideToolbarResep();
+        //hideToolbarResep();
         
         
         // Disable tab "Umum"
-int idxUmum = TabRawat.indexOfTab("Umum");
-if (idxUmum >= 0) {
-    TabRawat.setEnabledAt(idxUmum, false);
-}
-
-// Disable tab "Racikan"
-int idxRacikan = TabRawat.indexOfTab("Racikan");
-if (idxRacikan >= 0) {
-    TabRawat.setEnabledAt(idxRacikan, false);
-}
-int idxInput = TabRawat.indexOfTab("Resep Non Racikan");
-if (idxInput >= 0) {
-    TabRawat.setSelectedIndex(idxInput);
-}
+//int idxUmum = TabRawat.indexOfTab("Umum");
+//if (idxUmum >= 0) {
+//    TabRawat.setEnabledAt(idxUmum, false);
+//}
+//
+//// Disable tab "Racikan"
+//int idxRacikan = TabRawat.indexOfTab("Racikan");
+//if (idxRacikan >= 0) {
+//    TabRawat.setEnabledAt(idxRacikan, false);
+//}
+//int idxInput = TabRawat.indexOfTab("Resep Non Racikan");
+//if (idxInput >= 0) {
+//    TabRawat.setSelectedIndex(idxInput);
+//}
         initTableTokoBarang();     // tabel utama
         initTableTokoBarang1();    // tabel racikan
         styleTokoBarang();
@@ -2350,11 +2352,13 @@ try (PreparedStatement ps1 = koneksi.prepareStatement(sql)) {
     if (tbTokoBarang1 != null && tbTokoBarang1.isEditing()) {
         try { tbTokoBarang1.getCellEditor().stopCellEditing(); } catch (Exception ignored) {}
     }
-
+    
     String noResep  = NoResep.getText().trim();
     String noRawat  = (TNoRw != null ? TNoRw.getText().trim() : "");
     String kdDokter = (KdDokter != null ? KdDokter.getText().trim() : "");
     java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+    String tglHariIni = new SimpleDateFormat("yyyy-MM-dd").format(now);
+    String jamSekarang = new SimpleDateFormat("HH:mm:ss").format(now);
     if (noResep.isEmpty()) { Valid.textKosong(NoResep, "No. Resep"); return; }
 
     final String signaRacik = (SignaRacikan != null ? SignaRacikan.getText().trim() : "");
@@ -2389,6 +2393,24 @@ try (PreparedStatement ps1 = koneksi.prepareStatement(sql)) {
 
     try {
         koneksi.setAutoCommit(false);
+        Sequel.menyimpantf2(
+    "resep_obat",
+    "?,?,?,?,?,?,?,?,?,?",
+    "Nomer Resep",
+    10,
+    new String[]{
+        noResep,          // 1. no_resep
+        tglHariIni,       // 2. tgl_perawatan  (boleh disesuaikan dengan tgl kunjungan)
+        jamSekarang,      // 3. jam
+        noRawat,          // 4. no_rawat
+        kdDokter,         // 5. kd_dokter
+        tglHariIni,       // 6. tgl_peresepan
+        jamSekarang,      // 7. jam_peresepan
+        "ralan",          // 8. status  (silakan ganti kalau resep toko ingin status lain)
+        "0000-00-00",     // 9. tgl_penyerahan (default)
+        "00:00:00"        //10. jam_penyerahan (default)
+    }
+);
 
         // HEADER (sekali)
         try (PreparedStatement psH = koneksi.prepareStatement(sqlHeader)) {

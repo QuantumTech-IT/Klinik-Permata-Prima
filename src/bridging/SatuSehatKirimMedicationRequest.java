@@ -34,6 +34,10 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 /**
  *
@@ -637,6 +641,8 @@ public final class SatuSehatKirimMedicationRequest extends javax.swing.JDialog {
                     iddokter=cekViaSatuSehat.tampilIDParktisi(tbObat.getValueAt(i,7).toString());
                     arrSplit = tbObat.getValueAt(i,24).toString().toLowerCase().split("x");
                     signa1="1";
+                    String authoredOnUTC = toUTCDateTime(tbObat.getValueAt(i,21).toString());
+
                     try {
                         if(!arrSplit[0].replaceAll("[^0-9.]+", "").equals("")){
                             signa1=arrSplit[0].replaceAll("[^0-9.]+", "");
@@ -658,89 +664,105 @@ public final class SatuSehatKirimMedicationRequest extends javax.swing.JDialog {
                             headers.setContentType(MediaType.APPLICATION_JSON);
                             headers.add("Authorization", "Bearer "+api.TokenSatuSehat());
                             json = "{" +
-                                        "\"resourceType\": \"MedicationRequest\"," +
-                                        "\"identifier\": [" +
-                                            "{" +
-                                                "\"system\": \"http://sys-ids.kemkes.go.id/prescription/"+koneksiDB.IDSATUSEHAT()+"\"," +
-                                                "\"use\": \"official\"," +
-                                                "\"value\": \""+tbObat.getValueAt(i,25).toString()+"\"" +
-                                            "}," +
-                                            "{" +
-                                                "\"system\": \"http://sys-ids.kemkes.go.id/prescription-item/"+koneksiDB.IDSATUSEHAT()+"\"," +
-                                                "\"use\": \"official\"," +
-                                                "\"value\": \""+tbObat.getValueAt(i,11).toString()+"\"" +
-                                            "}" +
-                                        "]," +
-                                        "\"status\": \"completed\"," +
-                                        "\"intent\": \"order\"," +
-                                        "\"category\": [" +
-                                            "{" +
-                                                "\"coding\": [" +
-                                                    "{" +
-                                                        "\"system\": \"http://terminology.hl7.org/CodeSystem/medicationrequest-category\"," +
-                                                        "\"code\": \""+tbObat.getValueAt(i,28).toString().replaceAll("Ralan","outpatient").replaceAll("Ranap","inpatient")+"\"," +
-                                                        "\"display\": \""+tbObat.getValueAt(i,28).toString().replaceAll("Ralan","Outpatient").replaceAll("Ranap","Inpatient")+"\"" +
-                                                    "}" +
-                                                "]" +
-                                            "}" +
-                                        "]," +
-                                        "\"medicationReference\": {" +
-                                            "\"reference\": \"Medication/"+tbObat.getValueAt(i,23).toString()+"\"," +
-                                            "\"display\": \""+tbObat.getValueAt(i,12).toString()+"\"" +
-                                        "}," +
-                                        "\"subject\": {" +
-                                            "\"reference\": \"Patient/"+idpasien+"\"," +
-                                            "\"display\": \""+tbObat.getValueAt(i,4).toString()+"\"" +
-                                        "}," +
-                                        "\"encounter\": {" +
-                                            "\"reference\": \"Encounter/"+tbObat.getValueAt(i,8).toString()+"\"" +
-                                        "}," +
-                                        "\"authoredOn\": \""+tbObat.getValueAt(i,21).toString().replaceAll(" ","T")+"+07:00\"," +
-                                        "\"requester\": {" +
-                                            "\"reference\": \"Practitioner/"+iddokter+"\"," +
-                                            "\"display\": \""+tbObat.getValueAt(i,6).toString()+"\"" +
-                                        "}," +
-                                        "\"dosageInstruction\": [" +
-                                            "{" +
-                                                "\"sequence\": 1," +
-                                                "\"patientInstruction\": \""+tbObat.getValueAt(i,24).toString()+"\"," +
-                                                "\"timing\": {" +
-                                                    "\"repeat\": {" +
-                                                        "\"frequency\": "+signa2+"," +
-                                                        "\"period\": 1," +
-                                                        "\"periodUnit\": \"d\"" +
-                                                    "}" +
-                                                "}," +
-                                                "\"route\": {" +
-                                                    "\"coding\": [" +
-                                                        "{" +
-                                                            "\"system\": \""+tbObat.getValueAt(i,17).toString()+"\"," +
-                                                            "\"code\": \""+tbObat.getValueAt(i,16).toString()+"\"," +
-                                                            "\"display\": \""+tbObat.getValueAt(i,18).toString()+"\"" +
-                                                        "}" +
-                                                    "]" +
-                                                "}," +
-                                                "\"doseAndRate\": [" +
-                                                    "{" +
-                                                        "\"doseQuantity\": {" +
-                                                            "\"value\": "+signa1+"," +
-                                                            "\"unit\": \""+tbObat.getValueAt(i,19).toString()+"\"," +
-                                                            "\"system\": \""+tbObat.getValueAt(i,20).toString()+"\"," +
-                                                            "\"code\": \""+tbObat.getValueAt(i,19).toString()+"\"" +
-                                                        "}" +
-                                                    "}" +
-                                                "]" +
-                                            "}" +
-                                        "]," +
-                                        "\"dispenseRequest\": {" +
-                                            "\"quantity\": {" +
-                                                "\"value\": "+tbObat.getValueAt(i,22).toString()+"," +
-                                                "\"unit\": \""+tbObat.getValueAt(i,19).toString()+"\"," +
-                                                "\"system\": \""+tbObat.getValueAt(i,20).toString()+"\"," +
-                                                "\"code\": \""+tbObat.getValueAt(i,19).toString()+"\"" +
-                                            "}" +
-                                        "}" +
-                                    "}";
+    "\"resourceType\": \"MedicationRequest\"," +
+    "\"identifier\": [" +
+        "{" +
+            "\"system\": \"http://sys-ids.kemkes.go.id/prescription/"+koneksiDB.IDSATUSEHAT()+"\"," +
+            "\"use\": \"official\"," +
+            "\"value\": \""+tbObat.getValueAt(i,25).toString()+"\"" +
+        "}," +
+        "{" +
+            "\"system\": \"http://sys-ids.kemkes.go.id/prescription-item/"+koneksiDB.IDSATUSEHAT()+"\"," +
+            "\"use\": \"official\"," +
+            "\"value\": \""+tbObat.getValueAt(i,11).toString()+"\"" +
+        "}" +
+    "]," +
+    "\"status\": \"completed\"," +
+    "\"intent\": \"order\"," +
+    "\"priority\": \"routine\"," +                        // <== TAMBAHAN
+    "\"category\": [" +
+        "{" +
+            "\"coding\": [" +
+                "{" +
+                    "\"system\": \"http://terminology.hl7.org/CodeSystem/medicationrequest-category\"," +
+                    "\"code\": \""+tbObat.getValueAt(i,28).toString().replaceAll("Ralan","outpatient").replaceAll("Ranap","inpatient")+"\"," +
+                    "\"display\": \""+tbObat.getValueAt(i,28).toString().replaceAll("Ralan","Outpatient").replaceAll("Ranap","Inpatient")+"\"" +
+                "}" +
+            "]" +
+        "}" +
+    "]," +
+    "\"courseOfTherapyType\": {" +                        // <== TAMBAHAN
+        "\"coding\": [{" +
+            "\"system\": \"http://terminology.hl7.org/CodeSystem/medicationrequest-course-of-therapy\"," +
+            "\"code\": \"continuous\"," +
+            "\"display\": \"Continuing long term therapy\"" +
+        "}]" +
+    "}," +
+    "\"medicationReference\": {" +
+        "\"reference\": \"Medication/"+tbObat.getValueAt(i,23).toString()+"\"," +
+        "\"display\": \""+tbObat.getValueAt(i,12).toString()+"\"" +
+    "}," +
+    "\"subject\": {" +
+        "\"reference\": \"Patient/"+idpasien+"\"," +
+        "\"display\": \""+tbObat.getValueAt(i,4).toString()+"\"" +
+    "}," +
+    "\"encounter\": {" +
+        "\"reference\": \"Encounter/"+tbObat.getValueAt(i,8).toString()+"\"" +
+    "}," +
+    "\"authoredOn\": \""+authoredOnUTC+"\"," +           // <== PAKAI UTC
+    "\"requester\": {" +
+        "\"reference\": \"Practitioner/"+iddokter+"\"," +
+        "\"display\": \""+tbObat.getValueAt(i,6).toString()+"\"" +
+    "}," +
+    "\"performer\": {" +                                 // <== TAMBAHAN
+        "\"reference\": \"Practitioner/"+iddokter+"\"," +
+        "\"display\": \""+tbObat.getValueAt(i,6).toString()+"\"" +
+    "}," +
+    "\"dosageInstruction\": [" +
+        "{" +
+            "\"sequence\": 1," +
+            "\"text\": \""+tbObat.getValueAt(i,24).toString()+"\"," + // opsional: narasi
+            "\"patientInstruction\": \""+tbObat.getValueAt(i,24).toString()+"\"," +
+            "\"timing\": {" +
+                "\"repeat\": {" +
+                    "\"frequency\": "+signa2+"," +
+                    "\"period\": 1," +
+                    "\"periodUnit\": \"d\"" +
+                "}" +
+            "}," +
+            "\"route\": {" +
+                "\"coding\": [" +
+                    "{" +
+                        "\"system\": \""+tbObat.getValueAt(i,17).toString()+"\"," +
+                        "\"code\": \""+tbObat.getValueAt(i,16).toString()+"\"," +
+                        "\"display\": \""+tbObat.getValueAt(i,18).toString()+"\"" +
+                    "}" +
+                "]" +
+            "}," +
+            "\"doseAndRate\": [" +
+                "{" +
+                    "\"doseQuantity\": {" +
+                        "\"value\": "+signa1+"," +
+                        "\"unit\": \""+tbObat.getValueAt(i,19).toString()+"\"," +
+                        "\"system\": \""+tbObat.getValueAt(i,20).toString()+"\"," +
+                        "\"code\": \""+tbObat.getValueAt(i,19).toString()+"\"" +
+                    "}" +
+                "}" +
+            "]" +
+        "}" +
+    "]," +
+    "\"dispenseRequest\": {" +
+        "\"quantity\": {" +
+            "\"value\": "+tbObat.getValueAt(i,22).toString()+"," +
+            "\"unit\": \""+tbObat.getValueAt(i,19).toString()+"\"," +
+            "\"system\": \""+tbObat.getValueAt(i,20).toString()+"\"," +
+            "\"code\": \""+tbObat.getValueAt(i,19).toString()+"\"" +
+        "}" +
+    "}," +
+    "\"substitution\": {" +                               // <== TAMBAHAN WAJIB
+        "\"allowedBoolean\": true" +
+    "}" +
+"}";
                             System.out.println("URL : "+link+"/MedicationRequest");
                             System.out.println("Request JSON : "+json);
                             requestEntity = new HttpEntity(json,headers);
@@ -1396,4 +1418,35 @@ public final class SatuSehatKirimMedicationRequest extends javax.swing.JDialog {
     public JTable getTable(){
         return tbObat;
     }
+    
+    private String toUTCDateTime(String tglJamWIB) {
+    if (tglJamWIB == null || tglJamWIB.trim().equals("")) {
+        // fallback: sekarang UTC
+        OffsetDateTime nowUtc = OffsetDateTime.now(ZoneOffset.UTC);
+        return nowUtc.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"));
+    }
+
+    String raw = tglJamWIB.trim();
+    try {
+        LocalDateTime ldt;
+
+        // kalau cuma tanggal: "2025-12-05"
+        if (raw.length() == 10) {
+            ldt = LocalDateTime.parse(raw + " 00:00:00",
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        } else {
+            // format umum: "2025-12-05 06:17:37"
+            ldt = LocalDateTime.parse(raw,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+
+        OffsetDateTime wib = ldt.atOffset(ZoneOffset.ofHours(7));
+        OffsetDateTime utc = wib.withOffsetSameInstant(ZoneOffset.UTC);
+
+        return utc.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"));
+    } catch (Exception ex) {
+        // kalau gagal parse, minimal ubah spasi ke T dan pakai +00:00
+        return raw.replace(" ", "T") + "+00:00";
+    }
+}
 }

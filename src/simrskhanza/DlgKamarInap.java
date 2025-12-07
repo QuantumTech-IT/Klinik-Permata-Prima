@@ -28,6 +28,7 @@ import surat.SuratKontrol;
 import bridging.INACBGPerawatanCorona;
 import bridging.PCareDataPendaftaran;
 import bridging.SisruteRujukanKeluar;
+import bridging.SatuSehatMapingObatAlkes2;
 import laporan.DlgDiagnosaPenyakit;
 import informasi.InformasiAnalisaKamin;
 import keuangan.DlgKamar;
@@ -177,6 +178,7 @@ public class DlgKamarInap extends javax.swing.JDialog {
     public  DlgDiagnosaPenyakit diagnosa=new DlgDiagnosaPenyakit(null,false);
     private SimpleDateFormat dateformat = new SimpleDateFormat("yyyy/MM/dd");
     private SimpleDateFormat dateformat2 = new SimpleDateFormat("dd-MM-yyyy");
+    public  SatuSehatMapingObatAlkes2 aplikasi2=new SatuSehatMapingObatAlkes2(null,false);
     private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private Date date = new Date();
     private String now=dateFormat.format(date),kmr="",key="",tglmasuk,jammasuk,kd_pj,
@@ -1005,6 +1007,8 @@ public class DlgKamarInap extends javax.swing.JDialog {
         MnUrutKamarAsc = new javax.swing.JMenuItem();
         MnUrutTanggalMasukAsc = new javax.swing.JMenuItem();
         MnUrutTanggalMasukDesc = new javax.swing.JMenuItem();
+        SatuSehat = new javax.swing.JMenu();
+        MappingObat = new javax.swing.JMenuItem();
         buttonGroup1 = new javax.swing.ButtonGroup();
         JamMasuk = new widget.TextBox();
         WindowPindahKamar = new javax.swing.JDialog();
@@ -1562,7 +1566,6 @@ public class DlgKamarInap extends javax.swing.JDialog {
         MnPenilaianAwalKeperawatanRanap.setForeground(new java.awt.Color(50, 50, 50));
         MnPenilaianAwalKeperawatanRanap.setIcon(new javax.swing.ImageIcon(getClass().getResource("/picture/category.png"))); // NOI18N
         MnPenilaianAwalKeperawatanRanap.setText("Keperawatan Anak");
-        MnPenilaianAwalKeperawatanRanap.setActionCommand("Keperawatan Anak");
         MnPenilaianAwalKeperawatanRanap.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         MnPenilaianAwalKeperawatanRanap.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
         MnPenilaianAwalKeperawatanRanap.setName("MnPenilaianAwalKeperawatanRanap"); // NOI18N
@@ -4822,6 +4825,20 @@ public class DlgKamarInap extends javax.swing.JDialog {
         MnUrut.add(MnUrutTanggalMasukDesc);
 
         jPopupMenu1.add(MnUrut);
+
+        SatuSehat.setText("jMenu1");
+        SatuSehat.setName("SatuSehat"); // NOI18N
+
+        MappingObat.setText("jMenuItem1");
+        MappingObat.setName("MappingObat"); // NOI18N
+        MappingObat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                MappingObatActionPerformed(evt);
+            }
+        });
+        SatuSehat.add(MappingObat);
+
+        jPopupMenu1.add(SatuSehat);
 
         JamMasuk.setEditable(false);
         JamMasuk.setForeground(new java.awt.Color(255, 255, 255));
@@ -15917,6 +15934,19 @@ private void MnRujukMasukActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
                                 // TODO add your handling code here:
     }//GEN-LAST:event_MnPenilaianAwalKeperawatanRanap1ActionPerformed
 
+    private void MappingObatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MappingObatActionPerformed
+        isTutup();
+        //DlgKamarInap.dispose();
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        SatuSehatMapingObatAlkes2 aplikasi2=new SatuSehatMapingObatAlkes2(null,false);
+        //aplikasi2.isCek();
+        aplikasi2.setSize(internalFrame1.getWidth()-20,internalFrame1.getHeight()-20);
+        aplikasi2.setLocationRelativeTo(internalFrame1);
+        aplikasi2.setVisible(true);
+        this.setCursor(Cursor.getDefaultCursor());
+    
+    }//GEN-LAST:event_MappingObatActionPerformed
+
     private void MnPenilaianPreInduksiActionPerformed(java.awt.event.ActionEvent evt) {                                                       
         if(tabMode.getRowCount()==0){
             JOptionPane.showMessageDialog(null,"Maaf, table masih kosong...!!!!");
@@ -16399,6 +16429,7 @@ private void MnRujukMasukActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
     private widget.TextBox JamMasuk;
     private widget.Label LCount;
     private widget.Label LblStts;
+    private javax.swing.JMenuItem MappingObat;
     private javax.swing.JMenu MenuBPJS;
     private javax.swing.JMenu MenuInputData;
     private javax.swing.JMenuItem MnBarcode;
@@ -16599,6 +16630,7 @@ private void MnRujukMasukActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
     private widget.RadioButton Rganti2;
     private widget.RadioButton Rganti3;
     private widget.RadioButton Rganti4;
+    private javax.swing.JMenu SatuSehat;
     private widget.ScrollPane Scroll;
     private javax.swing.JMenu SetStatus;
     private widget.TextBox TBangsal;
@@ -17482,5 +17514,15 @@ private void MnRujukMasukActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
         MenuBPJS.add(ppPerawatanCorona);
         MenuBPJS.add(MnTeridentifikasiTB);
         MenuBPJS.add(MnPCare);
+    }
+    private void isTutup() {
+        //FlayMenu.setVisible(false);
+        akses.setform("frmUtama");
+        Window[] wins = Window.getWindows();
+        for (Window win : wins) {
+            if (win instanceof JDialog) {
+                win.dispose();
+            }
+        }
     }
 }

@@ -57,6 +57,7 @@ public final class sekuel {
     private int angka=0;
     private double angka2=0;
     private String dicari="";
+    private String track = "";
     private Date tanggal=new Date();
     private boolean bool=false;
     private final DecimalFormat df2 = new DecimalFormat("####");
@@ -185,6 +186,95 @@ public final class sekuel {
         return bool;
     }
     
+    public boolean menyimpantfNotifSmc(String judulOnDuplicate, String table, String kolom, String... values) {
+        String sql = "insert into " + table + " (" + kolom + ") values (";
+        if (kolom == null || kolom.isBlank()) {
+            sql = "insert into " + table + " values (";
+        }
+        for (int i = 0; i < values.length; i++) {
+            sql = sql.concat("?, ");
+        }
+
+        try (PreparedStatement ps = connect.prepareStatement(sql.substring(0, sql.length() - 2).concat(")"))) {
+            for (int i = 0; i < values.length; i++) {
+                ps.setString(i + 1, values[i]);
+            }
+            track = ps.toString();
+            SimpanTrack(track.substring(track.indexOf("insert")));
+            if (ps.executeUpdate() > 0) {
+                return true;
+            }
+        } catch (Exception e) {
+            System.out.println("Notif : " + e);
+            if (judulOnDuplicate != null && !judulOnDuplicate.isBlank()) {
+                JOptionPane.showMessageDialog(null, "Tidak bisa menyimpan data, kemungkinan ada " + judulOnDuplicate + " yang sama dimasukkan sebelumnya.");
+            }
+        }
+        return false;
+    }
+
+    public void mengupdateSmc(String table, String kolom, String where, String... values) {
+        String sql = "update " + table + " set " + kolom + " where " + where;
+        if (where == null || where.isBlank()) {
+            sql = "update " + table + " set " + kolom;
+        }
+
+        try (PreparedStatement ps = connect.prepareStatement(sql)) {
+            for (int i = 0; i < values.length; i++) {
+                ps.setString(i + 1, values[i]);
+            }
+            track = ps.toString();
+            SimpanTrack(track.substring(track.indexOf("update")));
+            ps.executeUpdate();
+        } catch (Exception e) {
+            System.out.println("Notif : " + e);
+            JOptionPane.showMessageDialog(null, "Gagal mengupdate data!");
+        }
+    }
+
+    public boolean mengupdatetfSmc(String table, String kolom, String where, String... values) {
+        String sql = "update " + table + " set " + kolom + " where " + where;
+        if (where == null || where.isBlank()) {
+            sql = "update " + table + " set " + kolom;
+        }
+
+        try (PreparedStatement ps = connect.prepareStatement(sql)) {
+            for (int i = 0; i < values.length; i++) {
+                ps.setString(i + 1, values[i]);
+            }
+            track = ps.toString();
+            SimpanTrack(track.substring(track.indexOf("update")));
+            if (ps.executeUpdate() > 0) {
+                return true;
+            }
+        } catch (Exception e) {
+            System.out.println("Notif : " + e);
+        }
+        return false;
+    }
+
+    public void menghapusSmc(String table, String where, String... values) {
+        String sql = "delete from " + table + " where " + where;
+        if (where == null || where.isBlank()) {
+            sql = "delete from " + table;
+        }
+
+        try (PreparedStatement ps = connect.prepareStatement(sql)) {
+            for (int i = 0; i < values.length; i++) {
+                ps.setString(i + 1, values[i]);
+            }
+            track = ps.toString();
+            SimpanTrack(track.substring(track.indexOf("delete")));
+            ps.executeUpdate();
+        } catch (Exception e) {
+            System.out.println("Notif : " + e);
+            if (e.getMessage().contains("constraint")) {
+                JOptionPane.showMessageDialog(null, "Gagal menghapus data, kemungkinan masih digunakan di bagian lainnya!");
+            } else {
+                JOptionPane.showMessageDialog(null, "Gagal menghapus data!");
+            }
+        }
+    }
     public void menyimpan(String table,String value,String sama,int i,String[] a){
         try {
             ps=connect.prepareStatement("insert into "+table+" values("+value+")");

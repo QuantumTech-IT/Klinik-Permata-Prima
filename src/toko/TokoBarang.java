@@ -176,36 +176,36 @@ tbJnsPerawatan.setModel(tabMode);
         ChkInput.setSelected(false);
         isForm(); 
         
-        retail.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-    public void insertUpdate(javax.swing.event.DocumentEvent e) { hitungPersenSatuan3(); }
-    public void removeUpdate(javax.swing.event.DocumentEvent e) {  hitungPersenSatuan3(); }
-    public void changedUpdate(javax.swing.event.DocumentEvent e) {  hitungPersenSatuan3(); }
-});
-        distributor.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-    public void insertUpdate(javax.swing.event.DocumentEvent e) { hitungPersenDistributor(); }
-    public void removeUpdate(javax.swing.event.DocumentEvent e) { hitungPersenDistributor(); }
-    public void changedUpdate(javax.swing.event.DocumentEvent e) { hitungPersenDistributor(); }
-});
-        grosir.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-    public void insertUpdate(javax.swing.event.DocumentEvent e){ hitungPersenGrosir(); }
-    public void removeUpdate(javax.swing.event.DocumentEvent e){ hitungPersenGrosir(); }
-    public void changedUpdate(javax.swing.event.DocumentEvent e){ hitungPersenGrosir(); }
-});
-        HResep.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-        public void insertUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
-        public void removeUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
-        public void changedUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
-    });
-    Isi.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-        public void insertUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
-        public void removeUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
-        public void changedUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
-    });
-    Kapasitas.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-        public void insertUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
-        public void removeUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
-        public void changedUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
-    });
+//        retail.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+//    public void insertUpdate(javax.swing.event.DocumentEvent e) { hitungPersenRetail(); }
+//    public void removeUpdate(javax.swing.event.DocumentEvent e) {  hitungPersenRetail(); }
+//    public void changedUpdate(javax.swing.event.DocumentEvent e) {  hitungPersenRetail(); }
+//});
+//        distributor.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+//    public void insertUpdate(javax.swing.event.DocumentEvent e) { hitungPersenDistributor(); }
+//    public void removeUpdate(javax.swing.event.DocumentEvent e) { hitungPersenDistributor(); }
+//    public void changedUpdate(javax.swing.event.DocumentEvent e) { hitungPersenDistributor(); }
+//});
+//        grosir.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+//    public void insertUpdate(javax.swing.event.DocumentEvent e){ hitungPersenGrosir(); }
+//    public void removeUpdate(javax.swing.event.DocumentEvent e){ hitungPersenGrosir(); }
+//    public void changedUpdate(javax.swing.event.DocumentEvent e){ hitungPersenGrosir(); }
+//});
+//        HResep.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+//        public void insertUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
+//        public void removeUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
+//        public void changedUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
+//    });
+//    Isi.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+//        public void insertUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
+//        public void removeUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
+//        public void changedUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
+//    });
+//    Kapasitas.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+//        public void insertUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
+//        public void removeUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
+//        public void changedUpdate(javax.swing.event.DocumentEvent e){ hitungPersenResep(); }
+//    });
     
     // taruh di panel kanan/emptypanel kamu
     javax.swing.JScrollPane sp = new javax.swing.JScrollPane(tbExp);
@@ -1710,7 +1710,7 @@ hitungHargaBesarKecil();
     }//GEN-LAST:event_grosirKeyPressed
 
     private void retailKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_retailKeyPressed
-        hitungPersenSatuan3();
+        hitungPersenRetail();
         Valid.pindah(evt,grosir,BtnSimpan);
     }//GEN-LAST:event_retailKeyPressed
 
@@ -1745,19 +1745,19 @@ hitungHargaBesarKecil();
     }//GEN-LAST:event_retailMouseExited
 
     private void IsiKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_IsiKeyPressed
-        if(evt.getKeyCode()==KeyEvent.VK_ENTER){
-            if(kode_sat2.getText().equals(kode_sat1.getText())){
-                Isi.setText("1");
-            }
-           btnSatuan.requestFocus();
-        }else if(evt.getKeyCode()==KeyEvent.VK_PAGE_UP){
-            btnSatuan1.requestFocus();
-            hitungHargaBesarKecil();
-        }
+//        if(evt.getKeyCode()==KeyEvent.VK_ENTER){
+//            if(kode_sat2.getText().equals(kode_sat1.getText())){
+//                Isi.setText("1");
+//            }
+//           btnSatuan.requestFocus();
+//        }else if(evt.getKeyCode()==KeyEvent.VK_PAGE_UP){
+//            btnSatuan1.requestFocus();
+//            hitungHargaBesarKecil();
+//        }
     }//GEN-LAST:event_IsiKeyPressed
 
     private void KapasitasKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_KapasitasKeyPressed
-        hitungHargaBesarKecil();
+        //hitungHargaBesarKecil();
         //Valid.pindah(evt, Isi,BtnJenis);
     }//GEN-LAST:event_KapasitasKeyPressed
 
@@ -1770,7 +1770,7 @@ hitungHargaBesarKecil();
     }//GEN-LAST:event_percenpackagingMouseExited
 
     private void percenpackagingKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_percenpackagingKeyPressed
-        hitungHargaPackaging();
+        //hitungHargaPackaging();
     }//GEN-LAST:event_percenpackagingKeyPressed
 
     private void percensatuanbesarMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_percensatuanbesarMouseMoved
@@ -1782,11 +1782,11 @@ hitungHargaBesarKecil();
     }//GEN-LAST:event_percensatuanbesarMouseExited
 
     private void percensatuanbesarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_percensatuanbesarActionPerformed
-        hitungHargaBesarKecil();        // TODO add your handling code here:
+        //hitungHargaBesarKecil();        // TODO add your handling code here:
     }//GEN-LAST:event_percensatuanbesarActionPerformed
 
     private void percensatuanbesarKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_percensatuanbesarKeyPressed
-        hitungHargaSatuanBesar();
+        //hitungHargaSatuanBesar();
     }//GEN-LAST:event_percensatuanbesarKeyPressed
 
     private void percensatuankecilMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_percensatuankecilMouseMoved
@@ -1798,7 +1798,7 @@ hitungHargaBesarKecil();
     }//GEN-LAST:event_percensatuankecilMouseExited
 
     private void percensatuankecilKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_percensatuankecilKeyPressed
-        hitungHargaBesarKecil();
+       // hitungHargaBesarKecil();
     }//GEN-LAST:event_percensatuankecilKeyPressed
 
     private void kode_sat1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_kode_sat1KeyPressed
@@ -2066,32 +2066,38 @@ i=2;
     }
 
    private void getData() {
-    if(tbJnsPerawatan.getSelectedRow() != -1){
-        kode_brng.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),0).toString());
-        nama_brng.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),1).toString());
-        nama_sat.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),2).toString());
-        nmjenis.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),3).toString());
-        stok.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),4).toString());
-        dasar.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),5).toString());
-        beli.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),6).toString());
-        distributor.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),7).toString());
-        grosir.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),8).toString());
-        retail.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),9).toString());
-        kode_sat1.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),10).toString());
-        kode_sat2.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),11).toString());
-        Isi.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),12).toString());
-        Kapasitas.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),13).toString());
-        HResep.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),14).toString());
-        Kandungan.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(),15).toString());
-        // tetap ambil kode_sat & kdjenis dari DB supaya sinkron
-        kode_sat.setText(Sequel.cariIsi(
-            "SELECT kode_sat FROM tokobarang WHERE kode_brng=?", kode_brng.getText()
-        ));
-        kdjenis.setText(Sequel.cariIsi(
-            "SELECT jenis FROM tokobarang WHERE kode_brng=?", kode_brng.getText()
-        ));
-    }
+    int row = tbJnsPerawatan.getSelectedRow();
+    if(row == -1) return;
+
+    // --- teks murni ---
+    kode_brng.setText(tbJnsPerawatan.getValueAt(row,0).toString());
+    nama_brng.setText(tbJnsPerawatan.getValueAt(row,1).toString());
+    nama_sat.setText(tbJnsPerawatan.getValueAt(row,2).toString());
+    nmjenis.setText(tbJnsPerawatan.getValueAt(row,3).toString());
+    kode_sat1.setText(tbJnsPerawatan.getValueAt(row,10).toString());
+    kode_sat2.setText(tbJnsPerawatan.getValueAt(row,11).toString());
+    Kandungan.setText(tbJnsPerawatan.getValueAt(row,15).toString());
+
+    // --- angka: pakai valNumFromTable + setNum ---
+    setNum(stok,       valNumFromTable(row, 4));  // Stok
+    setNum(dasar,      valNumFromTable(row, 5));  // Harga Dasar
+    setNum(beli,       valNumFromTable(row, 6));  // Harga Beli
+    setNum(distributor,valNumFromTable(row, 7));  // Harga Satuan 1
+    setNum(grosir,     valNumFromTable(row, 8));  // Harga Satuan 2
+    setNum(retail,     valNumFromTable(row, 9));  // Harga Satuan 3
+    setNum(Isi,        valNumFromTable(row,12));  // Isi
+    setNum(Kapasitas,  valNumFromTable(row,13));  // Kapasitas
+    setNum(HResep,     valNumFromTable(row,14));  // Harga Resep
+
+    // tetap ambil dari DB untuk sinkron
+    kode_sat.setText(Sequel.cariIsi(
+        "SELECT kode_sat FROM tokobarang WHERE kode_brng=?", kode_brng.getText()
+    ));
+    kdjenis.setText(Sequel.cariIsi(
+        "SELECT jenis FROM tokobarang WHERE kode_brng=?", kode_brng.getText()
+    ));
 }
+
 
     public JTable getTable(){
         return tbJnsPerawatan;
@@ -2151,110 +2157,186 @@ i=2;
 //            }
 //        }            
 //    }
+//   
+//   private void hitungHargaSatuanBesar() {
+//    if(this.isVisible() == true) {
+//        try {
+//            if (!beli.getText().trim().equals("") && !percensatuanbesar.getText().trim().equals("")) {
+//                try {
+//                    double hargaBeli = Double.parseDouble(beli.getText().trim());
+//                    double persenLaba = Double.parseDouble(percensatuanbesar.getText().trim());
+//
+//                    if (hargaBeli >= 0 && persenLaba >= 0) {
+//                        double hargaJual = hargaBeli + (hargaBeli * (persenLaba / 100));
+//                        grosir.setText(Double.toString(Valid.roundUp(hargaJual, 100)));
+//                    } else {
+//                        grosir.setText("");
+//                    }
+//                } catch (NumberFormatException e) {
+//                    grosir.setText("");
+//                }
+//            } else {
+//                grosir.setText("");
+//            }
+//        } catch (Exception e) {
+//            System.out.println("Notifikasi : " + e);
+//        }
+//    }
+//}
    
-   private void hitungHargaSatuanBesar() {
-    if(this.isVisible() == true) {
-        try {
-            if (!beli.getText().trim().equals("") && !percensatuanbesar.getText().trim().equals("")) {
-                try {
-                    double hargaBeli = Double.parseDouble(beli.getText().trim());
-                    double persenLaba = Double.parseDouble(percensatuanbesar.getText().trim());
-
-                    if (hargaBeli >= 0 && persenLaba >= 0) {
-                        double hargaJual = hargaBeli + (hargaBeli * (persenLaba / 100));
-                        grosir.setText(Double.toString(Valid.roundUp(hargaJual, 100)));
-                    } else {
-                        grosir.setText("");
-                    }
-                } catch (NumberFormatException e) {
-                    grosir.setText("");
-                }
-            } else {
-                grosir.setText("");
-            }
-        } catch (Exception e) {
-            System.out.println("Notifikasi : " + e);
-        }
-    }
-}
-   
-   private void hitungHargaPackaging() {
-    if(this.isVisible() == true) {
-        try {
-            // Hanya hitung jika KEDUA field sudah terisi (tidak kosong)
-            if (!beli.getText().trim().equals("") && !percenpackaging.getText().trim().equals("")) {
-                try {
-                    // Ambil nilai harga beli
-                    double hargaBeli = Double.parseDouble(beli.getText().trim());
-                    
-                    // Ambil nilai persentase laba packaging
-                    double persenLaba = Double.parseDouble(percenpackaging.getText().trim());
-                    
-                    // Validasi nilai harus positif
-                    if (hargaBeli >= 0 && persenLaba >= 0) {
-                        // Hitung harga jual packaging
-                        // Rumus: Harga Jual = Harga Beli + (Harga Beli × Persentase Laba / 100)
-                        double hargaJualPackaging = hargaBeli + (hargaBeli * (persenLaba / 100));
-                        
-                        // Set hasil ke field HPackaging dengan pembulatan ke 100
-                        distributor.setText(Double.toString(Valid.roundUp(hargaJualPackaging, 100)));
-                    } else {
-                        // Kosongkan field jika ada nilai negatif
-                        distributor.setText("");
-                    }
-                    
-                } catch (NumberFormatException e) {
-                    // Kosongkan field packaging jika input tidak valid (tanpa popup mengganggu)
-                    distributor.setText("");
-                }
-            } else {
-                // Kosongkan field packaging jika salah satu input kosong
-               distributor.setText("");
-            }
-        } catch (Exception e) {
-            System.out.println("Notifikasi : " + e);
-        }
-    }
-}
-   
-   private void hitungHargaBesarKecil(){
+//   private void hitungHargaPackaging() {
+//    if(this.isVisible() == true) {
+//        try {
+//            // Hanya hitung jika KEDUA field sudah terisi (tidak kosong)
+//            if (!beli.getText().trim().equals("") && !percenpackaging.getText().trim().equals("")) {
+//                try {
+//                    // Ambil nilai harga beli
+//                    double hargaBeli = Double.parseDouble(beli.getText().trim());
+//                    
+//                    // Ambil nilai persentase laba packaging
+//                    double persenLaba = Double.parseDouble(percenpackaging.getText().trim());
+//                    
+//                    // Validasi nilai harus positif
+//                    if (hargaBeli >= 0 && persenLaba >= 0) {
+//                        // Hitung harga jual packaging
+//                        // Rumus: Harga Jual = Harga Beli + (Harga Beli × Persentase Laba / 100)
+//                        double hargaJualPackaging = hargaBeli + (hargaBeli * (persenLaba / 100));
+//                        
+//                        // Set hasil ke field HPackaging dengan pembulatan ke 100
+//                        distributor.setText(Double.toString(Valid.roundUp(hargaJualPackaging, 100)));
+//                    } else {
+//                        // Kosongkan field jika ada nilai negatif
+//                        distributor.setText("");
+//                    }
+//                    
+//                } catch (NumberFormatException e) {
+//                    // Kosongkan field packaging jika input tidak valid (tanpa popup mengganggu)
+//                    distributor.setText("");
+//                }
+//            } else {
+//                // Kosongkan field packaging jika salah satu input kosong
+//               distributor.setText("");
+//            }
+//        } catch (Exception e) {
+//            System.out.println("Notifikasi : " + e);
+//        }
+//    }
+//}
+  
+   private void hitungHargaBesarKecil() {
     if (!isVisible()) return;
 
-    // ==== ambil input ====
-    double hargaBeliBox = num(beli);             // <-- field "Harga Beli" (per BOX)
-    double isi          = num(Isi);         // <-- field "Isi" (strip per box)
-    double kapasitas    = num(Kapasitas);   // <-- field "Kapasitas" (tablet per strip)
+    // ==== ambil input dasar ====
+    double hargaBeliBox = num(beli);        // "Harga Beli" per BOX
+    double isi          = num(Isi);         // strip per box
+    double kapasitas    = num(Kapasitas);   // TOTAL tablet per box (bukan per strip!)
 
-    double pctStrip     = num(percensatuanbesar);  // <-- field persen strip (%)
-    double pctTablet    = num(percensatuankecil);  // <-- field persen tablet (%)
+    double pctStrip  = num(percensatuanbesar);  // % laba strip
+    double pctTablet = num(percensatuankecil);  // % laba tablet
 
-    if (hargaBeliBox <= 0){ 
-        setNum(distributor, 0);
-        setNum(grosir, 0); 
-        setNum(retail, 0);
-        return; 
+    // kalau harga beli kosong -> nolkan semuanya
+    if (hargaBeliBox <= 0) {
+        setNum(distributor, 0);   // Harga Satuan 1 (BOX)
+        setNum(grosir, 0);        // Harga Satuan 2 (STRIP)
+        setNum(retail, 0);        // Harga Satuan 3 (TAB)
+        setNum(HResep, 0);        // Harga Resep
+
+        setNum(percenpackaging, 0);
+        setNum(percensatuanbesar, 0);
+        setNum(percensatuankecil, 0);
+        setNum(percenresep, 0);
+        return;
     }
-    if (isi <= 0) isi = 1;
+
+    if (isi <= 0)       isi       = 1;
     if (kapasitas <= 0) kapasitas = 1;
 
-    // ==== harga beli per level ====
-    double beliStrip  = hargaBeliBox / isi;
-    double beliTablet = hargaBeliBox / (isi * kapasitas);
+    // ==== modal per level ====
+    double beliStrip  = hargaBeliBox / isi;        // modal per STRIP
+    double beliTablet = hargaBeliBox / kapasitas;  // modal per TABLET (pakai TOTAL tablet/box)
 
-    final double STEP = 100; // ganti 500/1000 sesuai kebijakan
+    final double STEP = 100; // kelipatan pembulatan (boleh 500/1000 sesuai kebijakan)
 
-    // ==== jual per strip ====
-    if (pctStrip >= 0){
-        double jualStrip = roundUp(beliStrip * (1.0 + pctStrip/100.0), STEP);
-        setNum(grosir, jualStrip);     // <-- field "Hrg Satuan Besar"
-    } else setNum(grosir, 0);
+    // ------------------ HARGA JUAL ------------------
 
-    // ==== jual per tablet ====
-    if (pctTablet >= 0){
-        double jualTablet = roundUp(beliTablet * (1.0 + pctTablet/100.0), STEP);
-        setNum(retail, jualTablet);    // <-- field "Hrg Satuan Kecil"
-    } else setNum(retail, 0);
+    // Harga Satuan 1 (BOX) biasanya diisi manual,
+    // jadi di sini tidak diutak-atik (kecuali kamu mau auto juga).
+    double jualBox = num(distributor);
+
+    // ==== jual per STRIP (Satuan 2) ====
+    double jualStrip = num(grosir);
+    if (pctStrip >= 0) {
+        jualStrip = roundUp(beliStrip * (1.0 + pctStrip / 100.0), STEP);
+        setNum(grosir, jualStrip);
+    }
+
+    // ==== jual per TABLET (Satuan 3) ====
+    double jualTablet = num(retail);
+    if (pctTablet >= 0) {
+        jualTablet = roundUp(beliTablet * (1.0 + pctTablet / 100.0), STEP);
+        setNum(retail, jualTablet);
+    }
+
+    // ==== harga Resep (opsional ikut harga tablet kalau kosong) ====
+    double jualResep = num(HResep);
+    if (jualResep <= 0 && jualTablet > 0) {
+        jualResep = jualTablet;
+        setNum(HResep, jualResep);
+    }
+
+    // ------------------ LABA % ------------------
+
+    // Laba Satuan 1: pakai modal BOX
+    setNum(percenpackaging, persenLaba(jualBox, hargaBeliBox));
+
+    // Laba Satuan 2: pakai modal STRIP
+    setNum(percensatuanbesar, persenLaba(jualStrip, beliStrip));
+
+    // Laba Satuan 3: pakai modal TABLET
+    setNum(percensatuankecil, persenLaba(jualTablet, beliTablet));
+
+    // Laba Resep: biasanya juga per tablet
+    setNum(percenresep, persenLaba(jualResep, beliTablet));
 }
+//   private void hitungHargaBesarKecil(){
+//    if (!isVisible()) return;
+//
+//    // ==== ambil input ====
+//    double hargaBeliBox = num(beli);             // <-- field "Harga Beli" (per BOX)
+//    double isi          = num(Isi);         // <-- field "Isi" (strip per box)
+//    double kapasitas    = num(Kapasitas);   // <-- field "Kapasitas" (tablet per strip)
+//
+//    double pctStrip     = num(percensatuanbesar);  // <-- field persen strip (%)
+//    double pctTablet    = num(percensatuankecil);  // <-- field persen tablet (%)
+//
+//    if (hargaBeliBox <= 0){ 
+//        setNum(distributor, 0);
+//        setNum(grosir, 0); 
+//        setNum(retail, 0);
+//        return; 
+//    }
+//    if (isi <= 0) isi = 1;
+//    if (kapasitas <= 0) kapasitas = 1;
+//
+//    // ==== harga beli per level ====
+//    double beliStrip  = hargaBeliBox / isi;
+//    // harga beli per tablet -> PAKAI total tablet per box
+//    double beliTablet = hargaBeliBox / kapasitas;
+//
+//    final double STEP = 100; // ganti 500/1000 sesuai kebijakan
+//
+//    // ==== jual per strip ====
+//    if (pctStrip >= 0){
+//        double jualStrip = roundUp(beliStrip * (1.0 + pctStrip/100.0), STEP);
+//        setNum(grosir, jualStrip);     // <-- field "Hrg Satuan Besar"
+//    } else setNum(grosir, 0);
+//
+//    // ==== jual per tablet ====
+//    if (pctTablet >= 0){
+//        double jualTablet = roundUp(beliTablet * (1.0 + pctTablet/100.0), STEP);
+//        setNum(retail, jualTablet);    // <-- field "Hrg Satuan Kecil"
+//    } else setNum(retail, 0);
+//}
    /**
  * Hitung harga resep per biji (tablet) dari harga beli per BOX,
  * menggunakan persen khusus percenresep, dan pembulatan STEP_RESEP.
@@ -2295,120 +2377,242 @@ private void hitungHargaResepPerBiji() {
 
     setNum(HResep, hargaResep);
 }
-   
-   private static double num(javax.swing.JTextField t){
+
+// format: 1,000 – 10,000 – 114,300
+private static final DecimalFormat DF = new DecimalFormat("#,##0");
+
+// baca dari JTextField
+private double num(javax.swing.JTextField t){
     if (t == null) return 0;
-    String s = t.getText();
+    return num(t.getText());
+}
+
+private double num(String s){
     if (s == null) return 0;
     s = s.trim();
     if (s.isEmpty()) return 0;
-    try { return Double.parseDouble(s.replace(".","").replace(",", ".")); }
-    catch(Exception e){ return 0; }
+
+    // hapus pemisah ribuan: "78,144" -> "78144", "52,000" -> "52000"
+    s = s.replace(",", "");
+
+    try {
+        return Double.parseDouble(s);
+    } catch(Exception e){
+        return 0;
+    }
 }
-   // bulatkan NAIK ke kelipatan step (100/500/1000)
-private static double roundUp(double v, double step){
+
+private void setNum(javax.swing.JTextField t, double v){
+    if (t == null) return;
+    long bulat = Math.round(v);       // bulatkan ke integer
+    t.setText(String.valueOf(bulat));   // versi yang mengembalikan String
+}
+
+// bulatkan NAIK ke kelipatan step (100/500/1000)
+private double roundUp(double v, double step){
     if (step <= 0) return Math.round(v);
     return Math.ceil(v/step) * step;
 }
+   
+private double valNumFromTable(int row, int col) {
+    Object v = tbJnsPerawatan.getValueAt(row, col);
+    if (v == null) return 0;
+    if (v instanceof Number) {
+        return ((Number) v).doubleValue();
+    } else {
+        return num(v.toString());   // pakai num(String) di atas
+    }
+}
 
-// set angka ke textfield
-private static void setNum(javax.swing.JTextField t, double v){
-    t.setText(String.valueOf(v));
+// hitung persen laba = (jual - modal) / modal * 100
+private double persenLaba(double jual, double modal){
+    if (jual <= 0 || modal <= 0) return 0;
+    return ((jual - modal) / modal) * 100.0;
 }
-    private static double num(String s){
-    if (s == null) return 0;
-    s = s.trim().replace(",", "");
-    if (s.isEmpty()) return 0;
-    try { return Double.parseDouble(s); } catch(Exception e){ return 0; }
-}
+//   private static double num(javax.swing.JTextField t){
+//    if (t == null) return 0;
+//    String s = t.getText();
+//    if (s == null) return 0;
+//    s = s.trim();
+//    if (s.isEmpty()) return 0;
+//    try { return Double.parseDouble(s.replace(".","").replace(",", ".")); }
+//    catch(Exception e){ return 0; }
+//}
+//   // bulatkan NAIK ke kelipatan step (100/500/1000)
+//private static double roundUp(double v, double step){
+//    if (step <= 0) return Math.round(v);
+//    return Math.ceil(v/step) * step;
+//}
+//
+//// set angka ke textfield
+//private static void setNum(javax.swing.JTextField t, double v){
+//    t.setText(String.valueOf(v));
+//}
+//    private static double num(String s){
+//    if (s == null) return 0;
+//    s = s.trim().replace(",", "");
+//    if (s.isEmpty()) return 0;
+//    try { return Double.parseDouble(s); } catch(Exception e){ return 0; }
+//}
 
 // hitung % laba ketika HARGA RESEP diisi/diubah
 private void hitungPersenResep() {
-    if (!this.isVisible()) return;
+    double hargaBeliBox = num(beli);       // modal BOX
+    double tabletPerBox = num(Kapasitas);  // TOTAL tablet/box
 
-    double hbeli   = num(beli.getText());
-    double hResep  = num(HResep.getText());
-    double isiVal  = num(Isi.getText());
-    double kapVal  = num(Kapasitas.getText());
+    if (hargaBeliBox > 0 && tabletPerBox > 0) {
+        double modalTablet = hargaBeliBox / tabletPerBox; // modal per TAB
+        double jualResep   = num(HResep);                 // harga resep / TAB
 
-    // jika ada kasus kapasitas kosong, kamu bisa default-kan ke 1
-    // if (kapVal <= 0) kapVal = 1;
+        double persen      = persenLaba(jualResep, modalTablet); // misal 27.97
+        double persenBulat = Math.round(persen);                 // -> 28
 
-    if (hbeli > 0 && hResep >= 0 && isiVal > 0 && kapVal > 0) {
-        double hbeliPerUnit = hbeli / (isiVal * kapVal);
-        double persen = ((hResep - hbeliPerUnit) / hbeliPerUnit) * 100.0;
-
-        SwingUtilities.invokeLater(() ->
-            percenresep.setText(String.format(java.util.Locale.US, "%.2f", persen))
-        );
+        // tampilkan tanpa angka di belakang koma
+        percenresep.setText(String.format(java.util.Locale.US, "%.0f", persenBulat));
+        // atau:
+        // percenresep.setText(String.valueOf((int) persenBulat));
     } else {
-        SwingUtilities.invokeLater(() -> percenresep.setText(""));
+        // kalau modal nggak valid, kosongkan field persen resep
+        percenresep.setText("");
     }
 }
+
+//private void hitungPersenResep() {
+//    if (!this.isVisible()) return;
+//
+//    double hbeli   = num(beli.getText());
+//    double hResep  = num(HResep.getText());
+//    double isiVal  = num(Isi.getText());
+//    double kapVal  = num(Kapasitas.getText());
+//
+//    // jika ada kasus kapasitas kosong, kamu bisa default-kan ke 1
+//    // if (kapVal <= 0) kapVal = 1;
+//
+//    if (hbeli > 0 && hResep >= 0 && isiVal > 0 && kapVal > 0) {
+//        double hbeliPerUnit = hbeli / (isiVal * kapVal);
+//        double persen = ((hResep - hbeliPerUnit) / hbeliPerUnit) * 100.0;
+//
+//        SwingUtilities.invokeLater(() ->
+//            percenresep.setText(String.format(java.util.Locale.US, "%.2f", persen))
+//        );
+//    } else {
+//        SwingUtilities.invokeLater(() -> percenresep.setText(""));
+//    }
+//}
 
 private void hitungPersenDistributor() {
-    try {
-        double hargaBeli = num(beli.getText());
-        double hargaDistributor = num(distributor.getText());
+    double hargaBeliBox = num(beli);        // modal BOX
+    double jualBox      = num(distributor); // harga jual BOX
 
-        if (hargaBeli > 0 && hargaDistributor >= 0) {
-            double persen = ((hargaDistributor - hargaBeli) / hargaBeli) * 100.0;
+    if (hargaBeliBox > 0 && jualBox >= 0) {
+        double persen = persenLaba(jualBox, hargaBeliBox); // misal 30.53
 
-            // gunakan invokeLater supaya aman di DocumentListener
-            SwingUtilities.invokeLater(() -> {
-                percenpackaging.setText(String.format(java.util.Locale.US, "%.2f", persen));
-            });
-        } else {
-            SwingUtilities.invokeLater(() -> {
-                percenpackaging.setText("");
-            });
-        }
-    } catch (Exception e) {
-        System.out.println("Notifikasi hitungPersenDistributor: " + e);
+        // bulatkan ke bilangan bulat terdekat
+        double persenBulat = Math.round(persen);           // 30.53 -> 31
+
+        // tampilkan tanpa angka di belakang koma
+        percenpackaging.setText(String.format(java.util.Locale.US, "%.0f", persenBulat));
+        // atau simpel:
+        // percenpackaging.setText(String.valueOf((int) persenBulat));
+    } else {
+        percenpackaging.setText("");
     }
 }
+//private void hitungPersenDistributor() {
+//    try {
+//        double hargaBeli        = num(beli);        // langsung dari JTextField
+//        double hargaDistributor = num(distributor); // langsung dari JTextField
+//
+//        if (hargaBeli > 0 && hargaDistributor >= 0) {
+//            double persen = ((hargaDistributor - hargaBeli) / hargaBeli) * 100.0;
+//
+//            SwingUtilities.invokeLater(() -> {
+//                // kalau mau gaya Khanza bisa:
+//                // percenpackaging.setText(Valid.SetAngka3(persen));
+//                percenpackaging.setText(String.format(java.util.Locale.US, "%.2f", persen));
+//            });
+//        } else {
+//            SwingUtilities.invokeLater(() -> percenpackaging.setText(""));
+//        }
+//    } catch (Exception e) {
+//        System.out.println("Notifikasi hitungPersenDistributor: " + e);
+//    }
+//}
 
+// contoh untuk grosir / strip
 private void hitungPersenGrosir() {
-    if (!this.isVisible()) return;
+    double hargaBeliBox = num(beli);
+    double isi          = num(Isi);      // strip/box
+    double jualStrip    = num(grosir);   // harga satuan 2
 
-    double hargaBeli   = num(beli.getText());      // harga beli per-kemasan besar
-    double hargaGrosir = num(grosir.getText());    // harga jual per 1 isi
-    double isiVal      = num(Isi.getText());       // jumlah unit dalam kemasan
+    if (hargaBeliBox > 0 && isi > 0 && jualStrip >= 0) {
+        double modalStrip = hargaBeliBox / isi;
+        double persen     = persenLaba(jualStrip, modalStrip);
+        double persenBul  = Math.round(persen);
 
-    if (hargaBeli > 0 && hargaGrosir >= 0 && isiVal > 0) {
-        double hargaBeliPerUnit = hargaBeli / isiVal;
-
-        double persen = ((hargaGrosir - hargaBeliPerUnit) / hargaBeliPerUnit) * 100.0;
-
-        SwingUtilities.invokeLater(() ->
-            percensatuanbesar.setText(String.format(java.util.Locale.US, "%.2f", persen))
-        );
+        percensatuanbesar.setText(String.format(java.util.Locale.US, "%.0f", persenBul));
     } else {
-        SwingUtilities.invokeLater(() -> percensatuanbesar.setText(""));
+        percensatuanbesar.setText("");
     }
 }
 
-private void hitungPersenSatuan3() {
-    if (!this.isVisible()) return;
+//private void hitungPersenGrosir() {
+//    if (!this.isVisible()) return;
+//
+//    double hargaBeli   = num(beli);     // bukan num(beli.getText())
+//    double hargaGrosir = num(grosir);
+//    double isiVal      = num(Isi);  
+//    double beliStrip  = hargaBeliBox / isi; // jumlah unit dalam kemasan
+//
+//     if (hargaBeli > 0 && hargaGrosir >= 0 && isiVal > 0) {
+//        double hargaBeliPerStrip = hargaBeli / isiVal;
+//        double persen = ((hargaGrosir - hargaBeliPerStrip) / hargaBeliPerStrip) * 100.0;
+//
+//        setNum(percensatuanbesar, persenLaba(hargaGrosir, beliStrip));
+//    } else {
+//        percensatuanbesar.setText("");
+//    }
+//}
 
-    double hargaBeli    = num(beli.getText());       // harga beli kemasan besar
-    double hargaSat3    = num(retail.getText());    // harga jual satuan 3
-    double isiVal       = num(Isi.getText());        // jumlah isi per kemasan
-    double kapasitasVal = num(Kapasitas.getText());  // kapasitas per isi
+private void hitungPersenRetail() {
+    double hargaBeliBox = num(beli);      // modal BOX
+    double tabletPerBox = num(Kapasitas); // TOTAL tablet/box
 
-    if (hargaBeli > 0 && hargaSat3 >= 0 && isiVal > 0 && kapasitasVal > 0) {
-        // harga beli per unit terkecil
-        double hargaBeliPerUnit = hargaBeli / (isiVal * kapasitasVal);
+    if (hargaBeliBox > 0 && tabletPerBox > 0) {
+        double modalTablet = hargaBeliBox / tabletPerBox; // modal per TAB
+        double jualTablet  = num(retail);                 // harga jual TAB
 
-        double persen = ((hargaSat3 - hargaBeliPerUnit) / hargaBeliPerUnit) * 100.0;
+        double persen      = persenLaba(jualTablet, modalTablet);
+        double persenBulat = Math.round(persen);
 
-        SwingUtilities.invokeLater(() ->
-            percensatuankecil.setText(String.format(java.util.Locale.US, "%.2f", persen))
-        );
+        percensatuankecil.setText(String.format(java.util.Locale.US, "%.0f", persenBulat));
     } else {
-        SwingUtilities.invokeLater(() -> percensatuankecil.setText(""));
+        // kalau modal nggak valid, kosongkan field persen
+        percensatuankecil.setText("");
     }
 }
+
+//private void hitungPersenSatuan3() {
+//    if (!this.isVisible()) return;
+//
+//    double hargaBeli    = num(beli);       // harga beli kemasan besar
+//    double hargaSat3    = num(retail);    // harga jual satuan 3
+//    double isiVal       = num(Isi);        // jumlah isi per kemasan
+//    double kapasitasVal = num(Kapasitas);  // kapasitas per isi
+//
+//    if (hargaBeli > 0 && hargaSat3 >= 0 && isiVal > 0 && kapasitasVal > 0) {
+//        // harga beli per unit terkecil
+//        double hargaBeliPerUnit = hargaBeli / (isiVal * kapasitasVal);
+//
+//        double persen = ((hargaSat3 - hargaBeliPerUnit) / hargaBeliPerUnit) * 100.0;
+//
+//        SwingUtilities.invokeLater(() ->
+//            percensatuankecil.setText(String.format(java.util.Locale.US, "%.2f", persen))
+//        );
+//    } else {
+//        SwingUtilities.invokeLater(() -> percensatuankecil.setText(""));
+//    }
+//}
 
 private void initExpireCombo() {
     cmbExpire = new javax.swing.JComboBox<>(new String[]{
@@ -2720,4 +2924,5 @@ public void styleExpTable(JTable tbl) {
         tbl.getParent().setBackground(new Color(0xFFFFFF));
     }
 }
+
 }

@@ -3,11 +3,11 @@
 <properties>
     <comment>KhanzaHMS</comment> 
     <entry key="HOST">5k7+C7EnUw9nUv2Nix+DBA==</entry>
-    <entry key="DATABASE">8E+lfPls0Selg4zhnXGEFUZgWN51G8r+03b3SivCxYQ=</entry>
+    <entry key="DATABASE">8E+lfPls0Selg4zhnXGEFQXlLs6gW9mPyPMKsyWO79M=</entry>
     <entry key="PORT">nioxtijcpDaKSUiUiP5FAg==</entry>
     <entry key="USER">kMR3WfAwUK6MbhCyydxa0g==</entry>
     <entry key="PAS">l4nh5eVYrLAER/I2A4b3Tw==</entry>
-    <entry key="CARICEPAT">aktif</entry>
+    <entry key="CARICEPAT">no</entry>
     <entry key="HOSTHYBRIDWEB">5k7+C7EnUw9nUv2Nix+DBA==</entry>
     <entry key="USERHYBRIDWEB">nmXqCKzrz9i8GTZlq7JruQ==</entry>
     <entry key="PASHYBRIDWEB">AsJ/0/gCnYnD+gK4fw9uKA==</entry>
@@ -80,16 +80,16 @@
     <entry key="URLAPICORONA">http://sirs.kemkes.go.id/fo/index.php</entry>
     <entry key="IDCORONA">l4nh5eVYrLAER/I2A4b3Tw==</entry>
     <entry key="PASSCORONA">l4nh5eVYrLAER/I2A4b3Tw==</entry>
-    <entry key="CLIENTIDSATUSEHAT">84gc+gN5BhcCxLoJxHODBleZUdYHZiR2pYAb9T/w6hhyuWrFJFvPM7UvdNVtl7Sestw5ZVpC9SI/UUmSqSmYsA==</entry>
-    <entry key="SECRETKEYSATUSEHAT">ukhrihQzC2cCqQ+DQy7T+wkKxe2YFfvnv1vQr/eAycsbJOiU0j6eeo7CFJE6D/WlEcwqwFE15TGfO5qcMTm+wclfWqpiscCeYZA9pZ/+44o=</entry>
-    <entry key="URLAUTHSATUSEHAT">https://api-satusehat-dev.dto.kemkes.go.id/oauth2/v1</entry> 
-    <entry key="URLFHIRSATUSEHAT">https://api-satusehat-dev.dto.kemkes.go.id/fhir-r4/v1</entry>
-    <entry key="IDSATUSEHAT">Z64Bi97zYtxq3TuJDUb/ng==</entry>
-    <entry key="KELURAHANSATUSEHAT">3313160009</entry>
-    <entry key="KECAMATANSATUSEHAT">3313160</entry>
-    <entry key="KABUPATENSATUSEHAT">3313</entry>
-    <entry key="PROPINSISATUSEHAT">33</entry>
-    <entry key="KODEPOSSATUSEHAT">57752</entry>
+   <entry key="CLIENTIDSATUSEHAT">3neBP3930JFJRYgj2Q94ri9I840V1rrKKvDj4Ka1mHAGIbKokUnTq3hgxNeJpQLIAMaKtN1sJbv+tKRqcPLpSg==</entry>
+    <entry key="SECRETKEYSATUSEHAT">4xnNxJHr40udDFuCuFdwxE9lJlZYmoQXIdno3ek+kC36voxaaKQUvQoWr5BpNQBCaKI40wPCnbpkbaAHRa2wuvmBfRe15DF7Pnud5DelX/E=</entry>
+    <entry key="URLAUTHSATUSEHAT">https://api-satusehat.kemkes.go.id/oauth2/v1</entry> 
+    <entry key="URLFHIRSATUSEHAT">https://api-satusehat.kemkes.go.id/fhir-r4/v1</entry>
+    <entry key="IDSATUSEHAT">Dy2o8KJaXXAyz/5zkzROwg==</entry>
+    <entry key="KELURAHANSATUSEHAT">6371011010</entry>
+    <entry key="KECAMATANSATUSEHAT">637101</entry>
+    <entry key="KABUPATENSATUSEHAT">6371</entry>
+    <entry key="PROPINSISATUSEHAT">63</entry>
+    <entry key="KODEPOSSATUSEHAT">70654</entry>
     <entry key="KAMARAKTIFRANAP"></entry>
     <entry key="DOKTERAKTIFKASIRRALAN"></entry>
     <entry key="POLIAKTIFKASIRRALAN"></entry>
@@ -156,4 +156,5 @@
     <entry key="PORTORTHANC">gie5pRePkRsFe+dOh84P4A==</entry>
     <entry key="USERORTHANC">V9bi0P2HgAq8Nn8lUyS6/A==</entry>
     <entry key="PASSORTHANC">V9bi0P2HgAq8Nn8lUyS6/A==</entry>
+    <entry key="URLKFAV2SATUSEHAT">https://api-satusehat.kemkes.go.id/kfa-v2</entry>
 </properties>
