@@ -56,6 +56,8 @@ public final class DlgPaymentPoint extends javax.swing.JDialog {
         initComponents();
         this.setLocation(8,1);
         setSize(885,674);
+        //ModalAwal.setText(Sequel.cariIsi("select modal_awal from toko_kasir_shift"));  
+        BtnSeek4.setVisible(false);
 
         Object[] rowRwJlDr={"No.","Tanggal","Shift","No.Rawat/No.Nota","Nama Pasien","Pembayaran","Petugas"};
         tabMode=new DefaultTableModel(null,rowRwJlDr){
@@ -214,7 +216,14 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
             });
         }  
         InputModalAwal.setDocument(new batasInput((byte)16).getOnlyAngka(InputModalAwal));
-        Sequel.cariIsiAngka("select modal_awal from set_modal_payment",ModalAwal);
+        Sequel.cariIsiAngka(
+    "SELECT COALESCE(modal_awal,0) " +
+    "FROM toko_kasir_shift " +
+    "WHERE tgl=CURRENT_DATE() AND modal_awal>0 " +
+    "ORDER BY jam_buka ASC, id ASC " +
+    "LIMIT 1",
+    ModalAwal
+);
         
         
     }    
@@ -665,7 +674,7 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
     }//GEN-LAST:event_TCariKeyPressed
 
     private void BtnSeek4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnSeek4ActionPerformed
-        InputModalAwal.setText(Sequel.cariIsi("select modal_awal from set_modal_payment"));  
+        InputModalAwal.setText(Sequel.cariIsi("select modal_awal from toko_kasir_shift"));  
         WindowModalAwal.setSize(500,80);
         WindowModalAwal.setLocationRelativeTo(ModalAwal);
         InputModalAwal.requestFocus();

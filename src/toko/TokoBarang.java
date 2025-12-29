@@ -1281,7 +1281,7 @@ tbJnsPerawatan.setModel(tabMode);
         label31.setBounds(10, 190, 88, 23);
 
         DTPExpired.setForeground(new java.awt.Color(50, 70, 50));
-        DTPExpired.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "07-09-2025" }));
+        DTPExpired.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "11-12-2025" }));
         DTPExpired.setDisplayFormat("dd-MM-yyyy");
         DTPExpired.setName("DTPExpired"); // NOI18N
         DTPExpired.setOpaque(false);
@@ -2065,31 +2065,46 @@ i=2;
         TCari.requestFocus();
     }
 
-   private void getData() {
+  private void getData() {
     int row = tbJnsPerawatan.getSelectedRow();
-    if(row == -1) return;
+    if (row == -1) return;
 
-    // --- teks murni ---
-    kode_brng.setText(tbJnsPerawatan.getValueAt(row,0).toString());
-    nama_brng.setText(tbJnsPerawatan.getValueAt(row,1).toString());
-    nama_sat.setText(tbJnsPerawatan.getValueAt(row,2).toString());
-    nmjenis.setText(tbJnsPerawatan.getValueAt(row,3).toString());
-    kode_sat1.setText(tbJnsPerawatan.getValueAt(row,10).toString());
-    kode_sat2.setText(tbJnsPerawatan.getValueAt(row,11).toString());
-    Kandungan.setText(tbJnsPerawatan.getValueAt(row,15).toString());
+    // --- teks murni dari JTable ---
+    kode_brng.setText(tbJnsPerawatan.getValueAt(row, 0).toString());
+    nama_brng.setText(tbJnsPerawatan.getValueAt(row, 1).toString());
+    nama_sat.setText(tbJnsPerawatan.getValueAt(row, 2).toString()); // satuan utama (BOX)
+    nmjenis.setText(tbJnsPerawatan.getValueAt(row, 3).toString());
+    Kandungan.setText(tbJnsPerawatan.getValueAt(row, 15).toString());
 
-    // --- angka: pakai valNumFromTable + setNum ---
-    setNum(stok,       valNumFromTable(row, 4));  // Stok
-    setNum(dasar,      valNumFromTable(row, 5));  // Harga Dasar
-    setNum(beli,       valNumFromTable(row, 6));  // Harga Beli
-    setNum(distributor,valNumFromTable(row, 7));  // Harga Satuan 1
-    setNum(grosir,     valNumFromTable(row, 8));  // Harga Satuan 2
-    setNum(retail,     valNumFromTable(row, 9));  // Harga Satuan 3
-    setNum(Isi,        valNumFromTable(row,12));  // Isi
-    setNum(Kapasitas,  valNumFromTable(row,13));  // Kapasitas
-    setNum(HResep,     valNumFromTable(row,14));  // Harga Resep
+    // --- ambil kode satuan 1 & 2 dari tabel ---
+    String kdSat1 = tbJnsPerawatan.getValueAt(row, 10).toString(); // contoh: STR
+    String kdSat2 = tbJnsPerawatan.getValueAt(row, 11).toString(); // contoh: TAB
 
-    // tetap ambil dari DB untuk sinkron
+    kode_sat1.setText(kdSat1);
+    kode_sat2.setText(kdSat2);
+
+    // === DI SINI KUNCI NYA ===
+    // cari NAMA satuan berdasarkan kode di tabel kodesatuan
+    // (sesuaikan nama tabel & kolom: kodesatuan/kode_satuan, satuan/nama_satuan)
+    nama_sat1.setText(Sequel.cariIsi(
+        "SELECT satuan FROM kodesatuan WHERE kode_sat=?", kdSat1
+    ));
+    nama_sat2.setText(Sequel.cariIsi(
+        "SELECT satuan FROM kodesatuan WHERE kode_sat=?", kdSat2
+    ));
+
+    // --- angka: pakai helper num ---
+    setNum(stok,        valNumFromTable(row, 4));  // Stok
+    setNum(dasar,       valNumFromTable(row, 5));  // Harga Dasar
+    setNum(beli,        valNumFromTable(row, 6));  // Harga Beli
+    setNum(distributor, valNumFromTable(row, 7));  // Harga Satuan 1
+    setNum(grosir,      valNumFromTable(row, 8));  // Harga Satuan 2
+    setNum(retail,      valNumFromTable(row, 9));  // Harga Satuan 3
+    setNum(Isi,         valNumFromTable(row,12));  // Isi
+    setNum(Kapasitas,   valNumFromTable(row,13));  // Kapasitas
+    setNum(HResep,      valNumFromTable(row,14));  // Harga Resep
+
+    // tetap ambil dari DB kalau mau sinkron
     kode_sat.setText(Sequel.cariIsi(
         "SELECT kode_sat FROM tokobarang WHERE kode_brng=?", kode_brng.getText()
     ));
@@ -2097,6 +2112,7 @@ i=2;
         "SELECT jenis FROM tokobarang WHERE kode_brng=?", kode_brng.getText()
     ));
 }
+
 
 
     public JTable getTable(){

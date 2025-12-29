@@ -33,6 +33,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import toko.TokoBarang;
 
 /**
  *
@@ -44,6 +45,7 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     private final sekuel Sequel = new sekuel();
     private final validasi Valid = new validasi();
     private final DlgBarang barang = new DlgBarang(null, false);
+    private final TokoBarang barang2 = new TokoBarang(null, false);
     private final SatuSehatReferensiObatKFA referensi = new SatuSehatReferensiObatKFA(null, false);
     private final SatuSehatReferensiNumerator numerator = new SatuSehatReferensiNumerator(null, false);
     private final SatuSehatReferensiDenominator denom = new SatuSehatReferensiDenominator(null, false);
@@ -185,26 +187,26 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
             });
         }
 
-        barang.addWindowListener(new WindowAdapter() {
+        barang2.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
-                if (barang.getTable().getSelectedRow() != -1) {
-                    KodeBarang.setText(barang.getTable().getValueAt(barang.getTable().getSelectedRow(), 1).toString());
-                    NamaBarang.setText(barang.getTable().getValueAt(barang.getTable().getSelectedRow(), 2).toString());
-                    DenominatorCode.setText(barang.getTable().getValueAt(barang.getTable().getSelectedRow(), 6).toString());
-                    Satuan.setText(barang.getTable().getValueAt(barang.getTable().getSelectedRow(), 7).toString());
-                    Kategori.setText(barang.getTable().getValueAt(barang.getTable().getSelectedRow(), 29).toString());
+                if (barang2.getTable().getSelectedRow() != -1) {
+                    KodeBarang.setText(barang2.getTable().getValueAt(barang2.getTable().getSelectedRow(), 0).toString());
+                    NamaBarang.setText(barang2.getTable().getValueAt(barang2.getTable().getSelectedRow(), 1).toString());
+                    DenominatorCode.setText(barang2.getTable().getValueAt(barang2.getTable().getSelectedRow(), 11).toString());
+                    Satuan.setText(barang2.getTable().getValueAt(barang2.getTable().getSelectedRow(), 2).toString());
+                    Kategori.setText(barang2.getTable().getValueAt(barang2.getTable().getSelectedRow(), 3).toString());
                     
                 }
                 btnBarang.requestFocus();
             }
         });
 
-        barang.getTable().addKeyListener(new KeyAdapter() {
+        barang2.getTable().addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                    barang.dispose();
+                    barang2.dispose();
                 }
             }
         });
@@ -961,12 +963,12 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
 
     private void btnBarangActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBarangActionPerformed
         akses.setform("SatuSehatMapingObatAlkes2");
-        barang.emptTeks();
-        barang.isCek();
-        barang.setSize(internalFrame1.getWidth() - 20, internalFrame1.getHeight() - 20);
-        barang.setLocationRelativeTo(internalFrame1);
-        barang.setAlwaysOnTop(false);
-        barang.setVisible(true);
+        barang2.emptTeks();
+        barang2.isCek();
+        barang2.setSize(internalFrame1.getWidth() - 20, internalFrame1.getHeight() - 20);
+        barang2.setLocationRelativeTo(internalFrame1);
+        barang2.setAlwaysOnTop(false);
+        barang2.setVisible(true);
     }//GEN-LAST:event_btnBarangActionPerformed
 
     private void btnBarangKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnBarangKeyPressed
@@ -1228,9 +1230,9 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     private void KodeBarangKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_KodeBarangKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             try (PreparedStatement ps = koneksi.prepareStatement(
-                "select databarang.nama_brng, kodesatuan.satuan, kategori_barang.nama as nama_kategori from databarang "
-                + "join kodesatuan on databarang.kode_sat = kodesatuan.kode_sat join kategori_barang on "
-                + "databarang.kode_kategori = kategori_barang.kode where databarang.kode_brng = ?"
+                "select tokobarang.nama_brng, kodesatuan.satuan, kategori_barang.nama as nama_kategori from tokobarang "
+                + "join kodesatuan on tokobarang.kode_sat = kodesatuan.kode_sat join kategori_barang on "
+                + "tokobarang.jenis = kategori_barang.kode where tokobarang.kode_brng = ?"
             )) {
                 ps.setString(1, KodeBarang.getText());
                 try (ResultSet rs = ps.executeQuery()) {
@@ -1430,13 +1432,13 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     private void tampil() {
         Valid.tabelKosong(tabMode);
         try (PreparedStatement ps = koneksi.prepareStatement(
-            "select satu_sehat_mapping_obat.obat_code, satu_sehat_mapping_obat.obat_system, databarang.kode_brng, databarang.nama_brng, kodesatuan.satuan, "
+            "select satu_sehat_mapping_obat.obat_code, satu_sehat_mapping_obat.obat_system, tokobarang.kode_brng, tokobarang.nama_brng, kodesatuan.satuan, "
             + "kategori_barang.nama as nama_kategori, satu_sehat_mapping_obat.obat_display, satu_sehat_mapping_obat.form_code, satu_sehat_mapping_obat.form_system, "
             + "satu_sehat_mapping_obat.form_display, satu_sehat_mapping_obat.numerator_code, satu_sehat_mapping_obat.numerator_system, satu_sehat_mapping_obat.denominator_code, "
             + "satu_sehat_mapping_obat.denominator_system, satu_sehat_mapping_obat.route_code, satu_sehat_mapping_obat.route_system, satu_sehat_mapping_obat.route_display "
-            + "from satu_sehat_mapping_obat join databarang on satu_sehat_mapping_obat.kode_brng = databarang.kode_brng join kodesatuan on databarang.kode_sat = kodesatuan.kode_sat "
-            + "join kategori_barang on databarang.kode_kategori = kategori_barang.kode where satu_sehat_mapping_obat.obat_code like ? or satu_sehat_mapping_obat.obat_system like ? "
-            + "or databarang.kode_brng like ? or databarang.nama_brng like ? or kodesatuan.satuan like ? or kategori_barang.nama like ? or satu_sehat_mapping_obat.obat_display like ? "
+            + "from satu_sehat_mapping_obat join tokobarang on satu_sehat_mapping_obat.kode_brng = tokobarang.kode_brng join kodesatuan on tokobarang.kode_sat = kodesatuan.kode_sat "
+            + "join kategori_barang on tokobarang.jenis = kategori_barang.kode where satu_sehat_mapping_obat.obat_code like ? or satu_sehat_mapping_obat.obat_system like ? "
+            + "or tokobarang.kode_brng like ? or tokobarang.nama_brng like ? or kodesatuan.satuan like ? or kategori_barang.nama like ? or satu_sehat_mapping_obat.obat_display like ? "
             + "or satu_sehat_mapping_obat.form_code like ? or satu_sehat_mapping_obat.form_system like ? or satu_sehat_mapping_obat.form_display like ? or satu_sehat_mapping_obat.numerator_code like ? "
             + "or satu_sehat_mapping_obat.numerator_system like ? or satu_sehat_mapping_obat.denominator_code like ? or satu_sehat_mapping_obat.denominator_system like ? "
             + "or satu_sehat_mapping_obat.route_code like ? or satu_sehat_mapping_obat.route_system like ? or satu_sehat_mapping_obat.route_display like ?"

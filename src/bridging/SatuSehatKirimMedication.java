@@ -195,10 +195,6 @@ public final class SatuSehatKirimMedication extends javax.swing.JDialog {
         BtnPrint = new widget.Button();
         BtnKeluar = new widget.Button();
         panelGlass9 = new widget.panelisi();
-        jLabel15 = new widget.Label();
-        DTPCari1 = new widget.Tanggal();
-        jLabel17 = new widget.Label();
-        DTPCari2 = new widget.Tanggal();
         jLabel16 = new widget.Label();
         TCari = new widget.TextBox();
         BtnCari = new widget.Button();
@@ -362,38 +358,13 @@ public final class SatuSehatKirimMedication extends javax.swing.JDialog {
         panelGlass9.setPreferredSize(new java.awt.Dimension(44, 44));
         panelGlass9.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 9));
 
-        jLabel15.setText("Tgl.Registrasi :");
-        jLabel15.setName("jLabel15"); // NOI18N
-        jLabel15.setPreferredSize(new java.awt.Dimension(85, 23));
-        panelGlass9.add(jLabel15);
-
-        DTPCari1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "24-01-2024" }));
-        DTPCari1.setDisplayFormat("dd-MM-yyyy");
-        DTPCari1.setName("DTPCari1"); // NOI18N
-        DTPCari1.setOpaque(false);
-        DTPCari1.setPreferredSize(new java.awt.Dimension(95, 23));
-        panelGlass9.add(DTPCari1);
-
-        jLabel17.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel17.setText("s.d.");
-        jLabel17.setName("jLabel17"); // NOI18N
-        jLabel17.setPreferredSize(new java.awt.Dimension(24, 23));
-        panelGlass9.add(jLabel17);
-
-        DTPCari2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "24-01-2024" }));
-        DTPCari2.setDisplayFormat("dd-MM-yyyy");
-        DTPCari2.setName("DTPCari2"); // NOI18N
-        DTPCari2.setOpaque(false);
-        DTPCari2.setPreferredSize(new java.awt.Dimension(95, 23));
-        panelGlass9.add(DTPCari2);
-
         jLabel16.setText("Key Word :");
         jLabel16.setName("jLabel16"); // NOI18N
-        jLabel16.setPreferredSize(new java.awt.Dimension(70, 23));
+        jLabel16.setPreferredSize(new java.awt.Dimension(65, 23));
         panelGlass9.add(jLabel16);
 
         TCari.setName("TCari"); // NOI18N
-        TCari.setPreferredSize(new java.awt.Dimension(210, 23));
+        TCari.setPreferredSize(new java.awt.Dimension(530, 23));
         TCari.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 TCariKeyPressed(evt);
@@ -479,6 +450,7 @@ public final class SatuSehatKirimMedication extends javax.swing.JDialog {
                       "</table>"+
                     "</html>"
                 );
+                htmlContent=null;
 
                 File g = new File("file2.css");            
                 BufferedWriter bg = new BufferedWriter(new FileWriter(g));
@@ -613,6 +585,7 @@ public final class SatuSehatKirimMedication extends javax.swing.JDialog {
                                 tbObat.getValueAt(i,3).toString(),response.asText()
                             })==true){
                                 tbObat.setValueAt(response.asText(),i,9);
+                                tbObat.setValueAt(false,i,0);
                             }
                         }
                     }catch(Exception e){
@@ -699,6 +672,7 @@ public final class SatuSehatKirimMedication extends javax.swing.JDialog {
                         requestEntity = new HttpEntity(json,headers);
                         json=api.getRest().exchange(link+"/Medication/"+tbObat.getValueAt(i,9).toString(), HttpMethod.PUT, requestEntity, String.class).getBody();
                         System.out.println("Result JSON : "+json);
+                        tbObat.setValueAt(false,i,0);
                     }catch(Exception e){
                         System.out.println("Notifikasi Bridging : "+e);
                     }
@@ -746,16 +720,12 @@ public final class SatuSehatKirimMedication extends javax.swing.JDialog {
     private widget.Button BtnKirim;
     private widget.Button BtnPrint;
     private widget.Button BtnUpdate;
-    private widget.Tanggal DTPCari1;
-    private widget.Tanggal DTPCari2;
     private widget.Label LCount;
     private widget.editorpane LoadHTML;
     private widget.ScrollPane Scroll;
     private widget.TextBox TCari;
     private widget.InternalFrame internalFrame1;
-    private widget.Label jLabel15;
     private widget.Label jLabel16;
-    private widget.Label jLabel17;
     private widget.Label jLabel7;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPopupMenu jPopupMenu1;
@@ -770,14 +740,13 @@ public final class SatuSehatKirimMedication extends javax.swing.JDialog {
         Valid.tabelKosong(tabMode);
         try{
             ps=koneksi.prepareStatement(
-                   "select satu_sehat_mapping_obat.obat_code,satu_sehat_mapping_obat.obat_system,databarang.status,"+
+                   "select satu_sehat_mapping_obat.obat_code,satu_sehat_mapping_obat.obat_system,tokobarang.status,"+
                    "satu_sehat_mapping_obat.kode_brng,satu_sehat_mapping_obat.obat_display,satu_sehat_mapping_obat.form_code,"+
                    "satu_sehat_mapping_obat.form_system,satu_sehat_mapping_obat.form_display,ifnull(satu_sehat_medication.id_medication,'') as id_medication "+
-                   "from satu_sehat_mapping_obat inner join databarang on satu_sehat_mapping_obat.kode_brng=databarang.kode_brng "+
+                   "from satu_sehat_mapping_obat inner join tokobarang on satu_sehat_mapping_obat.kode_brng=tokobarang.kode_brng "+
                    "left join satu_sehat_medication on satu_sehat_medication.kode_brng=satu_sehat_mapping_obat.kode_brng "+
                    (TCari.getText().equals("")?"":"where (satu_sehat_mapping_obat.obat_code like ? or satu_sehat_mapping_obat.kode_brng like ? or "+
-                   "satu_sehat_mapping_obat.obat_display like ? or satu_sehat_mapping_obat.form_code like ? or satu_sehat_mapping_obat.form_display like ?) ")+
-                   "order by satu_sehat_mapping_obat.obat_display");
+                   "satu_sehat_mapping_obat.obat_display like ? or satu_sehat_mapping_obat.form_code like ? or satu_sehat_mapping_obat.form_display like ?) "));
             try {
                 if(!TCari.getText().equals("")){
                     ps.setString(1,"%"+TCari.getText()+"%");
@@ -812,6 +781,7 @@ public final class SatuSehatKirimMedication extends javax.swing.JDialog {
 
     public void isCek(){
         BtnKirim.setEnabled(akses.getsatu_sehat_kirim_medication());
+        BtnUpdate.setEnabled(akses.getsatu_sehat_kirim_medication());
         BtnPrint.setEnabled(akses.getsatu_sehat_kirim_medication());
     }
     
