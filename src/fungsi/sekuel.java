@@ -2189,5 +2189,78 @@ public double cariIsiAngka4(String sql, String p1, String p2, String p3, String 
             outFile.close();
         }
     }
+   
+// =========================================================
+// Overload baru: cariIsi dengan parameter banyak (String...)
+// Pemakaian: Sequel.cariIsi(sql, p1, p2, ...)
+// =========================================================
+public String cariIsi(String sql, String... params){
+    String hasil = "";
+    PreparedStatement psLocal = null;
+    ResultSet rsLocal = null;
+
+    try{
+        psLocal = connect.prepareStatement(sql);
+
+        if(params != null){
+            for(int i=0; i<params.length; i++){
+                if(params[i] == null){
+                    psLocal.setNull(i+1, java.sql.Types.VARCHAR);
+                }else{
+                    psLocal.setString(i+1, params[i]);
+                }
+            }
+        }
+
+        rsLocal = psLocal.executeQuery();
+        if(rsLocal.next()){
+            hasil = rsLocal.getString(1);
+            if(hasil == null) hasil = "";
+        }
+    }catch(Exception e){
+        System.out.println("Notifikasi : "+e);
+    }finally{
+        try{ if(rsLocal!=null) rsLocal.close(); }catch(Exception e){}
+        try{ if(psLocal!=null) psLocal.close(); }catch(Exception e){}
+    }
+
+    return hasil;
+}
+
+// =========================================================
+// Overload baru: cariInteger dengan parameter banyak (String...)
+// Pemakaian: Sequel.cariInteger(sql, p1, p2, ...)
+// =========================================================
+public int cariInteger(String sql, String... params){
+    int hasil = 0;
+    PreparedStatement psLocal = null;
+    ResultSet rsLocal = null;
+
+    try{
+        psLocal = connect.prepareStatement(sql);
+
+        if(params != null){
+            for(int i=0; i<params.length; i++){
+                if(params[i] == null){
+                    psLocal.setNull(i+1, java.sql.Types.VARCHAR);
+                }else{
+                    psLocal.setString(i+1, params[i]);
+                }
+            }
+        }
+
+        rsLocal = psLocal.executeQuery();
+        if(rsLocal.next()){
+            hasil = rsLocal.getInt(1);
+        }
+    }catch(Exception e){
+        System.out.println("Notifikasi : "+e);
+    }finally{
+        try{ if(rsLocal!=null) rsLocal.close(); }catch(Exception e){}
+        try{ if(psLocal!=null) psLocal.close(); }catch(Exception e){}
+    }
+
+    return hasil;
+}
 
 }

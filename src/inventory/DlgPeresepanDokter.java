@@ -106,24 +106,24 @@ private int TAB_IDX_RACIKAN     = -1;
     public DlgPeresepanDokter(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        //hideToolbarResep();
+        hideToolbarResep();
         
         
         // Disable tab "Umum"
-//int idxUmum = TabRawat.indexOfTab("Umum");
-//if (idxUmum >= 0) {
-//    TabRawat.setEnabledAt(idxUmum, false);
-//}
+int idxUmum = TabRawat.indexOfTab("Umum");
+if (idxUmum >= 0) {
+    TabRawat.setEnabledAt(idxUmum, false);
+}
 //
 //// Disable tab "Racikan"
-//int idxRacikan = TabRawat.indexOfTab("Racikan");
-//if (idxRacikan >= 0) {
-//    TabRawat.setEnabledAt(idxRacikan, false);
-//}
-//int idxInput = TabRawat.indexOfTab("Resep Non Racikan");
-//if (idxInput >= 0) {
-//    TabRawat.setSelectedIndex(idxInput);
-//}
+int idxRacikan = TabRawat.indexOfTab("Racikan");
+if (idxRacikan >= 0) {
+    TabRawat.setEnabledAt(idxRacikan, false);
+}
+int idxInput = TabRawat.indexOfTab("Resep Non Racikan");
+if (idxInput >= 0) {
+    TabRawat.setSelectedIndex(idxInput);
+}
         initTableTokoBarang();     // tabel utama
         initTableTokoBarang1();    // tabel racikan
         styleTokoBarang();
@@ -843,7 +843,7 @@ private int TAB_IDX_RACIKAN     = -1;
         jLabel8.setBounds(0, 42, 72, 23);
 
         DTPBeri.setForeground(new java.awt.Color(50, 70, 50));
-        DTPBeri.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "12-10-2025" }));
+        DTPBeri.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "27-11-2025" }));
         DTPBeri.setDisplayFormat("dd-MM-yyyy");
         DTPBeri.setName("DTPBeri"); // NOI18N
         DTPBeri.setOpaque(false);

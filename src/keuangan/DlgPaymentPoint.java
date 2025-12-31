@@ -267,13 +267,12 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
         label18 = new widget.Label();
         ModalAwal = new widget.TextBox();
         BtnSeek4 = new widget.Button();
-        label20 = new widget.Label();
-        TTutupKasir = new widget.TextBox();
-        BtnSeek5 = new widget.Button();
         label21 = new widget.Label();
         pengeluaran1 = new widget.TextBox();
         label22 = new widget.Label();
         qris = new widget.TextBox();
+        label20 = new widget.Label();
+        TTutupKasir = new widget.TextBox();
 
         WindowModalAwal.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         WindowModalAwal.setName("WindowModalAwal"); // NOI18N
@@ -511,40 +510,6 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
         });
         panelGlass6.add(BtnSeek4);
 
-        label20.setText("Tutup Kasir :");
-        label20.setName("label20"); // NOI18N
-        label20.setPreferredSize(new java.awt.Dimension(130, 23));
-        panelGlass6.add(label20);
-
-        TTutupKasir.setName("TTutupKasir"); // NOI18N
-        TTutupKasir.setPreferredSize(new java.awt.Dimension(150, 23));
-        TTutupKasir.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                TTutupKasirKeyPressed(evt);
-            }
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                TTutupKasirKeyReleased(evt);
-            }
-        });
-        panelGlass6.add(TTutupKasir);
-
-        BtnSeek5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/picture/190.png"))); // NOI18N
-        BtnSeek5.setMnemonic('5');
-        BtnSeek5.setToolTipText("ALt+5");
-        BtnSeek5.setName("BtnSeek5"); // NOI18N
-        BtnSeek5.setPreferredSize(new java.awt.Dimension(28, 23));
-        BtnSeek5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                BtnSeek5ActionPerformed(evt);
-            }
-        });
-        BtnSeek5.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                BtnSeek5KeyPressed(evt);
-            }
-        });
-        panelGlass6.add(BtnSeek5);
-
         label21.setText("Pengeluaran :");
         label21.setName("label21"); // NOI18N
         label21.setPreferredSize(new java.awt.Dimension(130, 23));
@@ -578,6 +543,23 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
             }
         });
         panelGlass6.add(qris);
+
+        label20.setText("Tutup Kasir :");
+        label20.setName("label20"); // NOI18N
+        label20.setPreferredSize(new java.awt.Dimension(130, 23));
+        panelGlass6.add(label20);
+
+        TTutupKasir.setName("TTutupKasir"); // NOI18N
+        TTutupKasir.setPreferredSize(new java.awt.Dimension(150, 23));
+        TTutupKasir.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                TTutupKasirKeyPressed(evt);
+            }
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                TTutupKasirKeyReleased(evt);
+            }
+        });
+        panelGlass6.add(TTutupKasir);
 
         internalFrame1.add(panelGlass6, java.awt.BorderLayout.PAGE_START);
 
@@ -721,14 +703,6 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
         }
     }//GEN-LAST:event_UserKeyPressed
 
-    private void BtnSeek5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnSeek5ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_BtnSeek5ActionPerformed
-
-    private void BtnSeek5KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_BtnSeek5KeyPressed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_BtnSeek5KeyPressed
-
     private void TTutupKasirKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TTutupKasirKeyReleased
         // TODO add your handling code here:
     }//GEN-LAST:event_TTutupKasirKeyReleased
@@ -780,7 +754,6 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
     private widget.Button BtnKeluar;
     private widget.Button BtnPrint;
     private widget.Button BtnSeek4;
-    private widget.Button BtnSeek5;
     private widget.Button BtnSimpan2;
     private widget.ComboBox CmbStatus;
     private widget.TextBox InputModalAwal;
@@ -810,233 +783,132 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
     private widget.TextBox qris;
     // End of variables declaration//GEN-END:variables
 
-    public void tampil(){
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)); 
-        Valid.tabelKosong(tabMode);
-        try{        
-            psjamshift=koneksi.prepareStatement("select * from closing_kasir");
-            try {
-                rsjamshift=psjamshift.executeQuery();
-                all=0;
-                pagi=0;
-                siang=0;
-                sore=0;
-                malam=0;
-                i = 1; // running number global (boleh taruh di atas sebelum loop shift)
-while (rsjamshift.next()) {
-    final String shift = rsjamshift.getString("shift");
+   public void tampil(){
+    this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    Valid.tabelKosong(tabMode);
 
-    // hitung awal/akhir rentang waktu shift
-    String awal  = Valid.SetTgl(Tgl1.getSelectedItem()+"")+" "+rsjamshift.getString("jam_masuk");
-    String akhir;
-    if ("Malam".equals(shift)) {
-        akhir = Sequel.cariIsi(
-            "SELECT DATE_ADD(?, INTERVAL 1 DAY)",
-            Valid.SetTgl(Tgl1.getSelectedItem()+"")+" "+rsjamshift.getString("jam_pulang")
-        );
-    } else {
-        akhir = Valid.SetTgl(Tgl1.getSelectedItem()+"")+" "+rsjamshift.getString("jam_pulang");
-    }
+    all=0; pagi=0; siang=0; sore=0; malam=0;
+    i=1;
 
-    // ------------------------------------------------------------------
-    // 1) SUMBER: TAGIHAN SADEWA (RAWAT INAP/JALAN) — versi aslimu, kurung diperjelas
-    // ------------------------------------------------------------------
-    PreparedStatement psSadewa = null;
-    ResultSet rsSadewa = null;
-    try {
+    String tgl = Valid.SetTgl(Tgl1.getSelectedItem()+""); // pastikan jadi yyyy-MM-dd
+    String cari = TCari.getText().trim();
+
+    // DEBUG wajib biar ketahuan datanya ada atau tidak
+    System.out.println("PAYMENT POINT tgl=" + tgl + " cari=" + cari);
+    System.out.println("closing_kasir count=" + Sequel.cariInteger("select count(*) from closing_kasir"));
+    System.out.println("sadewa count=" + Sequel.cariInteger("select count(*) from tagihan_sadewa where date(tgl_bayar)=?", tgl));
+    System.out.println("toko count=" + Sequel.cariInteger("select count(*) from tokopenjualan where date(tgl_jual)=?", tgl));
+
+    // =========================
+    // 1) TAGIHAN SADEWA (per tanggal)
+    // =========================
+    PreparedStatement psSadewa=null;
+    ResultSet rsSadewa=null;
+    try{
         psSadewa = koneksi.prepareStatement(
             "SELECT no_nota, tgl_bayar, nama_pasien, jumlah_bayar, petugas " +
             "FROM tagihan_sadewa " +
-            "WHERE (tgl_bayar BETWEEN ? AND ? AND nama_pasien LIKE ?) " +
-            "   OR (tgl_bayar BETWEEN ? AND ? AND no_nota      LIKE ?) " +
+            "WHERE DATE(tgl_bayar)=? " +
+            "AND (nama_pasien LIKE ? OR no_nota LIKE ?) " +
             "ORDER BY tgl_bayar, no_nota"
         );
-        psSadewa.setString(1, awal);
-        psSadewa.setString(2, akhir);
-        psSadewa.setString(3, "%"+TCari.getText().trim()+"%");
-        psSadewa.setString(4, awal);
-        psSadewa.setString(5, akhir);
-        psSadewa.setString(6, "%"+TCari.getText().trim()+"%");
+        psSadewa.setString(1, tgl);
+        psSadewa.setString(2, "%"+cari+"%");
+        psSadewa.setString(3, "%"+cari+"%");
 
         rsSadewa = psSadewa.executeQuery();
-        while (rsSadewa.next()) {
-            // cari nomor nota final (no_nota rawat inap/jalan bila ada)
+        while(rsSadewa.next()){
             String nonota = Sequel.cariIsi(
                 "SELECT no_nota FROM nota_inap WHERE no_rawat=?",
                 rsSadewa.getString("no_nota")
             );
-            if (nonota.equals("")) {
+            if(nonota.equals("")){
                 nonota = Sequel.cariIsi(
                     "SELECT no_nota FROM nota_jalan WHERE no_rawat=?",
                     rsSadewa.getString("no_nota")
                 );
-                if (nonota.equals("")) nonota = rsSadewa.getString("no_nota");
+                if(nonota.equals("")) nonota = rsSadewa.getString("no_nota");
             }
 
-            String petugas = rsSadewa.getString("petugas")+" "+
+            String petugas = rsSadewa.getString("petugas") + " " +
                     Sequel.cariIsi("SELECT pegawai.nama FROM pegawai WHERE pegawai.nik=?",
-                                   rsSadewa.getString("petugas"));
+                            rsSadewa.getString("petugas"));
 
-            // filter user (nik/nama mengandung teks User)
-            boolean lolosUser = petugas.toLowerCase().contains(User.getText().trim().toLowerCase());
+            long jml = Math.round(rsSadewa.getDouble("jumlah_bayar"));
+            all += jml;
 
-            if (CmbStatus.getSelectedItem().toString().equals("Semua") || shift.equals(CmbStatus.getSelectedItem().toString())) {
-                if (lolosUser) {
-                    long jml = Math.round(rsSadewa.getDouble("jumlah_bayar"));
-
-                    if      ("Pagi".equals(shift))  pagi  += jml;
-                    else if ("Siang".equals(shift)) siang += jml;
-                    else if ("Sore".equals(shift))  sore  += jml;
-                    else if ("Malam".equals(shift)) malam += jml;
-                    all += jml;
-
-                    tabMode.addRow(new Object[]{
-                        i, rsSadewa.getString("tgl_bayar"), shift,
-                        nonota, rsSadewa.getString("nama_pasien"),
-                        jml, petugas
-                    });
-                    i++;
-                }
-            }
+            tabMode.addRow(new Object[]{
+                i,
+                rsSadewa.getString("tgl_bayar"),
+                "Semua",
+                nonota,
+                rsSadewa.getString("nama_pasien"),
+                jml,
+                petugas
+            });
+            i++;
         }
-    } catch (Exception e) {
+    }catch(Exception e){
         System.out.println("Notifikasi (sadewa): "+e);
-    } finally {
-        if (rsSadewa != null) try { rsSadewa.close(); } catch (Exception ig) {}
-        if (psSadewa != null) try { psSadewa.close(); } catch (Exception ig) {}
+    }finally{
+        try{ if(rsSadewa!=null) rsSadewa.close(); }catch(Exception e){}
+        try{ if(psSadewa!=null) psSadewa.close(); }catch(Exception e){}
     }
 
-    // ------------------------------------------------------------------
-    // 2) SUMBER: TOKO PENJUALAN — DITAMBAHKAN
-    //     Catatan: kalau hanya mau total tanpa ongkir/ppn, ganti jml = total saja.
-    // ------------------------------------------------------------------
-    PreparedStatement psToko = null;
-    ResultSet rsToko = null;
-    try {
+    // =========================
+    // 2) TOKO PENJUALAN (per tanggal) - PENTING: LEFT JOIN biar gak hilang
+    // =========================
+    PreparedStatement psToko=null;
+    ResultSet rsToko=null;
+    try{
         psToko = koneksi.prepareStatement(
-            "SELECT tp.tgl_jual, tp.nm_member, tp.nip , pg.nama, " +
-            "       SUM(tp.ongkir) AS ongkir, SUM(tp.total) AS total, SUM(tp.ppn) AS ppn " +
+            "SELECT tp.tgl_jual, tp.nm_member, tp.nip, COALESCE(pg.nama,'') AS nama, " +
+            "       SUM(tp.total) AS total, SUM(tp.ongkir) AS ongkir, SUM(tp.ppn) AS ppn " +
             "FROM tokopenjualan tp " +
-            "INNER JOIN petugas pg ON tp.nip = pg.nip " +
-            "WHERE tp.tgl_jual BETWEEN ? AND ? " +
-            (TCari.getText().trim().isEmpty() ? "" : "AND (tp.nip LIKE ? OR pg.nama LIKE ?) ") +
-            "GROUP BY tp.tgl_jual, tp.nip " +
+            "LEFT JOIN petugas pg ON tp.nip = pg.nip " +
+            "WHERE DATE(tp.tgl_jual)=? " +
+            (cari.isEmpty() ? "" : "AND (tp.nip LIKE ? OR pg.nama LIKE ? OR tp.nm_member LIKE ?) ") +
+            "GROUP BY tp.tgl_jual, tp.nip, tp.nm_member " +
             "ORDER BY tp.tgl_jual, tp.nip"
         );
-        int p = 1;
-        psToko.setString(p++, awal);
-        psToko.setString(p++, akhir);
-        if (!TCari.getText().trim().isEmpty()) {
-            psToko.setString(p++, "%"+TCari.getText().trim()+"%");
-            psToko.setString(p++, "%"+TCari.getText().trim()+"%");
+
+        int p=1;
+        psToko.setString(p++, tgl);
+        if(!cari.isEmpty()){
+            psToko.setString(p++, "%"+cari+"%");
+            psToko.setString(p++, "%"+cari+"%");
+            psToko.setString(p++, "%"+cari+"%");
         }
 
         rsToko = psToko.executeQuery();
-        while (rsToko.next()) {
-            // label petugas dari toko
+        while(rsToko.next()){
             String petugas = rsToko.getString("nip")+" "+rsToko.getString("nama");
-            
+            long jml = Math.round(rsToko.getDouble("total")+rsToko.getDouble("ongkir")+rsToko.getDouble("ppn"));
+            all += jml;
 
-            // Payment Point boleh tetap filter user yang sama:
-            boolean lolosUser = petugas.toLowerCase().contains(User.getText().trim().toLowerCase());
-
-            if (CmbStatus.getSelectedItem().toString().equals("Semua") || shift.equals(CmbStatus.getSelectedItem().toString())) {
-                if (lolosUser) {
-                    // ambil total toko: total + ongkir + ppn (ubah sesuai kebijakanmu)
-                    long jml = Math.round(
-                        rsToko.getDouble("total") + rsToko.getDouble("ongkir") + rsToko.getDouble("ppn")
-                    );
-
-                    if      ("Pagi".equals(shift))  pagi  += jml;
-                    else if ("Siang".equals(shift)) siang += jml;
-                    else if ("Sore".equals(shift))  sore  += jml;
-                    else if ("Malam".equals(shift)) malam += jml;
-                    all += jml;
-
-                    // tampilkan baris ringkas sumber "Toko" (kolom no_nota diisi label sumber)
-                    tabMode.addRow(new Object[]{
-                        i, rsToko.getString("tgl_jual"), shift,
-                        "Toko Penjualan", rsToko.getString("nm_member"),
-                        jml, petugas
-                    });
-                    i++;
-                }
-            }
+            tabMode.addRow(new Object[]{
+                i,
+                rsToko.getString("tgl_jual"),
+                "Semua",
+                "Toko Penjualan",
+                rsToko.getString("nm_member"),
+                jml,
+                petugas
+            });
+            i++;
         }
-    } catch (Exception e) {
+    }catch(Exception e){
         System.out.println("Notifikasi (toko): "+e);
-    } finally {
-        if (rsToko != null) try { rsToko.close(); } catch (Exception ig) {}
-        if (psToko != null) try { psToko.close(); } catch (Exception ig) {}
+    }finally{
+        try{ if(rsToko!=null) rsToko.close(); }catch(Exception e){}
+        try{ if(psToko!=null) psToko.close(); }catch(Exception e){}
     }
+
+    this.setCursor(Cursor.getDefaultCursor());
+    appendRingkasan();
 }
-            } catch (Exception e) {
-                System.out.println("Notifikasi : "+e);
-            } finally{
-                if(rsjamshift!=null){
-                    rsjamshift.close();
-                }
-                if(psjamshift!=null){
-                    psjamshift.close();
-                }
-            }
-//            if(CmbStatus.getSelectedItem().toString().equals("Semua")){
-//                tabMode.addRow(new Object[]{
-//                        "","Modal Awal",":","","",Double.parseDouble(ModalAwal.getText()),""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "","Uang Masuk",":","","",all,""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "",">> Total",":","","",(all+Double.parseDouble(ModalAwal.getText())),""
-//                });
-//            }else if(CmbStatus.getSelectedItem().toString().equals("Pagi")){
-//                tabMode.addRow(new Object[]{
-//                        "","Modal Awal",":","","",Double.parseDouble(ModalAwal.getText()),""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "","Uang Masuk",":","","",pagi,""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "",">> Total",":","","",(pagi+Double.parseDouble(ModalAwal.getText())),""
-//                });
-//            }else if(CmbStatus.getSelectedItem().toString().equals("Siang")){
-//                tabMode.addRow(new Object[]{
-//                        "","Modal Awal",":","","",(Double.parseDouble(ModalAwal.getText())+pagi),""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "","Uang Masuk",":","","",siang,""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "",">> Total",":","","",(pagi+siang+Double.parseDouble(ModalAwal.getText())),""
-//                });
-//            }else if(CmbStatus.getSelectedItem().toString().equals("Sore")){
-//                tabMode.addRow(new Object[]{
-//                        "","Modal Awal",":","","",(Double.parseDouble(ModalAwal.getText())+pagi+siang),""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "","Uang Masuk",":","","",sore,""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "",">> Total",":","","",(pagi+siang+sore+Double.parseDouble(ModalAwal.getText())),""
-//                });
-//            }else if(CmbStatus.getSelectedItem().toString().equals("Malam")){
-//                tabMode.addRow(new Object[]{
-//                        "","Modal Awal",":","","",(Double.parseDouble(ModalAwal.getText())+pagi+siang+sore),""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "","Uang Masuk",":","","",malam,""
-//                });
-//                tabMode.addRow(new Object[]{
-//                        "",">> Total",":","","",(pagi+siang+sore+malam+Double.parseDouble(ModalAwal.getText())),""
-//                });
-//            }                
-        }catch(Exception e){
-            System.out.println("Notifikasi : "+e);
-        }
-        this.setCursor(Cursor.getDefaultCursor());
-        appendRingkasan();
-    }    
+
+  
     private void appendRingkasan() {
     double modal   = parseDoubleSafe(ModalAwal.getText());
 double setoran = parseDoubleSafe(TTutupKasir.getText());
@@ -1198,4 +1070,50 @@ private double parseDoubleSafe(String s){
         return 0.0;
     }
 }
+private String normJam(String jam){
+    if(jam == null) return "00:00:00";
+    jam = jam.trim();
+    if(jam.isEmpty()) return "00:00:00";
+    if(jam.length() == 5) return jam + ":00"; // HH:mm -> HH:mm:00
+    return jam; // asumsi HH:mm:ss
+}
+
+private boolean kolomAda(String table, String col){
+    try{
+        return Sequel.cariInteger(
+            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+            "WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?",
+            table, col
+        ) > 0;
+    }catch(Exception e){
+        return false;
+    }
+}
+
+private String tipeKolom(String table, String col){
+    try{
+        return Sequel.cariIsi(
+            "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS " +
+            "WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?",
+            table, col
+        );
+    }catch(Exception e){
+        return "";
+    }
+}
+
+private String cariKolomJam(String table, String[] kandidat){
+    for(String k : kandidat){
+        if(kolomAda(table, k)) return k;
+    }
+    return null;
+}
+
+private boolean isDateTimeType(String dt){
+    dt = dt == null ? "" : dt.toLowerCase();
+    return dt.equals("datetime") || dt.equals("timestamp");
+}
+
+
+
 }

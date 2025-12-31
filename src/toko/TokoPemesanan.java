@@ -817,113 +817,178 @@ private void KdKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TKdKey
 */
 
     private void BtnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnSimpanActionPerformed
-        if(NoFaktur.getText().trim().equals("")){
-            Valid.textKosong(NoFaktur,"No.Faktur");
-        }else if(nmsup.getText().trim().equals("")){
-            Valid.textKosong(kdsup,"Supplier");
-        }else if(nmptg.getText().trim().equals("")){
-            Valid.textKosong(kdptg,"Petugas");
-        }else if(NoOrder.getText().trim().equals("")){
-            Valid.textKosong(NoOrder,"No.Order");
-        }else if(Meterai.getText().trim().equals("")){
-            Valid.textKosong(Meterai,"meterai");
-        }else if(tbDokter.getRowCount()==0){
-            JOptionPane.showMessageDialog(null,"Maaf, data sudah habis...!!!!");
-            TCari.requestFocus();
-        }else if(ttl<=0){
-            JOptionPane.showMessageDialog(null,"Maaf, Silahkan masukkan pembelian...!!!!");
-            tbDokter.requestFocus();
-        }else{
-            int reply = JOptionPane.showConfirmDialog(rootPane,"Eeiiiiiits, udah bener belum data yang mau disimpan..??","Konfirmasi",JOptionPane.YES_NO_OPTION);
-            if (reply == JOptionPane.YES_OPTION) {
-                Sequel.AutoComitFalse();
-                sukses=true;
-                if(Sequel.menyimpantf2("tokopemesanan","?,?,?,?,?,?,?,?,?,?,?,?,?,?","No.Faktur",14,new String[]{
-                    NoFaktur.getText(),NoOrder.getText(),kdsup.getText(),kdptg.getText(),Valid.SetTgl(TglPesan.getSelectedItem()+""),
-                    Valid.SetTgl(TglFaktur.getSelectedItem()+""),Valid.SetTgl(TglTempo.getSelectedItem()+""),""+sbttl,""+ttldisk,""+ttl,
-                    ""+ppn,""+meterai,""+(ttl+ppn+meterai),"Belum Dibayar"
-                })==true){
-                    jml=tbDokter.getRowCount();
-                    for(i=0;i<jml;i++){  
-                        setKonversi(i);
-                        if(Valid.SetAngka(tbDokter.getValueAt(i,0).toString())>0){
-                           if(Sequel.menyimpantf2("toko_detail_pesan",
-                                        "?,?,?,?,?,?,?,?,?,?,?",           // 11 parameter
-                                        "Transaksi Penerimaan",11,new String[]{
-                                            NoFaktur.getText(),                     // 1  no_faktur
-                                            tbDokter.getValueAt(i,1).toString(),    // 2  kode_brng
-                                            tbDokter.getValueAt(i,3).toString(),    // 3  satuan
-                                            tbDokter.getValueAt(i,0).toString(),    // 4  jml
-                                            tbDokter.getValueAt(i,5).toString(),    // 5  harga
-                                            tbDokter.getValueAt(i,6).toString(),    // 6  subtotal
-                                            tbDokter.getValueAt(i,7).toString(),    // 7  disk(%)
-                                            tbDokter.getValueAt(i,8).toString(),    // 8  diskon(Rp)
-                                            tbDokter.getValueAt(i,9).toString(),    // 9  total
-                                            tbDokter.getValueAt(i,14).toString(),   // 10 no_batch
-                                            tbDokter.getValueAt(i,15).toString()    // 11 tgl_expire (kolom baru di tabel)
-                                        })==true){
-                                Trackbarang.catatRiwayat(tbDokter.getValueAt(i,1).toString(),Valid.SetAngka(tbDokter.getValueAt(i,0).toString()),0,"Penerimaan", akses.getkode(),"Simpan");
-                                Sequel.mengedit("tokobarang","kode_brng=?","stok=stok+?",2,new String[]{
-                                    tbDokter.getValueAt(i,0).toString(),tbDokter.getValueAt(i,1).toString()
-                                });
-                                String exp = tbDokter.getValueAt(i,15) == null ? "" : tbDokter.getValueAt(i,15).toString().trim();
-                                if(!exp.equals("")){
-                                    Sequel.mengedit("tokobarang","kode_brng=?","expire=?",2,new String[]{
-                                        exp,                                           // nilai expire baru
-                                        tbDokter.getValueAt(i,1).toString()           // kode_brng
-                                    });
-                                }
-                                if(tbDokter.getValueAt(i,4).toString().equals("true")&&(akses.gettoko_barang()==true)){
-                                    Sequel.mengedit("tokobarang","kode_brng=?","dasar=?,h_beli=?,distributor=?,grosir=?,retail=?",6,new String[]{
-                                        tbDokter.getValueAt(i,10).toString(),(Double.parseDouble(tbDokter.getValueAt(i,5).toString())+((Double.parseDouble(tppn.getText())/100)*Double.parseDouble(tbDokter.getValueAt(i,5).toString())))+"",tbDokter.getValueAt(i,11).toString(),tbDokter.getValueAt(i,12).toString(),tbDokter.getValueAt(i,13).toString(),tbDokter.getValueAt(i,1).toString()
-                                    }); 
-                                }
-                            }else{
-                                sukses=false;
-                            } 
-                        }                
-                    }
-                }else{
-                    sukses=false;
-                }                        
-                   
-                if(sukses==true){
-                    Sequel.queryu("delete from tampjurnal");
-                    Sequel.menyimpan("tampjurnal","?,?,?,?",4,new String[]{Penerimaan_Toko,"PERSEDIAAN BARANG TOKO",""+(ttl+meterai),"0"});
-                    if(ppn>0){
-                        Sequel.menyimpan2("tampjurnal","?,?,?,?",4,new String[]{PPN_Masukan,"PPN Masukan Toko",""+ppn,"0"});
-                    }
-                    Sequel.menyimpan("tampjurnal","?,?,?,?",4,new String[]{Kontra_Penerimaan_Toko,"HUTANG BARANG TOKO","0",""+(ttl+ppn+meterai)}); 
-                    sukses=jur.simpanJurnal(NoFaktur.getText(),"U","PENERIMAAN BARANG TOKO"+", OLEH "+akses.getkode());
+       if (NoFaktur.getText().trim().equals("")) {
+    Valid.textKosong(NoFaktur, "No.Faktur");
+} else if (nmsup.getText().trim().equals("")) {
+    Valid.textKosong(kdsup, "Supplier");
+} else if (nmptg.getText().trim().equals("")) {
+    Valid.textKosong(kdptg, "Petugas");
+} else if (NoOrder.getText().trim().equals("")) {
+    Valid.textKosong(NoOrder, "No.Order");
+} else if (Meterai.getText().trim().equals("")) {
+    Valid.textKosong(Meterai, "meterai");
+} else if (tbDokter.getRowCount() == 0) {
+    JOptionPane.showMessageDialog(null, "Maaf, data sudah habis...!!!!");
+    TCari.requestFocus();
+} else if (ttl <= 0) {
+    JOptionPane.showMessageDialog(null, "Maaf, Silahkan masukkan pembelian...!!!!");
+    tbDokter.requestFocus();
+} else {
+
+    int reply = JOptionPane.showConfirmDialog(
+            rootPane,
+            "Eeiiiiiits, udah bener belum data yang mau disimpan..??",
+            "Konfirmasi",
+            JOptionPane.YES_NO_OPTION
+    );
+
+    if (reply == JOptionPane.YES_OPTION) {
+        Sequel.AutoComitFalse();
+        sukses = true;
+
+        if (Sequel.menyimpantf2(
+                "tokopemesanan",
+                "?,?,?,?,?,?,?,?,?,?,?,?,?,?",
+                "No.Faktur",
+                14,
+                new String[]{
+                        NoFaktur.getText(),
+                        NoOrder.getText(),
+                        kdsup.getText(),
+                        kdptg.getText(),
+                        Valid.SetTgl(TglPesan.getSelectedItem() + ""),
+                        Valid.SetTgl(TglFaktur.getSelectedItem() + ""),
+                        Valid.SetTgl(TglTempo.getSelectedItem() + ""),
+                        "" + sbttl,
+                        "" + ttldisk,
+                        "" + ttl,
+                        "" + ppn,
+                        "" + meterai,
+                        "" + (ttl + ppn + meterai),
+                        "Belum Dibayar"
                 }
-                
-                if(sukses==true){
-                    Sequel.Commit();
-                    jml=tbDokter.getRowCount();
-                    for(i=0;i<jml;i++){ 
-                        tbDokter.setValueAt("",i,0);
-                        tbDokter.setValueAt(false,i,4);
-                        tbDokter.setValueAt(0,i,6);
-                        tbDokter.setValueAt(0,i,7);
-                        tbDokter.setValueAt(0,i,8);
-                        tbDokter.setValueAt(0,i,9);
-                        tbDokter.setValueAt(0,i,10);
-                        tbDokter.setValueAt(0,i,11);
-                        tbDokter.setValueAt(0,i,12);
-                        tbDokter.setValueAt(0,i,13);
-                        tbDokter.setValueAt(0,i,14);
-                        tbDokter.setValueAt(0,i,15);
+        )) {
+
+            jml = tbDokter.getRowCount();
+
+            for (i = 0; i < jml; i++) {
+                setKonversi(i);
+
+                if (Valid.SetAngka(tbDokter.getValueAt(i, 0).toString()) > 0) {
+
+                    // ✅ INSERT detail pesan (tgl_expire aman NULL)
+                    if (insertDetailPesan(i)) {
+
+                        Trackbarang.catatRiwayat(
+                                tbDokter.getValueAt(i, 1).toString(),
+                                Valid.SetAngka(tbDokter.getValueAt(i, 0).toString()),
+                                0,
+                                "Penerimaan",
+                                akses.getkode(),
+                                "Simpan"
+                        );
+
+                        Sequel.mengedit(
+                                "tokobarang",
+                                "kode_brng=?",
+                                "stok=stok+?",
+                                2,
+                                new String[]{
+                                        tbDokter.getValueAt(i, 0).toString(),
+                                        tbDokter.getValueAt(i, 1).toString()
+                                }
+                        );
+
+                        // ✅ Update expire tokobarang hanya kalau tanggal valid
+                        String expParam = normalizeMysqlDate(tbDokter.getValueAt(i, 15));
+                        if (expParam != null) {
+                            Sequel.mengedit(
+                                    "tokobarang",
+                                    "kode_brng=?",
+                                    "expire=?",
+                                    2,
+                                    new String[]{
+                                            expParam,
+                                            tbDokter.getValueAt(i, 1).toString()
+                                    }
+                            );
+                        }
+
+                        // ✅ checkbox G aman dari NULL
+                        boolean cekG = Boolean.TRUE.equals(tbDokter.getValueAt(i, 4));
+
+                        if (cekG && akses.gettoko_barang()) {
+                            Sequel.mengedit(
+                                    "tokobarang",
+                                    "kode_brng=?",
+                                    "dasar=?,h_beli=?,distributor=?,grosir=?,retail=?",
+                                    6,
+                                    new String[]{
+                                            tbDokter.getValueAt(i, 10).toString(),
+                                            (Double.parseDouble(tbDokter.getValueAt(i, 5).toString())
+                                                    + ((Double.parseDouble(tppn.getText()) / 100)
+                                                    * Double.parseDouble(tbDokter.getValueAt(i, 5).toString()))) + "",
+                                            tbDokter.getValueAt(i, 11).toString(),
+                                            tbDokter.getValueAt(i, 12).toString(),
+                                            tbDokter.getValueAt(i, 13).toString(),
+                                            tbDokter.getValueAt(i, 1).toString()
+                                    }
+                            );
+                        }
+
+                    } else {
+                        sukses = false;
                     }
-                    Meterai.setText("0");
-                    getData();
-                }else{
-                    JOptionPane.showMessageDialog(null,"Terjadi kesalahan saat pemrosesan data, transaksi dibatalkan.\nPeriksa kembali data sebelum melanjutkan menyimpan..!!");
-                    Sequel.RollBack();
                 }
-                Sequel.AutoComitTrue();  
-                autoNomor();
             }
-        }        
+
+        } else {
+            sukses = false;
+        }
+
+        if (sukses) {
+            Sequel.queryu("delete from tampjurnal");
+            Sequel.menyimpan("tampjurnal", "?,?,?,?", 4, new String[]{Penerimaan_Toko, "PERSEDIAAN BARANG TOKO", "" + (ttl + meterai), "0"});
+            if (ppn > 0) {
+                Sequel.menyimpan2("tampjurnal", "?,?,?,?", 4, new String[]{PPN_Masukan, "PPN Masukan Toko", "" + ppn, "0"});
+            }
+            Sequel.menyimpan("tampjurnal", "?,?,?,?", 4, new String[]{Kontra_Penerimaan_Toko, "HUTANG BARANG TOKO", "0", "" + (ttl + ppn + meterai)});
+            sukses = jur.simpanJurnal(NoFaktur.getText(), "U", "PENERIMAAN BARANG TOKO" + ", OLEH " + akses.getkode());
+        }
+
+        if (sukses) {
+            Sequel.Commit();
+
+            jml = tbDokter.getRowCount();
+            for (i = 0; i < jml; i++) {
+                tbDokter.setValueAt("", i, 0);
+                tbDokter.setValueAt(false, i, 4);
+                tbDokter.setValueAt(0, i, 6);
+                tbDokter.setValueAt(0, i, 7);
+                tbDokter.setValueAt(0, i, 8);
+                tbDokter.setValueAt(0, i, 9);
+                tbDokter.setValueAt(0, i, 10);
+                tbDokter.setValueAt(0, i, 11);
+                tbDokter.setValueAt(0, i, 12);
+                tbDokter.setValueAt(0, i, 13);
+                tbDokter.setValueAt("", i, 14);
+                tbDokter.setValueAt("", i, 15);
+            }
+
+            Meterai.setText("0");
+            getData();
+        } else {
+            JOptionPane.showMessageDialog(null,
+                    "Terjadi kesalahan saat pemrosesan data, transaksi dibatalkan.\n" +
+                    "Periksa kembali data sebelum melanjutkan menyimpan..!!"
+            );
+            Sequel.RollBack();
+        }
+
+        Sequel.AutoComitTrue();
+        autoNomor();
+    }
+}
     }//GEN-LAST:event_BtnSimpanActionPerformed
 
     private void BtnSimpanKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_BtnSimpanKeyPressed
@@ -1223,196 +1288,484 @@ private void btnPetugasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     private widget.TextBox tppn;
     // End of variables declaration//GEN-END:variables
 
+    
+    private boolean sedangUpdateHarga = false;
+    private void initListenerHargaEnter() {
+    tabMode.addTableModelListener(e -> {
+        if (e.getType() != javax.swing.event.TableModelEvent.UPDATE) return;
+        if (sedangUpdateHarga) return;
+
+        int r = e.getFirstRow();
+        int c = e.getColumn();
+
+        // kolom 0 = jumlah, kolom 1 = kode
+        if (c == 0 || c == 1) {
+            sedangUpdateHarga = true;
+            try {
+                boolean force = (c == 1); // kalau kode berubah, paksa ambil master
+                ambilHargaMasterTokobarang(r, force);
+                getData(); // hitung ulang subtotal/total
+            } finally {
+                sedangUpdateHarga = false;
+            }
+        }
+    });
+}
+    private String s(Object v) {
+    return (v == null) ? "" : v.toString().trim();
+}
+
+private double d(Object v) {
+    try {
+        String x = s(v);
+        if (x.equals("")) return 0.0;
+        return Double.parseDouble(x);
+    } catch (Exception e) {
+        return 0.0;
+    }
+}
+
+private void ambilHargaMasterTokobarang(int row, boolean force) {
+    if (row < 0) return;
+
+    String kode = s(tbDokter.getValueAt(row, 1));
+    if (kode.equals("")) return;
+
+    // kalau checkbox G = true, biasanya user mau ubah harga manual → jangan ditimpa
+    boolean cekG = Boolean.TRUE.equals(tbDokter.getValueAt(row, 4));
+    if (!force && cekG) return;
+
+    PreparedStatement psHarga = null;
+    ResultSet rsHarga = null;
+
+    try {
+        psHarga = koneksi.prepareStatement(
+            "SELECT kode_sat, h_beli, dasar, distributor, grosir, retail, expire " +
+            "FROM tokobarang WHERE kode_brng=? LIMIT 1"
+        );
+        psHarga.setString(1, kode);
+        rsHarga = psHarga.executeQuery();
+
+        if (rsHarga.next()) {
+            // satuan: isi kalau kosong
+            if (s(tbDokter.getValueAt(row, 3)).equals("")) {
+                tbDokter.setValueAt(rsHarga.getString("kode_sat"), row, 3);
+            }
+
+            tbDokter.setValueAt(rsHarga.getDouble("h_beli"), row, 5);
+            tbDokter.setValueAt(rsHarga.getDouble("dasar"), row, 10);
+            tbDokter.setValueAt(rsHarga.getDouble("distributor"), row, 11);
+            tbDokter.setValueAt(rsHarga.getDouble("grosir"), row, 12);
+            tbDokter.setValueAt(rsHarga.getDouble("retail"), row, 13);
+
+            String exp = rsHarga.getString("expire");
+            tbDokter.setValueAt(exp == null ? "" : exp, row, 15);
+        }
+    } catch (Exception e) {
+        System.out.println("ambilHargaMasterTokobarang(): " + e);
+    } finally {
+        try { if (rsHarga != null) rsHarga.close(); } catch (Exception ex) {}
+        try { if (psHarga != null) psHarga.close(); } catch (Exception ex) {}
+    }
+}
+
     private void tampil() {
-        row=tbDokter.getRowCount();
-        jml=0;
-        for(i=0;i<row;i++){
-            try {
-                if(Double.parseDouble(tbDokter.getValueAt(i,0).toString())>0){
-                    jml++;
-                }
-            } catch (Exception e) {
-                jml=jml+0;
-            } 
-        }
-        
-        kodebarang=new String[jml];
-        namabarang=new String[jml];
-        satuan=new String[jml];
-        h_beli=new double[jml];
-        jumlah=new double[jml];
-        subtotal=new double[jml];
-        diskon=new double[jml];
-        besardiskon=new double[jml];
-        jmltotal=new double[jml];
-        ganti=new boolean[jml];
-        dasar=new double[jml];
-        distributor=new double[jml];
-        grosir=new double[jml];
-        retail=new double[jml];
-        nobatch = new String[jml];
-        tglexp  = new String[jml];
-        
-        index=0;        
-        for(i=0;i<row;i++){
-            try {
-                if(Double.parseDouble(tbDokter.getValueAt(i,0).toString())>0){
-                    jumlah[index]=Double.parseDouble(tbDokter.getValueAt(i,0).toString());
-                    kodebarang[index]=tbDokter.getValueAt(i,1).toString();
-                    namabarang[index]=tbDokter.getValueAt(i,2).toString();
-                    satuan[index]=tbDokter.getValueAt(i,3).toString();
-                    ganti[index]=Boolean.parseBoolean(tbDokter.getValueAt(i,4).toString());
-                    h_beli[index]=Double.parseDouble(tbDokter.getValueAt(i,5).toString());
-                    subtotal[index]=Double.parseDouble(tbDokter.getValueAt(i,6).toString());
-                    diskon[index]=Double.parseDouble(tbDokter.getValueAt(i,7).toString());
-                    besardiskon[index]=Double.parseDouble(tbDokter.getValueAt(i,8).toString());
-                    jmltotal[index]=Double.parseDouble(tbDokter.getValueAt(i,9).toString());
-                    dasar[index]=Double.parseDouble(tbDokter.getValueAt(i,10).toString());
-                    distributor[index]=Double.parseDouble(tbDokter.getValueAt(i,11).toString());
-                    grosir[index]=Double.parseDouble(tbDokter.getValueAt(i,12).toString());
-                    retail[index]=Double.parseDouble(tbDokter.getValueAt(i,13).toString());
-                    nobatch[index] = tbDokter.getValueAt(i,14) == null ? "" : tbDokter.getValueAt(i,14).toString();
+    row = tbDokter.getRowCount();
+    jml = 0;
 
-            // kolom 15 = Tgl. Exp (kolom baru yg tadi kamu tambah di constructor)
-                    tglexp[index]  = (tbDokter.getValueAt(i,15) == null ? "" : tbDokter.getValueAt(i,15).toString());
-                    index++;
-                }
-            } catch (Exception e) {
+    // hitung baris yg qty > 0
+    for (i = 0; i < row; i++) {
+        try {
+            if (d(tbDokter.getValueAt(i, 0)) > 0) {
+                jml++;
             }
+        } catch (Exception e) {
+            // skip
         }
-        Valid.tabelKosong(tabMode);
-        for(i=0;i<jml;i++){
-            //tabMode.addRow(new Object[]{jumlah[i],kodebarang[i],namabarang[i],satuan[i],ganti[i],h_beli[i],subtotal[i],diskon[i],besardiskon[i],jmltotal[i],dasar[i],distributor[i],grosir[i],retail[i]});
+    }
+
+    kodebarang = new String[jml];
+    namabarang = new String[jml];
+    satuan     = new String[jml];
+    h_beli     = new double[jml];
+    jumlah     = new double[jml];
+    subtotal   = new double[jml];
+    diskon     = new double[jml];
+    besardiskon= new double[jml];
+    jmltotal   = new double[jml];
+    ganti      = new boolean[jml];
+    dasar      = new double[jml];
+    distributor= new double[jml];
+    grosir     = new double[jml];
+    retail     = new double[jml];
+    nobatch    = new String[jml];
+    tglexp     = new String[jml];
+
+    index = 0;
+
+    // simpan dulu item yg sudah diisi qty
+    for (i = 0; i < row; i++) {
+        try {
+            if (d(tbDokter.getValueAt(i, 0)) > 0) {
+                jumlah[index]      = d(tbDokter.getValueAt(i, 0));
+                kodebarang[index]  = s(tbDokter.getValueAt(i, 1));
+                namabarang[index]  = s(tbDokter.getValueAt(i, 2));
+                satuan[index]      = s(tbDokter.getValueAt(i, 3));
+
+                // ✅ aman dari null
+                ganti[index]       = Boolean.TRUE.equals(tbDokter.getValueAt(i, 4));
+
+                h_beli[index]      = d(tbDokter.getValueAt(i, 5));
+                subtotal[index]    = d(tbDokter.getValueAt(i, 6));
+                diskon[index]      = d(tbDokter.getValueAt(i, 7));
+                besardiskon[index] = d(tbDokter.getValueAt(i, 8));
+                jmltotal[index]    = d(tbDokter.getValueAt(i, 9));
+                dasar[index]       = d(tbDokter.getValueAt(i, 10));
+                distributor[index] = d(tbDokter.getValueAt(i, 11));
+                grosir[index]      = d(tbDokter.getValueAt(i, 12));
+                retail[index]      = d(tbDokter.getValueAt(i, 13));
+
+                nobatch[index]     = s(tbDokter.getValueAt(i, 14));
+                tglexp[index]      = s(tbDokter.getValueAt(i, 15));
+
+                index++;
+            }
+        } catch (Exception e) {
+            // skip
+        }
+    }
+
+    // kosongkan tabel tampilan
+    Valid.tabelKosong(tabMode);
+
+    // masukkan lagi item yg sudah dipilih
+    for (i = 0; i < jml; i++) {
         tabMode.addRow(new Object[]{
-        jumlah[i],      // 0
-        kodebarang[i],  // 1
-        namabarang[i],  // 2
-        satuan[i],      // 3
-        ganti[i],       // 4
-        h_beli[i],      // 5
-        subtotal[i],    // 6
-        diskon[i],      // 7
-        besardiskon[i], // 8
-        jmltotal[i],    // 9
-        dasar[i],       // 10
-        distributor[i], // 11
-        grosir[i],      // 12
-        retail[i],      // 13
-        nobatch[i],     // 14 - No. Batch
-        tglexp[i]       // 15 - Tgl. Exp
-    });
-        }
-        try{
-            ps = koneksi.prepareStatement(
-                "select tokobarang.kode_brng, tokobarang.nama_brng, tokobarang.kode_sat, " +
-                "       tokobarang.h_beli, tokobarang.expire " +   // <-- tambah expire
-                "from tokobarang " +
-                "where tokobarang.status='1' and tokobarang.kode_brng like ? or " +
-                "      tokobarang.status='1' and tokobarang.nama_brng like ? or " +
-                "      tokobarang.status='1' and tokobarang.jenis like ? " +
-                "order by tokobarang.nama_brng"
-            );
-            try{   
-                ps.setString(1,"%"+TCari.getText().trim()+"%");
-                ps.setString(2,"%"+TCari.getText().trim()+"%");
-                ps.setString(3,"%"+TCari.getText().trim()+"%");
-                rs=ps.executeQuery();
-                while(rs.next()){
-                    //tabMode.addRow(new Object[]{"",rs.getString("kode_brng"),rs.getString("nama_brng"),rs.getString("kode_sat"),false,rs.getDouble("h_beli"),0,0,0,0,0,0,0,0});
-               tabMode.addRow(new Object[]{
-        "",                          // 0 Jml
-        rs.getString("kode_brng"),   // 1
-        rs.getString("nama_brng"),   // 2
-        rs.getString("kode_sat"),    // 3
-        false,                       // 4 G
-        rs.getDouble("h_beli"),      // 5 Harga
-        0.0,                         // 6 Subtotal
-        0.0,                         // 7 Disk(%)
-        0.0,                         // 8 Diskon(Rp)
-        0.0,                         // 9 Total
-        0.0,                         // 10 Dasar
-        0.0,                         // 11 Distributor
-        0.0,                         // 12 Grosir
-        0.0,                         // 13 Retail
-        "",                          // 14 No. Batch (kosong, diisi manual)
-        rs.getString("expire")       // 15 Tgl. Exp dari master
-    });
-                }   
-            }catch(Exception e){
-                System.out.println(e);
-            }finally{
-                if(rs!=null){
-                    rs.close();
-                }
-                if(ps!=null){
-                    ps.close();
-                }
-            }              
-        }catch(SQLException e){
-            System.out.println("Notifikasi : "+e);
-        }
-        
+            jumlah[i],      // 0
+            kodebarang[i],  // 1
+            namabarang[i],  // 2
+            satuan[i],      // 3
+            ganti[i],       // 4
+            h_beli[i],      // 5
+            subtotal[i],    // 6
+            diskon[i],      // 7
+            besardiskon[i], // 8
+            jmltotal[i],    // 9
+            dasar[i],       // 10
+            distributor[i], // 11
+            grosir[i],      // 12
+            retail[i],      // 13
+            nobatch[i],     // 14
+            tglexp[i]       // 15
+        });
     }
 
-    private void getData(){
-        row=tbDokter.getSelectedRow();
-        if(row!= -1){
-            if(!tbDokter.getValueAt(row,0).toString().equals("")){
-                try {
-                    if(Valid.SetAngka(tbDokter.getValueAt(row,0).toString())>0){
-                        tbDokter.setValueAt(Double.parseDouble(tbDokter.getValueAt(row,0).toString())*Double.parseDouble(tbDokter.getValueAt(row,5).toString()), row,6);                
-                        tbDokter.setValueAt(Double.parseDouble(tbDokter.getValueAt(row,6).toString())-Double.parseDouble(tbDokter.getValueAt(row,8).toString()), row,9);           
-                    }
-                } catch (Exception e) {
-                    tbDokter.setValueAt("",row,0);
-                    tbDokter.setValueAt(0,row,6);   
-                    tbDokter.setValueAt(0,row,7);   
-                    tbDokter.setValueAt(0,row,8);                
-                    tbDokter.setValueAt(0,row,9); 
-                    tbDokter.setValueAt("",row,14);
-                }    
-            }else{
-                tbDokter.setValueAt(0,row,6);   
-                tbDokter.setValueAt(0,row,7);   
-                tbDokter.setValueAt(0,row,8);                
-                tbDokter.setValueAt(0,row,9); 
-                tbDokter.setValueAt("",row,14); 
-            }             
-        }
-        ttl=0;sbttl=0;ttldisk=0;
-        y=0;w=0;
-        meterai=0;
-        if(!Meterai.getText().equals("")){
-            meterai=Double.parseDouble(Meterai.getText());
-        }
-        
-        jml=tbDokter.getRowCount();
-        for(i=0;i<jml;i++){                 
-            try {
-                w=Double.parseDouble(tbDokter.getValueAt(i,6).toString());                
-            }catch (Exception e) {
-                w=0;                
+    // tampilkan master barang (harga lengkap)
+    try {
+        ps = koneksi.prepareStatement(
+            "SELECT kode_brng, nama_brng, kode_sat, " +
+            "       h_beli, dasar, distributor, grosir, retail, expire " +
+            "FROM tokobarang " +
+            "WHERE status='1' AND (kode_brng LIKE ? OR nama_brng LIKE ? OR jenis LIKE ?) " +
+            "ORDER BY nama_brng"
+        );
+
+        try {
+            ps.setString(1, "%" + TCari.getText().trim() + "%");
+            ps.setString(2, "%" + TCari.getText().trim() + "%");
+            ps.setString(3, "%" + TCari.getText().trim() + "%");
+
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                tabMode.addRow(new Object[]{
+                    "",                          // 0 Jml (kosong)
+                    rs.getString("kode_brng"),   // 1
+                    rs.getString("nama_brng"),   // 2
+                    rs.getString("kode_sat"),    // 3
+                    false,                       // 4 G
+                    rs.getDouble("h_beli"),      // 5 Harga beli
+                    0.0,                         // 6 Subtotal
+                    0.0,                         // 7 Disk(%)
+                    0.0,                         // 8 Disk(Rp)
+                    0.0,                         // 9 Total
+                    rs.getDouble("dasar"),       // 10 Dasar
+                    rs.getDouble("distributor"), // 11 Distributor
+                    rs.getDouble("grosir"),      // 12 Grosir
+                    rs.getDouble("retail"),      // 13 Retail
+                    "",                          // 14 No Batch
+                    rs.getString("expire") == null ? "" : rs.getString("expire") // 15 Exp
+                });
             }
-            sbttl=sbttl+w;                
-            try {
-                y=Double.parseDouble(tbDokter.getValueAt(i,8).toString());                
-            }catch (Exception e) {
-                y=0;                
-            }
-            ttldisk=ttldisk+y;
+        } catch (Exception e) {
+            System.out.println(e);
+        } finally {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
         }
-        LSubtotal.setText(Valid.SetAngka(sbttl));
-        LPotongan.setText(Valid.SetAngka(ttldisk));
-        ttl=sbttl-ttldisk;
-        LTotal2.setText(Valid.SetAngka(ttl));
-        ppn=0;
-        if(!tppn.getText().equals("")){
-            ppn=Math.round((Double.parseDouble(tppn.getText())/100) *(ttl));
-            LPpn.setText(Valid.SetAngka(ppn));
-            LTagiha.setText(Valid.SetAngka(ttl+ppn+meterai));
-        }
-        
+    } catch (SQLException e) {
+        System.out.println("Notifikasi : " + e);
     }
+}
+    
+    private void getData() {
+    row = tbDokter.getSelectedRow();
+    if (row != -1) {
+
+        String qtyStr = s(tbDokter.getValueAt(row, 0));
+
+        if (!qtyStr.equals("")) {
+            try {
+                if (Valid.SetAngka(qtyStr) > 0) {
+                    double qty   = d(tbDokter.getValueAt(row, 0));
+                    double harga = d(tbDokter.getValueAt(row, 5));
+                    double sub   = qty * harga;
+
+                    tbDokter.setValueAt(sub, row, 6);
+                    tbDokter.setValueAt(sub - d(tbDokter.getValueAt(row, 8)), row, 9);
+                }
+            } catch (Exception e) {
+                tbDokter.setValueAt("", row, 0);
+                tbDokter.setValueAt(0, row, 6);
+                tbDokter.setValueAt(0, row, 7);
+                tbDokter.setValueAt(0, row, 8);
+                tbDokter.setValueAt(0, row, 9);
+                tbDokter.setValueAt("", row, 14);
+                // expire biar aman
+                tbDokter.setValueAt("", row, 15);
+            }
+        } else {
+            tbDokter.setValueAt(0, row, 6);
+            tbDokter.setValueAt(0, row, 7);
+            tbDokter.setValueAt(0, row, 8);
+            tbDokter.setValueAt(0, row, 9);
+            tbDokter.setValueAt("", row, 14);
+            tbDokter.setValueAt("", row, 15);
+        }
+    }
+
+    ttl = 0;
+    sbttl = 0;
+    ttldisk = 0;
+    y = 0;
+    w = 0;
+
+    meterai = 0;
+    if (!Meterai.getText().equals("")) {
+        meterai = Double.parseDouble(Meterai.getText());
+    }
+
+    jml = tbDokter.getRowCount();
+    for (i = 0; i < jml; i++) {
+        w = d(tbDokter.getValueAt(i, 6));
+        sbttl = sbttl + w;
+
+        y = d(tbDokter.getValueAt(i, 8));
+        ttldisk = ttldisk + y;
+    }
+
+    LSubtotal.setText(Valid.SetAngka(sbttl));
+    LPotongan.setText(Valid.SetAngka(ttldisk));
+
+    ttl = sbttl - ttldisk;
+    LTotal2.setText(Valid.SetAngka(ttl));
+
+    ppn = 0;
+    if (!tppn.getText().equals("")) {
+        ppn = Math.round((Double.parseDouble(tppn.getText()) / 100) * (ttl));
+        LPpn.setText(Valid.SetAngka(ppn));
+        LTagiha.setText(Valid.SetAngka(ttl + ppn + meterai));
+    }
+}
+//    private void tampil() {
+//        row=tbDokter.getRowCount();
+//        jml=0;
+//        for(i=0;i<row;i++){
+//            try {
+//                if(Double.parseDouble(tbDokter.getValueAt(i,0).toString())>0){
+//                    jml++;
+//                }
+//            } catch (Exception e) {
+//                jml=jml+0;
+//            } 
+//        }
+//        
+//        kodebarang=new String[jml];
+//        namabarang=new String[jml];
+//        satuan=new String[jml];
+//        h_beli=new double[jml];
+//        jumlah=new double[jml];
+//        subtotal=new double[jml];
+//        diskon=new double[jml];
+//        besardiskon=new double[jml];
+//        jmltotal=new double[jml];
+//        ganti=new boolean[jml];
+//        dasar=new double[jml];
+//        distributor=new double[jml];
+//        grosir=new double[jml];
+//        retail=new double[jml];
+//        nobatch = new String[jml];
+//        tglexp  = new String[jml];
+//        
+//        index=0;        
+//        for(i=0;i<row;i++){
+//            try {
+//                if(Double.parseDouble(tbDokter.getValueAt(i,0).toString())>0){
+//                    jumlah[index]=Double.parseDouble(tbDokter.getValueAt(i,0).toString());
+//                    kodebarang[index]=tbDokter.getValueAt(i,1).toString();
+//                    namabarang[index]=tbDokter.getValueAt(i,2).toString();
+//                    satuan[index]=tbDokter.getValueAt(i,3).toString();
+//                    ganti[index]=Boolean.parseBoolean(tbDokter.getValueAt(i,4).toString());
+//                    h_beli[index]=Double.parseDouble(tbDokter.getValueAt(i,5).toString());
+//                    subtotal[index]=Double.parseDouble(tbDokter.getValueAt(i,6).toString());
+//                    diskon[index]=Double.parseDouble(tbDokter.getValueAt(i,7).toString());
+//                    besardiskon[index]=Double.parseDouble(tbDokter.getValueAt(i,8).toString());
+//                    jmltotal[index]=Double.parseDouble(tbDokter.getValueAt(i,9).toString());
+//                    dasar[index]=Double.parseDouble(tbDokter.getValueAt(i,10).toString());
+//                    distributor[index]=Double.parseDouble(tbDokter.getValueAt(i,11).toString());
+//                    grosir[index]=Double.parseDouble(tbDokter.getValueAt(i,12).toString());
+//                    retail[index]=Double.parseDouble(tbDokter.getValueAt(i,13).toString());
+//                    nobatch[index] = tbDokter.getValueAt(i,14) == null ? "" : tbDokter.getValueAt(i,14).toString();
+//
+//            // kolom 15 = Tgl. Exp (kolom baru yg tadi kamu tambah di constructor)
+//                    tglexp[index]  = (tbDokter.getValueAt(i,15) == null ? "" : tbDokter.getValueAt(i,15).toString());
+//                    index++;
+//                }
+//            } catch (Exception e) {
+//            }
+//        }
+//        Valid.tabelKosong(tabMode);
+//        for(i=0;i<jml;i++){
+//            //tabMode.addRow(new Object[]{jumlah[i],kodebarang[i],namabarang[i],satuan[i],ganti[i],h_beli[i],subtotal[i],diskon[i],besardiskon[i],jmltotal[i],dasar[i],distributor[i],grosir[i],retail[i]});
+//        tabMode.addRow(new Object[]{
+//        jumlah[i],      // 0
+//        kodebarang[i],  // 1
+//        namabarang[i],  // 2
+//        satuan[i],      // 3
+//        ganti[i],       // 4
+//        h_beli[i],      // 5
+//        subtotal[i],    // 6
+//        diskon[i],      // 7
+//        besardiskon[i], // 8
+//        jmltotal[i],    // 9
+//        dasar[i],       // 10
+//        distributor[i], // 11
+//        grosir[i],      // 12
+//        retail[i],      // 13
+//        nobatch[i],     // 14 - No. Batch
+//        tglexp[i]       // 15 - Tgl. Exp
+//    });
+//        }
+//        try{
+//            ps = koneksi.prepareStatement(
+//                "select tokobarang.kode_brng, tokobarang.nama_brng, tokobarang.kode_sat, " +
+//                "       tokobarang.h_beli, tokobarang.expire " +   // <-- tambah expire
+//                "from tokobarang " +
+//                "where tokobarang.status='1' and tokobarang.kode_brng like ? or " +
+//                "      tokobarang.status='1' and tokobarang.nama_brng like ? or " +
+//                "      tokobarang.status='1' and tokobarang.jenis like ? " +
+//                "order by tokobarang.nama_brng"
+//            );
+//            try{   
+//                ps.setString(1,"%"+TCari.getText().trim()+"%");
+//                ps.setString(2,"%"+TCari.getText().trim()+"%");
+//                ps.setString(3,"%"+TCari.getText().trim()+"%");
+//                rs=ps.executeQuery();
+//                while(rs.next()){
+//                    //tabMode.addRow(new Object[]{"",rs.getString("kode_brng"),rs.getString("nama_brng"),rs.getString("kode_sat"),false,rs.getDouble("h_beli"),0,0,0,0,0,0,0,0});
+//               tabMode.addRow(new Object[]{
+//        "",                          // 0 Jml
+//        rs.getString("kode_brng"),   // 1
+//        rs.getString("nama_brng"),   // 2
+//        rs.getString("kode_sat"),    // 3
+//        false,                       // 4 G
+//        rs.getDouble("h_beli"),      // 5 Harga
+//        0.0,                         // 6 Subtotal
+//        0.0,                         // 7 Disk(%)
+//        0.0,                         // 8 Diskon(Rp)
+//        0.0,                         // 9 Total
+//        0.0,                         // 10 Dasar
+//        0.0,                         // 11 Distributor
+//        0.0,                         // 12 Grosir
+//        0.0,                         // 13 Retail
+//        "",                          // 14 No. Batch (kosong, diisi manual)
+//        rs.getString("expire")       // 15 Tgl. Exp dari master
+//    });
+//                }   
+//            }catch(Exception e){
+//                System.out.println(e);
+//            }finally{
+//                if(rs!=null){
+//                    rs.close();
+//                }
+//                if(ps!=null){
+//                    ps.close();
+//                }
+//            }              
+//        }catch(SQLException e){
+//            System.out.println("Notifikasi : "+e);
+//        }
+//        
+//    }
+//
+//    private void getData(){
+//        row=tbDokter.getSelectedRow();
+//        if(row!= -1){
+//            if(!tbDokter.getValueAt(row,0).toString().equals("")){
+//                try {
+//                    if(Valid.SetAngka(tbDokter.getValueAt(row,0).toString())>0){
+//                        tbDokter.setValueAt(Double.parseDouble(tbDokter.getValueAt(row,0).toString())*Double.parseDouble(tbDokter.getValueAt(row,5).toString()), row,6);                
+//                        tbDokter.setValueAt(Double.parseDouble(tbDokter.getValueAt(row,6).toString())-Double.parseDouble(tbDokter.getValueAt(row,8).toString()), row,9);           
+//                    }
+//                } catch (Exception e) {
+//                    tbDokter.setValueAt("",row,0);
+//                    tbDokter.setValueAt(0,row,6);   
+//                    tbDokter.setValueAt(0,row,7);   
+//                    tbDokter.setValueAt(0,row,8);                
+//                    tbDokter.setValueAt(0,row,9); 
+//                    tbDokter.setValueAt("",row,14);
+//                }    
+//            }else{
+//                tbDokter.setValueAt(0,row,6);   
+//                tbDokter.setValueAt(0,row,7);   
+//                tbDokter.setValueAt(0,row,8);                
+//                tbDokter.setValueAt(0,row,9); 
+//                tbDokter.setValueAt("",row,14); 
+//            }             
+//        }
+//        ttl=0;sbttl=0;ttldisk=0;
+//        y=0;w=0;
+//        meterai=0;
+//        if(!Meterai.getText().equals("")){
+//            meterai=Double.parseDouble(Meterai.getText());
+//        }
+//        
+//        jml=tbDokter.getRowCount();
+//        for(i=0;i<jml;i++){                 
+//            try {
+//                w=Double.parseDouble(tbDokter.getValueAt(i,6).toString());                
+//            }catch (Exception e) {
+//                w=0;                
+//            }
+//            sbttl=sbttl+w;                
+//            try {
+//                y=Double.parseDouble(tbDokter.getValueAt(i,8).toString());                
+//            }catch (Exception e) {
+//                y=0;                
+//            }
+//            ttldisk=ttldisk+y;
+//        }
+//        LSubtotal.setText(Valid.SetAngka(sbttl));
+//        LPotongan.setText(Valid.SetAngka(ttldisk));
+//        ttl=sbttl-ttldisk;
+//        LTotal2.setText(Valid.SetAngka(ttl));
+//        ppn=0;
+//        if(!tppn.getText().equals("")){
+//            ppn=Math.round((Double.parseDouble(tppn.getText())/100) *(ttl));
+//            LPpn.setText(Valid.SetAngka(ppn));
+//            LTagiha.setText(Valid.SetAngka(ttl+ppn+meterai));
+//        }
+//        
+//    }
     
     public void isCek(){
         autoNomor();
@@ -1660,6 +2013,89 @@ private PercentSet inferPercentsFromTokobarang(String kodeBrg){
 private static class PercentSet {
     final double pPackaging, pStrip, pTablet, pResep;
     PercentSet(double a,double b,double c,double d){ pPackaging=a; pStrip=b; pTablet=c; pResep=d; }
+}
+
+//private String s(Object v) {
+//    return (v == null) ? "" : v.toString().trim();
+//}
+
+private String normalizeMysqlDate(Object v) {
+    if (v == null) return null;
+
+    String x = v.toString().trim();
+    if (x.equals("") || x.equalsIgnoreCase("null")) return null;
+
+    // kalau kebawa timestamp "yyyy-MM-dd HH:mm:ss"
+    if (x.length() >= 19 && x.charAt(4) == '-' && x.charAt(7) == '-') {
+        x = x.substring(0, 10);
+    } else if (x.length() >= 10 && x.charAt(4) == '-' && x.charAt(7) == '-') {
+        x = x.substring(0, 10);
+    }
+
+    // dd/MM/yyyy -> yyyy-MM-dd
+    if (x.matches("\\d{2}/\\d{2}/\\d{4}")) {
+        String[] p = x.split("/");
+        return p[2] + "-" + p[1] + "-" + p[0];
+    }
+
+    // yyyy-MM-dd
+    if (x.matches("\\d{4}-\\d{2}-\\d{2}")) {
+        return x;
+    }
+
+    // format lain dianggap kosong
+    return null;
+}
+
+private boolean insertDetailPesan(int row) {
+    PreparedStatement ps = null;
+    try {
+        String noFaktur = NoFaktur.getText().trim();
+        String kodeBrg  = s(tbDokter.getValueAt(row, 1));
+        String kodeSat  = s(tbDokter.getValueAt(row, 3));
+
+        double jumlah   = Double.parseDouble(tbDokter.getValueAt(row, 0).toString());
+        double harga    = Double.parseDouble(tbDokter.getValueAt(row, 5).toString());
+        double subtotal = Double.parseDouble(tbDokter.getValueAt(row, 6).toString());
+        double dis      = Double.parseDouble(tbDokter.getValueAt(row, 7).toString());
+        double besardis = Double.parseDouble(tbDokter.getValueAt(row, 8).toString());
+        double total    = Double.parseDouble(tbDokter.getValueAt(row, 9).toString());
+
+        String batch    = s(tbDokter.getValueAt(row, 14));
+        String expParam = normalizeMysqlDate(tbDokter.getValueAt(row, 15)); // ✅ bisa null
+
+        ps = koneksi.prepareStatement(
+            "INSERT INTO toko_detail_pesan " +
+            "(no_faktur,kode_brng,kode_sat,jumlah,harga,subtotal,dis,besardis,total,no_batch,tgl_expire) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+        );
+
+        ps.setString(1, noFaktur);
+        ps.setString(2, kodeBrg);
+        ps.setString(3, kodeSat);
+        ps.setDouble(4, jumlah);
+        ps.setDouble(5, harga);
+        ps.setDouble(6, subtotal);
+        ps.setDouble(7, dis);
+        ps.setDouble(8, besardis);
+        ps.setDouble(9, total);
+        ps.setString(10, batch);
+
+        // ✅ ini inti fix: kosong -> NULL
+        if (expParam == null) {
+            ps.setNull(11, java.sql.Types.DATE);
+        } else {
+            ps.setDate(11, java.sql.Date.valueOf(expParam));
+        }
+
+        return ps.executeUpdate() > 0;
+
+    } catch (Exception e) {
+        System.out.println("Notifikasi : " + e);
+        return false;
+    } finally {
+        try { if (ps != null) ps.close(); } catch (Exception ex) {}
+    }
 }
     
 }
