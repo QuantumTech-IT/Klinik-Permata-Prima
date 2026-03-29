@@ -16,6 +16,7 @@
                                 <th width="5%"><center>JK</center></th>
                                 <th width="5%"><center>Umur</center></th>
                                 <th width="10%"><center>Status</center></th>
+                                <th width="10%"><center>Aksi</center></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -25,12 +26,16 @@
                            while($rsquerypasien = mysqli_fetch_array($querypasien)) {
                                echo "<tr>
                                        <td align='left'>".$rsquerypasien["no_reg"]."</td>
-                                       <td align='left'>".$rsquerypasien["no_rawat"]."</td>
+                                       <td align='left'><a href='index.php?act=Visit&no_rawat=".urlencode($rsquerypasien["no_rawat"])."' title='Buka CPPT/SOAP'>".$rsquerypasien["no_rawat"]."</a></td>
                                        <td align='left'>".$rsquerypasien["no_rkm_medis"]."</td>
                                        <td align='left'>".$rsquerypasien["nm_pasien"]."</td>
                                        <td align='left'>".$rsquerypasien["jk"]."</td>
                                        <td align='left'>".$rsquerypasien["umur"]."</td>
                                        <td align='left'>".$rsquerypasien["stts"]."</td>
+                                       <td align='center'>
+                                         <a class='btn btn-xs btn-primary' href='index.php?act=Visit&no_rawat=".urlencode($rsquerypasien["no_rawat"])."'>CPPT</a>
+                                         <a class='btn btn-xs btn-success' href='index.php?act=Resep&no_rawat=".urlencode($rsquerypasien["no_rawat"])."'>Resep</a>
+                                       </td>
                                      </tr>";
                            }
                         ?>

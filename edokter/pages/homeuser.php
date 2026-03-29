@@ -21,12 +21,14 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link href="css/style3.css" rel="stylesheet" type="text/css">
     <link href="css/style4.css" rel="stylesheet" type="text/css">
+    <link href="css/tooplate.css" rel="stylesheet" type="text/css">
     <link href="plugins/bootstrap/css/bootstrap.css" rel="stylesheet">
     <link href="plugins/node-waves/waves.css" rel="stylesheet" />
     <link href="plugins/animate-css/animate.css" rel="stylesheet" />
     <link href="plugins/morrisjs/morris.css" rel="stylesheet" />
     <link href="plugins/jquery-datatable/skin/bootstrap/css/dataTables.bootstrap.css" rel="stylesheet">
     <link href="css/style2.css" rel="stylesheet">
+    <link href="css/doctor-modern.css" rel="stylesheet" type="text/css">
     <link href="css/themes/all-themes.css" rel="stylesheet" />
 </head>
 <body class="theme-pink">
@@ -78,6 +80,18 @@
                             <span>Daftar Pasien</span>
                         </a>
                     </li>
+                    <li <?=$halaman=="Visit"?"class='active'":""?>>
+                        <a href="index.php?act=Visit">
+                            <i class="material-icons">clinical_notes</i>
+                            <span>CPPT/SOAP</span>
+                        </a>
+                    </li>
+                    <li <?=$halaman=="Resep"?"class='active'":""?>>
+                        <a href="index.php?act=Resep">
+                            <i class="material-icons">medication</i>
+                            <span>Resep</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
             <!-- #Menu -->
@@ -124,6 +138,8 @@
     <script src="js/pages/tables/jquery-datatable.js"></script>
     <script src="js/pages/index.js"></script>
     <script src="js/demo.js"></script>
+    <script src="js/doctor-visit.js"></script>
+    <script src="js/doctor-resep.js"></script>
     <script src="conf/validator.js" type="text/javascript"></script>
 </body>
 </html>
