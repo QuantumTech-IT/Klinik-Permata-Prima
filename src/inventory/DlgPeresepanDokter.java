@@ -38,10 +38,12 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.RowFilter;
 import javax.swing.Timer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
 import kepegawaian.DlgCariDokter;
 //import toko.TokoPenjualan;
 import toko.TokoPenjualan; 
@@ -74,16 +76,34 @@ public final class DlgPeresepanDokter extends javax.swing.JDialog {
     private static final String TAB_NON_RACIKAN_TITLE = "Resep Non Racikan";
     private static final String TAB_RACIKAN_TITLE     = "Resep Racikan";
     // ===== di class form =====
+private static final String HINT_RACIKAN =
+    "Ketik komposisi racikan, contoh:\nParacetamol 500mg  3 tab\nAmbroxol 30mg      3 tab\nCTM 4mg            3 tab";
+
 private static final class RacikanItem {
-    String kode, satuan, namaRacikan, signa;
+    String kode, satuan, namaRacikan, signa, keterangan;
     double jml;
-    RacikanItem(String kode,double jml,String sat,String signa,String nama){
+    RacikanItem(String kode, double jml, String sat, String signa, String nama) {
         this.kode=kode; this.jml=jml; this.satuan=sat; this.signa=signa; this.namaRacikan=nama;
+    }
+    RacikanItem(String kode, double jml, String sat, String signa, String nama, String ket) {
+        this(kode, jml, sat, signa, nama);
+        this.keterangan = ket;
     }
 }
 private final java.util.List<RacikanItem> stagedRacikan = new java.util.ArrayList<>();
-    
-    
+
+// === Preview Resep Toko (tab permanen) ===
+private javax.swing.table.DefaultTableModel tmPreviewToko;
+private javax.swing.JTable                  tbPreviewToko;
+private javax.swing.table.TableRowSorter<javax.swing.table.DefaultTableModel> sorterPreviewToko;
+private javax.swing.JLabel                  lblPreviewInfo;
+private javax.swing.JButton                 btnSimpanPreview;
+private javax.swing.JButton                 btnHapusBaris;
+private javax.swing.JButton                 btnTambahItem;
+private javax.swing.JButton                 btnTambahRacikan;
+private javax.swing.JComboBox<String>       cmbResepToko;
+private String                              currentPreviewNoResep;
+
 //    public TokoPenjualan dlgToko = new TokoPenjualan(null, false);
 //    public DlgPeresepanDokter dlgResep = new DlgPeresepanDokter(null, false);
 //    private TokoPenjualan tokoPenjualanRef;
@@ -120,9 +140,16 @@ int idxRacikan = TabRawat.indexOfTab("Racikan");
 if (idxRacikan >= 0) {
     TabRawat.setEnabledAt(idxRacikan, false);
 }
+
+int idxResepRacikan = TabRawat.indexOfTab("Resep Racikan");
+if (idxRacikan >= 0) {
+    TabRawat.setEnabledAt(idxResepRacikan, false);
+}
+
 int idxInput = TabRawat.indexOfTab("Resep Non Racikan");
 if (idxInput >= 0) {
-    TabRawat.setSelectedIndex(idxInput);
+    TabRawat.setEnabledAt(idxInput, false);
+    //TabRawat.setSelectedIndex(idxInput);
 }
         initTableTokoBarang();     // tabel utama
         initTableTokoBarang1();    // tabel racikan
@@ -131,11 +158,13 @@ if (idxInput >= 0) {
         //setupTokoBarangTableUI();
         //applyZebra(tbTokoBarang);
         tampiltokobarang();
-        tampiltokobarang1();
+        //tampiltokobarang1();
         initTabIndexes();
-        
-        initJenisResep();
-        initJenisResepListener();
+        initPreviewResepToko();
+        showOnlyPreviewTab();
+        hideLegacyInlineRacikanControls();
+        initShortcutButtons();
+        tbTokoBarang.setVisible (false);
         
         
         
@@ -357,6 +386,9 @@ if (idxInput >= 0) {
             public void windowClosing(WindowEvent e) {}
             @Override
             public void windowClosed(WindowEvent e) {
+                if (isPreviewOnlyMode()) {
+                    return;
+                }
                 if(aturanpakai.getTable().getSelectedRow()!= -1){  
                     if(TabRawat.getSelectedIndex()==0){
                         tbResep.setValueAt(aturanpakai.getTable().getValueAt(aturanpakai.getTable().getSelectedRow(),0).toString(),tbResep.getSelectedRow(),2);
@@ -407,6 +439,9 @@ if (idxInput >= 0) {
             public void windowClosing(WindowEvent e) {}
             @Override
             public void windowClosed(WindowEvent e) {
+                if (isPreviewOnlyMode()) {
+                    return;
+                }
                 if(metoderacik.getTable().getSelectedRow()!= -1){  
                     tbObatResepRacikan.setValueAt(metoderacik.getTable().getValueAt(metoderacik.getTable().getSelectedRow(),1).toString(),tbObatResepRacikan.getSelectedRow(),2);
                     tbObatResepRacikan.setValueAt(metoderacik.getTable().getValueAt(metoderacik.getTable().getSelectedRow(),2).toString(),tbObatResepRacikan.getSelectedRow(),3);
@@ -843,7 +878,7 @@ if (idxInput >= 0) {
         jLabel8.setBounds(0, 42, 72, 23);
 
         DTPBeri.setForeground(new java.awt.Color(50, 70, 50));
-        DTPBeri.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "27-11-2025" }));
+        DTPBeri.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "26-03-2026" }));
         DTPBeri.setDisplayFormat("dd-MM-yyyy");
         DTPBeri.setName("DTPBeri"); // NOI18N
         DTPBeri.setOpaque(false);
@@ -981,7 +1016,6 @@ if (idxInput >= 0) {
         petunjuk.setColumns(20);
         petunjuk.setFont(new java.awt.Font("Monospaced", 1, 13)); // NOI18N
         petunjuk.setRows(5);
-        petunjuk.setText("Petunjuk Resep Racikan :\n1. Pilih Jenis Resep \"Racikan\"\n2. Isi Signa Racikan Dan Nama Racikan\n3. Cari Obat Untuk Komposisi Racikan\n4. Isi Jumlah \n5. Akhiri Dengan Klik Tambah Racikan\n\"Selalu Akhiri Dengan Klik Tambah Racikan\"");
         petunjuk.setName("petunjuk"); // NOI18N
         jScrollPane3.setViewportView(petunjuk);
 
@@ -1070,6 +1104,7 @@ if (idxInput >= 0) {
 
         TabRawat.addTab("Racikan", jPanel3);
 
+        jScrollPane1.setEnabled(false);
         jScrollPane1.setName("jScrollPane1"); // NOI18N
 
         tbTokoBarang.setModel(new javax.swing.table.DefaultTableModel(
@@ -1101,6 +1136,7 @@ if (idxInput >= 0) {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        tbTokoBarang1.setEnabled(false);
         tbTokoBarang1.setName("tbTokoBarang1"); // NOI18N
         jScrollPane2.setViewportView(tbTokoBarang1);
 
@@ -1124,7 +1160,11 @@ if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
 } else if (evt.getKeyCode() == KeyEvent.VK_PAGE_UP) {
     BtnKeluar.requestFocus();
 } else if (evt.getKeyCode() == KeyEvent.VK_UP) {
-    tbResep.requestFocus();
+    if (isPreviewOnlyMode()) {
+        tbPreviewToko.requestFocus();
+    } else {
+        tbResep.requestFocus();
+    }
 }
 
 //        if(evt.getKeyCode()==KeyEvent.VK_ENTER){
@@ -1142,6 +1182,10 @@ if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
 }//GEN-LAST:event_TCariKeyPressed
 
     private void BtnCariActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnCariActionPerformed
+        if (isPreviewOnlyMode()) {
+            applyPreviewFilter(TCari.getText().trim());
+            return;
+        }
         if(TabRawat.getSelectedIndex()==0){
             tampilobat();
         }else if(TabRawat.getSelectedIndex()==1){
@@ -1426,6 +1470,14 @@ private void BtnSeek5KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_
 }//GEN-LAST:event_BtnSeek5KeyPressed
 
 private void ppBersihkanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ppBersihkanActionPerformed
+    if (isPreviewOnlyMode()) {
+        TCari.setText("");
+        applyPreviewFilter("");
+        if (tbPreviewToko != null) {
+            tbPreviewToko.clearSelection();
+        }
+        return;
+    }
     if(TabRawat.getSelectedIndex()==0){
         for(i=0;i<tbResep.getRowCount();i++){ 
             tbResep.setValueAt(false,i,0);
@@ -1692,7 +1744,7 @@ private void ppBersihkanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
     }//GEN-LAST:event_ChkRM1ItemStateChanged
 
     private void BtnTambahRacikanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnTambahRacikanActionPerformed
-      tambahRacikan();
+      showTambahRacikanDialog();
     }//GEN-LAST:event_BtnTambahRacikanActionPerformed
 
     /**
@@ -2241,7 +2293,7 @@ private void ppBersihkanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
         try (ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 tabModeBarang.addRow(new Object[]{
-    0.0,                    // Jumlah default
+    "",                    // Jumlah default
     "",                     // Aturan pakai default
     rs.getString("kode_brng"),
     rs.getString("nama_brng"),
@@ -2329,7 +2381,7 @@ try (PreparedStatement ps1 = koneksi.prepareStatement(sql)) {
         try (ResultSet rs = ps1.executeQuery()) {
             while (rs.next()) {
                 tabModeBarang1.addRow(new Object[]{
-                    0.0,                                   // Jumlah
+                    "",                                   // Jumlah
                     rs.getString("kode_brng"),
                     rs.getString("nama_brng"),
                     rs.getString("kategori"),
@@ -2353,7 +2405,11 @@ try (PreparedStatement ps1 = koneksi.prepareStatement(sql)) {
         try { tbTokoBarang1.getCellEditor().stopCellEditing(); } catch (Exception ignored) {}
     }
     
-    String noResep  = NoResep.getText().trim();
+    // jika header sudah dibuat via ensureResepHeader(), pakai no_resep itu
+    // supaya tidak bergeser saat emptTeksobat() di-trigger di antara dua simpan
+    String noResep = (currentPreviewNoResep != null && !currentPreviewNoResep.trim().isEmpty())
+                     ? currentPreviewNoResep.trim()
+                     : NoResep.getText().trim();
     String noRawat  = (TNoRw != null ? TNoRw.getText().trim() : "");
     String kdDokter = (KdDokter != null ? KdDokter.getText().trim() : "");
     java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
@@ -2391,6 +2447,9 @@ try (PreparedStatement ps1 = koneksi.prepareStatement(sql)) {
         "(no_resep,kode_brng,jml,satuan,aturan_pakai,keterangan,nama_racikan) " +
         "VALUES (?,?,?,?,?,?,?)";
 
+    final String SQL_RESEP_DOKTER =
+        "INSERT INTO resep_dokter (no_resep, kode_brng, jml, aturan_pakai) VALUES (?,?,?,?)";
+
     try {
         koneksi.setAutoCommit(false);
         Sequel.menyimpantf2(
@@ -2423,6 +2482,8 @@ try (PreparedStatement ps1 = koneksi.prepareStatement(sql)) {
         }
 
         int inserted = 0, cntNR = 0, cntR = 0;
+        java.util.Map<String, Double> mapJmlResepDokter = new java.util.LinkedHashMap<>();
+        java.util.Map<String, String> mapAturanResepDokter = new java.util.LinkedHashMap<>();
 
         try (PreparedStatement psD = koneksi.prepareStatement(SQLD)) {
 
@@ -2447,19 +2508,41 @@ try (PreparedStatement ps1 = koneksi.prepareStatement(sql)) {
                 psD.setNull(7, java.sql.Types.VARCHAR);       // nama_racikan = NULL
                 psD.addBatch();
                 inserted++; cntNR++;
+
+                String key = kode.trim();
+                mapJmlResepDokter.put(key, mapJmlResepDokter.getOrDefault(key, 0.0) + jml);
+                if (!mapAturanResepDokter.containsKey(key) ||
+                        mapAturanResepDokter.get(key) == null ||
+                        mapAturanResepDokter.get(key).trim().isEmpty()) {
+                    mapAturanResepDokter.put(key, aturan == null ? "" : aturan);
+                }
             }
 
             // --- Racikan (dari buffer stagedRacikan) ---
             for (RacikanItem it : stagedRacikan) {
                 psD.setString(1, noResep);
-                psD.setString(2, it.kode);
+                psD.setString(2, it.kode == null ? "" : it.kode);
                 psD.setDouble(3, it.jml);
                 psD.setString(4, (it.satuan == null || it.satuan.isEmpty()) ? null : it.satuan);
                 psD.setString(5, (it.signa == null || it.signa.trim().isEmpty()) ? null : it.signa.trim());
-                psD.setString(6, "Racikan");                  // << benar: kolom 'keterangan'
-                psD.setString(7, it.namaRacikan);             // << benar: kolom 'nama_racikan'
+                // jika ada komposisi bebas, simpan di keterangan; kalau tidak "Racikan"
+                String ketR = (it.keterangan != null && !it.keterangan.trim().isEmpty())
+                              ? it.keterangan.trim() : "Racikan";
+                psD.setString(6, ketR);
+                psD.setString(7, it.namaRacikan);
                 psD.addBatch();
                 inserted++; cntR++;
+
+                String key = (it.kode == null ? "" : it.kode.trim());
+                if (!key.isEmpty()) {
+                    mapJmlResepDokter.put(key, mapJmlResepDokter.getOrDefault(key, 0.0) + it.jml);
+                    String aturanR = (it.signa == null ? "" : it.signa.trim());
+                    if (!mapAturanResepDokter.containsKey(key) ||
+                            mapAturanResepDokter.get(key) == null ||
+                            mapAturanResepDokter.get(key).trim().isEmpty()) {
+                        mapAturanResepDokter.put(key, aturanR);
+                    }
+                }
             }
 
             if (inserted == 0) {
@@ -2467,7 +2550,47 @@ try (PreparedStatement ps1 = koneksi.prepareStatement(sql)) {
                 JOptionPane.showMessageDialog(null, "Tidak ada item dengan jumlah > 0.");
                 return;
             }
-            psD.executeBatch();
+            int[] batchResult = psD.executeBatch();
+            System.out.println("[DEBUG] resep_toko_detail batch size=" + batchResult.length + " inserted=" + inserted + " noResep=" + noResep);
+
+            // Sinkron ke resep_dokter agar data resep dokter tetap terisi
+            try (PreparedStatement delRD = koneksi.prepareStatement(
+                    "DELETE FROM resep_dokter WHERE no_resep=?")) {
+                delRD.setString(1, noResep);
+                delRD.executeUpdate();
+            }
+
+            if (!mapJmlResepDokter.isEmpty()) {
+                int skippedNotInDatabarang = 0;
+                try (PreparedStatement insRD = koneksi.prepareStatement(SQL_RESEP_DOKTER)) {
+                    for (java.util.Map.Entry<String, Double> en : mapJmlResepDokter.entrySet()) {
+                        String kode = en.getKey();
+                        if (kode == null || kode.trim().isEmpty()) continue;
+                        kode = kode.trim();
+
+                        if (!pastikanDatabarangUntukResep(kode)) {
+                            skippedNotInDatabarang++;
+                            continue;
+                        }
+
+                        String aturanRD = mapAturanResepDokter.get(kode);
+                        insRD.setString(1, noResep);
+                        insRD.setString(2, kode);
+                        insRD.setDouble(3, en.getValue() == null ? 0.0 : en.getValue());
+                        if (aturanRD == null || aturanRD.trim().isEmpty()) {
+                            insRD.setNull(4, java.sql.Types.VARCHAR);
+                        } else {
+                            insRD.setString(4, aturanRD.trim());
+                        }
+                        insRD.addBatch();
+                    }
+                    insRD.executeBatch();
+                }
+                if (skippedNotInDatabarang > 0) {
+                    System.out.println("[RESEP_TOKO] Sinkron resep_dokter skip " + skippedNotInDatabarang +
+                            " item karena kode tidak ditemukan di databarang/tokobarang.");
+                }
+            }
 
             // Update header sesuai realita item yang tersimpan
             String jenisFinal = (cntNR > 0 && cntR > 0) ? "Campuran" : (cntR > 0 ? "Racikan" : "Non Racikan");
@@ -2496,12 +2619,147 @@ try (PreparedStatement ps1 = koneksi.prepareStatement(sql)) {
 
         if (tokoRef != null) tokoRef.onResepTokoSaved(noResep);
 
+        final String noResepFinal = noResep;
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            populateResepTokoCombo();
+            // pilih item yang baru disimpan di combo
+            for (int ci = 0; ci < cmbResepToko.getItemCount(); ci++) {
+                if (((String) cmbResepToko.getItemAt(ci)).startsWith(noResepFinal)) {
+                    cmbResepToko.setSelectedIndex(ci);
+                    break;
+                }
+            }
+            // arahkan ke tab Preview Resep Toko
+            loadResepTokoPreview(noResepFinal, true);
+        });
+
     } catch (Exception e) {
         try { koneksi.rollback(); } catch (Exception ex) {}
-        JOptionPane.showMessageDialog(null, "Gagal simpan resep toko: " + e.getMessage());
+        String pesanTeknis = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+        String pesanUser;
+        if (pesanTeknis.toLowerCase().contains("connect") || pesanTeknis.toLowerCase().contains("communications link")) {
+            pesanUser = "Koneksi database terputus.\nPeriksa koneksi lalu coba simpan ulang.";
+        } else if (pesanTeknis.toLowerCase().contains("duplicate") || pesanTeknis.toLowerCase().contains("unique")) {
+            pesanUser = "Data sudah ada di database.\nPeriksa kembali nomor resep atau data yang dimasukkan.";
+        } else {
+            pesanUser = "Gagal menyimpan resep. Coba ulangi.\nJika masih gagal, hubungi administrator.";
+        }
+        javax.swing.JOptionPane.showMessageDialog(this, pesanUser, "Gagal Simpan", javax.swing.JOptionPane.ERROR_MESSAGE);
+        fungsi.TelegramNotifier.sendError("Resep Dokter", akses.getkode(),
+            "Gagal simpanKeResepToko: " + pesanTeknis,
+            "No Resep: " + (currentPreviewNoResep != null ? currentPreviewNoResep : NoResep.getText())
+            + " | Pasien: " + TNoRw.getText());
     } finally {
         try { koneksi.setAutoCommit(true); } catch (Exception ex) {}
     }
+}
+
+private boolean pastikanDatabarangUntukResep(String kodeBrng) throws java.sql.SQLException {
+    if (kodeBrng == null || kodeBrng.trim().isEmpty()) {
+        return false;
+    }
+    String kode = kodeBrng.trim();
+
+    try (PreparedStatement cek = koneksi.prepareStatement(
+            "SELECT 1 FROM databarang WHERE kode_brng=? LIMIT 1")) {
+        cek.setString(1, kode);
+        try (ResultSet rsCek = cek.executeQuery()) {
+            if (rsCek.next()) {
+                return true;
+            }
+        }
+    }
+
+    final String sqlToko =
+            "SELECT nama_brng, kode_sat, dasar, h_beli, distributor, grosir, retail, status " +
+            "FROM tokobarang WHERE kode_brng=? LIMIT 1";
+    try (PreparedStatement psToko = koneksi.prepareStatement(sqlToko)) {
+        psToko.setString(1, kode);
+        try (ResultSet rsToko = psToko.executeQuery()) {
+            if (!rsToko.next()) {
+                return false;
+            }
+
+            String nama = rsToko.getString("nama_brng");
+            if (nama == null || nama.trim().isEmpty()) {
+                nama = kode;
+            } else {
+                nama = nama.trim();
+            }
+
+            String kodeSat = rsToko.getString("kode_sat");
+            if (kodeSat == null || kodeSat.trim().isEmpty()) {
+                kodeSat = "-";
+            } else {
+                kodeSat = kodeSat.trim();
+            }
+
+            double dasar = rsToko.getDouble("dasar");
+            if (rsToko.wasNull()) dasar = 0;
+            double hBeli = rsToko.getDouble("h_beli");
+            if (rsToko.wasNull()) hBeli = dasar;
+            double distributor = rsToko.getDouble("distributor");
+            if (rsToko.wasNull()) distributor = hBeli;
+            double grosir = rsToko.getDouble("grosir");
+            if (rsToko.wasNull()) grosir = distributor;
+            double retail = rsToko.getDouble("retail");
+            if (rsToko.wasNull()) retail = grosir;
+
+            String status = rsToko.getString("status");
+            status = "0".equals(status) ? "0" : "1";
+
+            final String sqlInsert =
+                    "INSERT INTO databarang " +
+                    "(kode_brng,nama_brng,kode_satbesar,kode_sat,letak_barang,dasar,h_beli,ralan,kelas1,kelas2,kelas3,utama,vip,vvip,beliluar,jualbebas,karyawan,stokminimal,kdjns,isi,kapasitas,expire,status,kode_industri,kode_kategori,kode_golongan) " +
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            try (PreparedStatement ins = koneksi.prepareStatement(sqlInsert)) {
+                int idx = 1;
+                ins.setString(idx++, kode);
+                ins.setString(idx++, nama);
+                ins.setString(idx++, kodeSat);
+                ins.setString(idx++, kodeSat);
+                ins.setString(idx++, "");
+                ins.setDouble(idx++, dasar);
+                ins.setDouble(idx++, hBeli);
+                ins.setDouble(idx++, distributor);
+                ins.setDouble(idx++, grosir);
+                ins.setDouble(idx++, retail);
+                ins.setDouble(idx++, retail);
+                ins.setDouble(idx++, retail);
+                ins.setDouble(idx++, retail);
+                ins.setDouble(idx++, retail);
+                ins.setDouble(idx++, retail);
+                ins.setDouble(idx++, retail);
+                ins.setDouble(idx++, retail);
+                ins.setDouble(idx++, 0d);
+                ins.setString(idx++, "-");
+                ins.setDouble(idx++, 1d);
+                ins.setDouble(idx++, 0d);
+                ins.setNull(idx++, java.sql.Types.DATE);
+                ins.setString(idx++, status);
+                ins.setString(idx++, "-");
+                ins.setString(idx++, "-");
+                ins.setString(idx++, "-");
+                ins.executeUpdate();
+            }
+        }
+    } catch (java.sql.SQLException ex) {
+        String state = ex.getSQLState();
+        if ("23000".equals(state)) {
+            try (PreparedStatement cekUlang = koneksi.prepareStatement(
+                    "SELECT 1 FROM databarang WHERE kode_brng=? LIMIT 1")) {
+                cekUlang.setString(1, kode);
+                try (ResultSet rs = cekUlang.executeQuery()) {
+                    if (rs.next()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        throw ex;
+    }
+
+    return true;
 }
 //private void simpanKeResepToko() {
 //    if (tbTokoBarang != null && tbTokoBarang.isEditing()) {
@@ -5053,37 +5311,6 @@ private static double toDouble(Object v) {
         
     }
 
-    // panggil sekali saat init form
-private void initJenisResepListener() {
-    cmbJenisResep.addItemListener(e -> {
-        if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
-            onJenisResepChanged(String.valueOf(e.getItem()));
-        }
-    });
-}
-
-private void onJenisResepChanged(String jenis) {
-    boolean racikan = "Racikan".equalsIgnoreCase(jenis);
-
-    // pindahkan tab sesuai pilihan
-    selectTabByTitle(TabRawat, racikan ? TAB_RACIKAN_TITLE : TAB_NON_RACIKAN_TITLE);
-
-    // toggle komponen
-    if (SignaRacikan != null) {
-        SignaRacikan.setEnabled(racikan);
-        if (racikan) SignaRacikan.requestFocus();
-    }
-    if (tbTokoBarang != null) tbTokoBarang.setEnabled(!racikan);
-    if (tbTokoBarang1 != null)     tbTokoBarang1.setEnabled(racikan);
-
-//    // opsional: ubah placeholder/label
-//    SignaRacikan.setText(racikan ? "" : "Aturan Pakai");
-}
-
-private String getJenisFromActiveTab() {
-    String title = TabRawat.getTitleAt(TabRawat.getSelectedIndex());
-    return TAB_RACIKAN_TITLE.equalsIgnoreCase(title) ? "Racikan" : "Non Racikan";
-}
 // helper: pilih tab berdasar judul
 private void selectTabByTitle(javax.swing.JTabbedPane tabs, String title) {
     for (int i = 0; i < tabs.getTabCount(); i++) {
@@ -5116,6 +5343,11 @@ private void refreshByActiveTab(String keyword) {
 
     String title = TabRawat.getTitleAt(idx);
     System.out.println("[refresh] selected title='" + title + "'");
+
+    if (title != null && title.trim().equalsIgnoreCase("Preview Resep Toko")) {
+        applyPreviewFilter(keyword);
+        return;
+    }
 
     if (idx == TAB_IDX_RACIKAN) {
         System.out.println("[refresh] go RACIKAN");
@@ -5158,39 +5390,1077 @@ private void refreshByActiveTab(String keyword) {
 //}
     
     public void setTokoPenjualanRef(TokoPenjualan ref){
-    this.tokoRef = ref;
-}
-   private JComboBox<String> cmbJenisResep;
-    private void initJenisResep() {
-        JLabel lblJenis = new JLabel("Jenis Resep :");
-        lblJenis.setBounds(20, 120, 100, 23);
+        this.tokoRef = ref;
+    }
 
-        cmbJenisResep = new JComboBox<>(new String[]{"Non Racikan", "Racikan"});
-        cmbJenisResep.setName("cmbJenisResep");
-        cmbJenisResep.setSelectedIndex(0);
-        cmbJenisResep.setBounds(120, 120, 140, 23);
+    @Override
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        if (visible) {
+            javax.swing.SwingUtilities.invokeLater(() -> populateResepTokoCombo());
+        }
+    }
 
-        // default: sembunyikan dulu SignaRacikan
-        SignaRacikan.setVisible(false);
-        LblNRacikan.setVisible(false);
-        LblSRacik.setVisible(false);
-        NamaRacikan.setVisible(false);
-        BtnTambahRacikan.setVisible(false);
-        jScrollPane3.setVisible(false);
-        cmbJenisResep.addActionListener(evt -> {
-            boolean racik = "Racikan".equals(cmbJenisResep.getSelectedItem());
-            SignaRacikan.setVisible(racik);
-            NamaRacikan.setVisible(racik);
-            LblNRacikan.setVisible(racik);
-            LblSRacik.setVisible(racik);
-            BtnTambahRacikan.setVisible(racik);
-            jScrollPane3.setVisible(racik);
+    /** Isi combo dengan semua resep_toko milik pasien ini, lalu auto-pilih yang terbaru. */
+    public void populateResepTokoCombo() {
+        String noRawat = TNoRw.getText().trim();
+        cmbResepToko.removeAllItems();
+        cmbResepToko.addItem("-- Pilih Resep --");
+        cmbResepToko.setEnabled(false);
+
+        if (noRawat.isEmpty()) return;
+
+        try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                "SELECT rt.no_resep, rt.tgl_resep, rt.keterangan " +
+                "FROM resep_toko rt " +
+                "WHERE rt.no_rawat = ? " +
+                "ORDER BY rt.tgl_resep DESC")) {
+            ps.setString(1, noRawat);
+            java.sql.ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                String noResep  = rs.getString("no_resep");
+                String tgl      = rs.getString("tgl_resep");
+                String jenis    = rs.getString("keterangan");
+                if (tgl != null && tgl.length() >= 10) tgl = tgl.substring(0, 10);
+                cmbResepToko.addItem(noResep + "  [" + tgl + "  " + (jenis == null ? "" : jenis) + "]");
+            }
+            rs.close();
+        } catch (Exception e) {
+            System.err.println("[COMBO] gagal load resep toko: " + e.getMessage());
+        }
+
+        if (cmbResepToko.getItemCount() > 1) {
+            cmbResepToko.setEnabled(true);
+            cmbResepToko.setSelectedIndex(1); // otomatis pilih yang terbaru
+        }
+    }
+
+    /** Load preview — pindah ke tab Preview setelah load (dipakai setelah simpan). */
+    public void loadResepTokoPreview(String noResep) {
+        loadResepTokoPreview(noResep, true);
+    }
+
+    private String[] getResepTokoStatusInfo(String noResep) {
+        String status = "baru";
+        String noNota = "";
+        if (noResep == null || noResep.trim().isEmpty()) {
+            return new String[]{status, noNota};
+        }
+        try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                "SELECT COALESCE(status,'baru') AS status, COALESCE(no_nota,'') AS no_nota " +
+                "FROM resep_toko WHERE no_resep=? LIMIT 1")) {
+            ps.setString(1, noResep.trim());
+            java.sql.ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                status = rs.getString("status");
+                noNota = rs.getString("no_nota");
+            }
+            rs.close();
+        } catch (Exception e) {
+            System.err.println("[PREVIEW] gagal cek status resep: " + e.getMessage());
+        }
+        return new String[]{status, noNota};
+    }
+
+    /** Load preview; switchTab=false untuk auto-load saat form dibuka (tetap di tab aktif). */
+    public void loadResepTokoPreview(String noResep, boolean switchTab) {
+        while (tmPreviewToko.getRowCount() > 0) tmPreviewToko.removeRow(0);
+        currentPreviewNoResep = null;
+        btnSimpanPreview.setEnabled(false);
+        btnHapusBaris.setEnabled(false);
+        btnTambahItem.setEnabled(false); btnTambahRacikan.setEnabled(false);
+        tbPreviewToko.setEnabled(true);
+
+        if (noResep == null || noResep.trim().isEmpty()) {
+            lblPreviewInfo.setText("Belum ada resep tersimpan.");
+            return;
+        }
+        String[] infoResep = getResepTokoStatusInfo(noResep);
+        boolean resepSelesai = "selesai".equalsIgnoreCase(infoResep[0]);
+        String noNota = infoResep[1];
+        String statusInfo = resepSelesai
+                ? "Selesai" + (noNota.isEmpty() ? "" : " / Nota " + noNota)
+                : infoResep[0];
+        lblPreviewInfo.setText("No. Resep: " + noResep + "   |   Status: " + statusInfo);
+
+        String sql =
+            "SELECT rtd.kode_brng, " +
+            "       COALESCE(b.nama_brng, tb.nama_brng, rtd.nama_racikan, rtd.kode_brng) AS nama_barang, " +
+            "       rtd.jml, rtd.satuan, rtd.aturan_pakai, COALESCE(rtd.nama_racikan,'') AS ket " +
+            "FROM resep_toko_detail rtd " +
+            "LEFT JOIN databarang b  ON b.kode_brng  = rtd.kode_brng AND rtd.kode_brng <> '' " +
+            "LEFT JOIN tokobarang tb ON tb.kode_brng = rtd.kode_brng AND rtd.kode_brng <> '' " +
+            "WHERE rtd.no_resep = ? " +
+            "ORDER BY rtd.nama_racikan, rtd.kode_brng";
+        try (java.sql.PreparedStatement psPrev = koneksi.prepareStatement(sql)) {
+            psPrev.setString(1, noResep.trim());
+            java.sql.ResultSet rsPrev = psPrev.executeQuery();
+            while (rsPrev.next()) {
+                tmPreviewToko.addRow(new Object[]{
+                    rsPrev.getString("kode_brng"),
+                    rsPrev.getString("nama_barang"),
+                    rsPrev.getDouble("jml"),
+                    rsPrev.getString("satuan"),
+                    rsPrev.getString("aturan_pakai"),
+                    rsPrev.getString("ket")
+                });
+            }
+            rsPrev.close();
+            currentPreviewNoResep = noResep.trim();
+            tbPreviewToko.setEnabled(!resepSelesai);
+            btnTambahItem.setEnabled(!resepSelesai);
+            btnTambahRacikan.setEnabled(!resepSelesai);
+            if (!resepSelesai && tmPreviewToko.getRowCount() > 0) btnSimpanPreview.setEnabled(true);
+        } catch (Exception e) {
+            System.err.println("[PREVIEW] gagal: " + e.getMessage());
+        }
+        if (switchTab) {
+            int idx = TabRawat.indexOfTab("Preview Resep Toko");
+            if (idx >= 0) TabRawat.setSelectedIndex(idx);
+        }
+    }
+
+    /** Simpan perubahan edit (jml, satuan, aturan_pakai) ke resep_toko_detail. */
+    private void savePreviewChanges() {
+        if (currentPreviewNoResep == null) return;
+        if ("selesai".equalsIgnoreCase(getResepTokoStatusInfo(currentPreviewNoResep)[0])) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Resep ini sudah selesai/dikerjakan, sehingga tidak bisa diubah lagi.",
+                "Resep Sudah Selesai",
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            loadResepTokoPreview(currentPreviewNoResep, false);
+            return;
+        }
+        // commit cell yang sedang diedit
+        if (tbPreviewToko.isEditing()) {
+            try { tbPreviewToko.getCellEditor().stopCellEditing(); } catch (Exception ignored) {}
+        }
+        int updated = 0;
+        try {
+            koneksi.setAutoCommit(false);
+            try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                    "UPDATE resep_toko_detail SET jml=?, satuan=?, aturan_pakai=? " +
+                    "WHERE no_resep=? AND kode_brng=?")) {
+                for (int i = 0; i < tmPreviewToko.getRowCount(); i++) {
+                    String kode   = String.valueOf(tmPreviewToko.getValueAt(i, 0));
+                    double jml    = 0;
+                    try { jml = Double.parseDouble(String.valueOf(tmPreviewToko.getValueAt(i, 2))); } catch (Exception ignored) {}
+                    String satuan = String.valueOf(tmPreviewToko.getValueAt(i, 3));
+                    String aturan = String.valueOf(tmPreviewToko.getValueAt(i, 4));
+                    ps.setDouble(1, jml);
+                    ps.setString(2, "null".equals(satuan) ? null : satuan);
+                    ps.setString(3, "null".equals(aturan) ? null : aturan);
+                    ps.setString(4, currentPreviewNoResep);
+                    ps.setString(5, kode);
+                    ps.addBatch();
+                    updated++;
+                }
+                ps.executeBatch();
+            }
+            koneksi.commit();
+            javax.swing.JOptionPane.showMessageDialog(this,
+                updated + " baris berhasil diperbarui.", "Simpan Berhasil",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            try { koneksi.rollback(); } catch (Exception ignored) {}
+            String pesanTeknis = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+            String pesanUser = pesanTeknis.toLowerCase().contains("connect")
+                ? "Koneksi database terputus.\nPeriksa koneksi lalu coba simpan ulang."
+                : "Gagal menyimpan perubahan. Coba ulangi.\nJika masih gagal, hubungi administrator.";
+            javax.swing.JOptionPane.showMessageDialog(this, pesanUser, "Gagal Simpan", javax.swing.JOptionPane.ERROR_MESSAGE);
+            fungsi.TelegramNotifier.sendError("Resep Dokter", akses.getkode(),
+                "Gagal savePreviewChanges: " + pesanTeknis,
+                "No Resep: " + currentPreviewNoResep + " | Pasien: " + TNoRw.getText());
+        } finally {
+            try { koneksi.setAutoCommit(true); } catch (Exception ignored) {}
+        }
+    }
+
+    /** Hapus baris terpilih dari tabel dan DB. */
+    private void deleteSelectedPreviewRow() {
+        int row = tbPreviewToko.getSelectedRow();
+        if (row < 0 || currentPreviewNoResep == null) return;
+        if ("selesai".equalsIgnoreCase(getResepTokoStatusInfo(currentPreviewNoResep)[0])) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Resep ini sudah selesai/dikerjakan, sehingga itemnya tidak bisa dihapus lagi.",
+                "Resep Sudah Selesai",
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            loadResepTokoPreview(currentPreviewNoResep, false);
+            return;
+        }
+        String kode = String.valueOf(tmPreviewToko.getValueAt(row, 0));
+        String nama = String.valueOf(tmPreviewToko.getValueAt(row, 1));
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(this,
+            "Hapus item '" + nama + "' dari resep " + currentPreviewNoResep + "?",
+            "Konfirmasi Hapus", javax.swing.JOptionPane.YES_NO_OPTION);
+        if (confirm != javax.swing.JOptionPane.YES_OPTION) return;
+        try {
+            koneksi.setAutoCommit(false);
+            try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                    "DELETE FROM resep_toko_detail WHERE no_resep=? AND kode_brng=?")) {
+                ps.setString(1, currentPreviewNoResep);
+                ps.setString(2, kode);
+                ps.executeUpdate();
+            }
+            koneksi.commit();
+            tmPreviewToko.removeRow(row);
+            if (tmPreviewToko.getRowCount() == 0) btnSimpanPreview.setEnabled(false);
+        } catch (Exception ex) {
+            try { koneksi.rollback(); } catch (Exception ignored) {}
+            String pesanTeknis = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+            String pesanUser = pesanTeknis.toLowerCase().contains("connect")
+                ? "Koneksi database terputus.\nPeriksa koneksi lalu coba hapus ulang."
+                : "Gagal menghapus item. Coba ulangi.\nJika masih gagal, hubungi administrator.";
+            javax.swing.JOptionPane.showMessageDialog(this, pesanUser, "Gagal Hapus", javax.swing.JOptionPane.ERROR_MESSAGE);
+            fungsi.TelegramNotifier.sendError("Resep Dokter", akses.getkode(),
+                "Gagal deleteSelectedPreviewRow: " + pesanTeknis,
+                "No Resep: " + currentPreviewNoResep + " | Item: " + nama + " | Pasien: " + TNoRw.getText());
+        } finally {
+            try { koneksi.setAutoCommit(true); } catch (Exception ignored) {}
+        }
+    }
+
+    /** Dialog tambah item baru ke resep_toko_detail — cari by nama obat, staging sebelum simpan. */
+    private void showTambahItemDialog() {
+        if (!ensureResepHeader()) return;
+
+        // ── warna tema ──
+        java.awt.Color clrPrimary   = new java.awt.Color(25, 118, 210);
+        java.awt.Color clrSuccess   = new java.awt.Color(46, 125,  50);
+        java.awt.Color clrSuccessDk = new java.awt.Color(27,  94,  32);
+        java.awt.Color clrOrange    = new java.awt.Color(230, 81,   0);
+        java.awt.Color clrOrangeDk  = new java.awt.Color(191, 54,   12);
+        java.awt.Color clrBg        = new java.awt.Color(245, 247, 250);
+        java.awt.Color clrCard      = java.awt.Color.WHITE;
+        java.awt.Color clrBorder    = new java.awt.Color(207, 216, 220);
+        java.awt.Color clrRowEven   = new java.awt.Color(235, 245, 255);
+        java.awt.Color clrStageEven = new java.awt.Color(232, 245, 233);
+        java.awt.Font  fntLabel     = new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12);
+        java.awt.Font  fntField     = new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13);
+        java.awt.Font  fntBtn       = new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13);
+
+        javax.swing.border.Border fieldBorder = javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(clrBorder, 1),
+            javax.swing.BorderFactory.createEmptyBorder(5, 8, 5, 8));
+
+        java.util.function.Function<String, javax.swing.JLabel> mkLbl = txt -> {
+            javax.swing.JLabel l = new javax.swing.JLabel(txt);
+            l.setFont(fntLabel); l.setForeground(new java.awt.Color(55, 71, 79));
+            return l;
+        };
+
+        // ── helper buat tombol rounded ──
+        java.util.function.BiFunction<String, java.awt.Color, javax.swing.JButton> mkBtn =
+            (label, bg) -> new javax.swing.JButton(label) {
+                @Override protected void paintComponent(java.awt.Graphics g) {
+                    java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                    g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(getModel().isRollover() ? bg.darker() : bg);
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                    g2.dispose(); super.paintComponent(g);
+                }
+            };
+
+        // ── state obat dipilih ──
+        final String[] selKode   = {""};
+        final String[] selNama   = {""};
+        final String[] selSatuan = {""};
+
+        // ── field input ──
+        javax.swing.JTextField tfCari   = new javax.swing.JTextField(22);
+        tfCari.setFont(fntField); tfCari.setBorder(fieldBorder); tfCari.setBackground(clrCard);
+        javax.swing.JTextField tfJml    = new javax.swing.JTextField("1", 6);
+        tfJml.setFont(fntField); tfJml.setBorder(fieldBorder); tfJml.setBackground(clrCard);
+        tfJml.setPreferredSize(new java.awt.Dimension(75, 33));
+        tfJml.setMinimumSize(new java.awt.Dimension(60, 30));
+        javax.swing.JTextField tfSatuan = new javax.swing.JTextField(8);
+        tfSatuan.setFont(fntField); tfSatuan.setBorder(fieldBorder); tfSatuan.setBackground(clrCard);
+        tfSatuan.setPreferredSize(new java.awt.Dimension(85, 33));
+        tfSatuan.setMinimumSize(new java.awt.Dimension(70, 30));
+        javax.swing.JTextField tfAturan = new javax.swing.JTextField(22);
+        tfAturan.setFont(fntField); tfAturan.setBorder(fieldBorder); tfAturan.setBackground(clrCard);
+
+        javax.swing.JLabel lblPilih = new javax.swing.JLabel("Belum dipilih — cari dan klik obat di tabel");
+        lblPilih.setFont(new java.awt.Font("Segoe UI", java.awt.Font.ITALIC, 12));
+        lblPilih.setForeground(new java.awt.Color(120, 120, 120));
+
+        // ── tabel hasil cari ──
+        javax.swing.table.DefaultTableModel tmCari = new javax.swing.table.DefaultTableModel(
+            new Object[][]{}, new Object[]{"Kode", "Nama Obat", "Satuan", "Stok"}
+        ) { @Override public boolean isCellEditable(int r, int c) { return false; } };
+        javax.swing.JTable tbCari = new javax.swing.JTable(tmCari);
+        tbCari.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        tbCari.setRowHeight(22); tbCari.setShowHorizontalLines(true);
+        tbCari.setGridColor(new java.awt.Color(225, 230, 235));
+        tbCari.setSelectionBackground(new java.awt.Color(179, 215, 255));
+        tbCari.setSelectionForeground(java.awt.Color.BLACK);
+        tbCari.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tbCari.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        tbCari.getTableHeader().setBackground(clrPrimary);
+        tbCari.getTableHeader().setForeground(java.awt.Color.WHITE);
+        tbCari.getTableHeader().setReorderingAllowed(false);
+        tbCari.getColumnModel().getColumn(0).setPreferredWidth(75);
+        tbCari.getColumnModel().getColumn(1).setPreferredWidth(240);
+        tbCari.getColumnModel().getColumn(2).setPreferredWidth(55);
+        tbCari.getColumnModel().getColumn(3).setPreferredWidth(50);
+        javax.swing.table.TableCellRenderer zebraR = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override public java.awt.Component getTableCellRendererComponent(
+                    javax.swing.JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+                java.awt.Component comp = super.getTableCellRendererComponent(t, v, sel, foc, r, c);
+                if (!sel) comp.setBackground(r % 2 == 0 ? clrCard : clrRowEven);
+                return comp;
+            }
+        };
+        for (int ci = 0; ci < tbCari.getColumnCount(); ci++) tbCari.getColumnModel().getColumn(ci).setCellRenderer(zebraR);
+        javax.swing.JScrollPane spCari = new javax.swing.JScrollPane(tbCari);
+        spCari.setBorder(javax.swing.BorderFactory.createLineBorder(clrBorder, 1));
+        spCari.setPreferredSize(new java.awt.Dimension(460, 130));
+
+        // ── tabel staging (keranjang) ──
+        javax.swing.table.DefaultTableModel tmStage = new javax.swing.table.DefaultTableModel(
+            new Object[][]{}, new Object[]{"Nama Obat", "Jml", "Satuan", "Aturan Pakai"}
+        ) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        // data tersembunyi (kode) disimpan di list terpisah
+        java.util.List<String> stageKode = new java.util.ArrayList<>();
+        java.util.List<String> stageNama = new java.util.ArrayList<>();
+
+        javax.swing.JTable tbStage = new javax.swing.JTable(tmStage);
+        tbStage.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        tbStage.setRowHeight(22); tbStage.setShowHorizontalLines(true);
+        tbStage.setGridColor(new java.awt.Color(200, 230, 200));
+        tbStage.setSelectionBackground(new java.awt.Color(165, 214, 167));
+        tbStage.setSelectionForeground(java.awt.Color.BLACK);
+        tbStage.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tbStage.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        tbStage.getTableHeader().setBackground(new java.awt.Color(46, 125, 50));
+        tbStage.getTableHeader().setForeground(java.awt.Color.WHITE);
+        tbStage.getTableHeader().setReorderingAllowed(false);
+        tbStage.getColumnModel().getColumn(0).setPreferredWidth(200);
+        tbStage.getColumnModel().getColumn(1).setPreferredWidth(40);
+        tbStage.getColumnModel().getColumn(2).setPreferredWidth(55);
+        tbStage.getColumnModel().getColumn(3).setPreferredWidth(120);
+        javax.swing.table.TableCellRenderer zebraG = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override public java.awt.Component getTableCellRendererComponent(
+                    javax.swing.JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+                java.awt.Component comp = super.getTableCellRendererComponent(t, v, sel, foc, r, c);
+                if (!sel) comp.setBackground(r % 2 == 0 ? clrCard : clrStageEven);
+                return comp;
+            }
+        };
+        for (int ci = 0; ci < tbStage.getColumnCount(); ci++) tbStage.getColumnModel().getColumn(ci).setCellRenderer(zebraG);
+        javax.swing.JScrollPane spStage = new javax.swing.JScrollPane(tbStage);
+        spStage.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(165, 214, 167), 1));
+        spStage.setPreferredSize(new java.awt.Dimension(460, 100));
+
+        // ── label counter staging ──
+        javax.swing.JLabel lblCounter = new javax.swing.JLabel("0 obat dalam daftar");
+        lblCounter.setFont(new java.awt.Font("Segoe UI", java.awt.Font.ITALIC, 11));
+        lblCounter.setForeground(new java.awt.Color(46, 125, 50));
+
+        // ── fungsi cari ──
+        Runnable doSearch = () -> {
+            String kw = tfCari.getText().trim();
+            while (tmCari.getRowCount() > 0) tmCari.removeRow(0);
+            if (kw.isEmpty()) return;
+            try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                    "SELECT tb.kode_brng, tb.nama_brng, tb.kode_sat2 AS satuan, " +
+                    "COALESCE(tb.stok,0)*COALESCE(tb.isi,1)*COALESCE(tb.kapasitas,1) AS stok " +
+                    "FROM tokobarang tb " +
+                    "WHERE tb.status='1' AND (tb.nama_brng LIKE ? OR tb.kode_brng LIKE ?) " +
+                    "ORDER BY tb.nama_brng LIMIT 80")) {
+                String like = "%" + kw + "%";
+                ps.setString(1, like); ps.setString(2, like);
+                java.sql.ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    tmCari.addRow(new Object[]{
+                        rs.getString("kode_brng"), rs.getString("nama_brng"),
+                        rs.getString("satuan"),    rs.getDouble("stok")
+                    });
+                }
+            } catch (Exception ex) { System.err.println("[CARI] " + ex.getMessage()); }
+        };
+
+        // pilih baris hasil cari → isi field
+        tbCari.getSelectionModel().addListSelectionListener(ev -> {
+            if (ev.getValueIsAdjusting()) return;
+            int row = tbCari.getSelectedRow();
+            if (row < 0) return;
+            selKode[0]   = String.valueOf(tmCari.getValueAt(row, 0));
+            selNama[0]   = String.valueOf(tmCari.getValueAt(row, 1));
+            selSatuan[0] = String.valueOf(tmCari.getValueAt(row, 2));
+            lblPilih.setText("\u2726  " + selNama[0] + "  (" + selKode[0] + ")");
+            lblPilih.setForeground(clrPrimary);
+            lblPilih.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+            if (tfSatuan.getText().trim().isEmpty()) tfSatuan.setText(selSatuan[0]);
+            tfJml.requestFocus(); tfJml.selectAll();
         });
 
-        FormInput.add(lblJenis);
-        FormInput.add(cmbJenisResep);
+        tfCari.addActionListener(e -> {
+            doSearch.run();
+            if (tmCari.getRowCount() > 0) tbCari.setRowSelectionInterval(0, 0);
+        });
+
+        // ── tombol Cari ──
+        javax.swing.JButton btnCari = mkBtn.apply("Cari", clrPrimary);
+        btnCari.setFont(fntBtn); btnCari.setForeground(java.awt.Color.WHITE);
+        btnCari.setContentAreaFilled(false); btnCari.setOpaque(false);
+        btnCari.setBorderPainted(false); btnCari.setFocusPainted(false);
+        btnCari.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnCari.setPreferredSize(new java.awt.Dimension(78, 33));
+        btnCari.addActionListener(e -> doSearch.run());
+
+        // ── tombol + Tambah ke List (oranye) ──
+        javax.swing.JButton btnAddList = mkBtn.apply("  + Tambah ke List", clrOrange);
+        btnAddList.setFont(fntBtn); btnAddList.setForeground(java.awt.Color.WHITE);
+        btnAddList.setContentAreaFilled(false); btnAddList.setOpaque(false);
+        btnAddList.setBorderPainted(false); btnAddList.setFocusPainted(false);
+        btnAddList.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnAddList.setPreferredSize(new java.awt.Dimension(175, 32));
+
+        // ── tombol Hapus Baris (dari staging) ──
+        javax.swing.JButton btnHapusStage = mkBtn.apply("  Hapus Baris", new java.awt.Color(198, 40, 40));
+        btnHapusStage.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        btnHapusStage.setForeground(java.awt.Color.WHITE);
+        btnHapusStage.setContentAreaFilled(false); btnHapusStage.setOpaque(false);
+        btnHapusStage.setBorderPainted(false); btnHapusStage.setFocusPainted(false);
+        btnHapusStage.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnHapusStage.setPreferredSize(new java.awt.Dimension(120, 28));
+
+        // aksi Tambah ke List
+        btnAddList.addActionListener(e -> {
+            String kode = selKode[0].trim();
+            String nama = selNama[0].trim();
+            if (kode.isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(null,
+                    "Pilih obat terlebih dahulu dari tabel hasil pencarian.",
+                    "Perhatian", javax.swing.JOptionPane.WARNING_MESSAGE);
+                tfCari.requestFocus(); return;
+            }
+            double jml = 0;
+            try { jml = Double.parseDouble(tfJml.getText().trim().replace(",", ".")); }
+            catch (NumberFormatException ignored) {}
+            if (jml <= 0) {
+                javax.swing.JOptionPane.showMessageDialog(null,
+                    "Jumlah harus lebih dari 0.", "Perhatian", javax.swing.JOptionPane.WARNING_MESSAGE);
+                tfJml.requestFocus(); tfJml.selectAll(); return;
+            }
+            String satuan = tfSatuan.getText().trim();
+            String aturan = tfAturan.getText().trim();
+            // tambah ke staging
+            stageKode.add(kode);
+            stageNama.add(nama);
+            tmStage.addRow(new Object[]{nama, jml, satuan, aturan});
+            int total = tmStage.getRowCount();
+            lblCounter.setText(total + " obat dalam daftar");
+            // reset field untuk input berikutnya
+            selKode[0] = ""; selNama[0] = ""; selSatuan[0] = "";
+            lblPilih.setText("Belum dipilih — cari dan klik obat di tabel");
+            lblPilih.setForeground(new java.awt.Color(120, 120, 120));
+            lblPilih.setFont(new java.awt.Font("Segoe UI", java.awt.Font.ITALIC, 12));
+            tfJml.setText("1"); tfSatuan.setText(""); tfAturan.setText("");
+            tbCari.clearSelection();
+            tfCari.setText(""); tfCari.requestFocus();
+        });
+
+        // aksi Hapus dari staging
+        btnHapusStage.addActionListener(e -> {
+            int row = tbStage.getSelectedRow();
+            if (row < 0) {
+                javax.swing.JOptionPane.showMessageDialog(null,
+                    "Pilih baris yang ingin dihapus dari daftar.", "Perhatian",
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            tmStage.removeRow(row);
+            stageKode.remove(row);
+            stageNama.remove(row);
+            lblCounter.setText(tmStage.getRowCount() + " obat dalam daftar");
+        });
+
+        // ── panel cari (search bar) ──
+        javax.swing.JPanel pCariBar = new javax.swing.JPanel(new java.awt.BorderLayout(6, 0));
+        pCariBar.setBackground(clrCard);
+        pCariBar.add(tfCari, java.awt.BorderLayout.CENTER);
+        pCariBar.add(btnCari, java.awt.BorderLayout.EAST);
+
+        // ── panel input obat (kiri: label, kanan: fields inline) ──
+        javax.swing.JPanel pInput = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        pInput.setBackground(clrCard);
+        java.awt.GridBagConstraints gc = new java.awt.GridBagConstraints();
+        gc.insets = new java.awt.Insets(4, 0, 4, 8); gc.anchor = java.awt.GridBagConstraints.WEST;
+
+        gc.gridx=0; gc.gridy=0; gc.weightx=0; gc.fill=java.awt.GridBagConstraints.NONE;
+        pInput.add(mkLbl.apply("Jumlah"), gc);
+        gc.gridx=1; gc.weightx=0; gc.fill=java.awt.GridBagConstraints.HORIZONTAL;
+        pInput.add(tfJml, gc);
+        gc.gridx=2; gc.weightx=0; gc.fill=java.awt.GridBagConstraints.NONE;
+        pInput.add(mkLbl.apply("Satuan"), gc);
+        gc.gridx=3; gc.weightx=0; gc.fill=java.awt.GridBagConstraints.HORIZONTAL;
+        pInput.add(tfSatuan, gc);
+        gc.gridx=4; gc.weightx=0;
+        pInput.add(mkLbl.apply("Aturan Pakai"), gc);
+        gc.gridx=5; gc.weightx=1; gc.fill=java.awt.GridBagConstraints.HORIZONTAL;
+        pInput.add(tfAturan, gc);
+        gc.gridx=6; gc.weightx=0; gc.fill=java.awt.GridBagConstraints.NONE;
+        gc.insets=new java.awt.Insets(4, 10, 4, 0);
+        pInput.add(btnAddList, gc);
+
+        // ── panel atas (cari + hasil + dipilih + input) ──
+        javax.swing.JPanel pTop = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        pTop.setBackground(clrCard);
+        pTop.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(clrBorder, 1),
+            javax.swing.BorderFactory.createEmptyBorder(12, 12, 12, 12)));
+        java.awt.GridBagConstraints gt = new java.awt.GridBagConstraints();
+        gt.insets=new java.awt.Insets(4, 0, 4, 0); gt.fill=java.awt.GridBagConstraints.HORIZONTAL; gt.weightx=1;
+
+        gt.gridx=0; gt.gridy=0; pTop.add(mkLbl.apply("Cari Obat"), gt);
+        gt.gridy=1; pTop.add(pCariBar, gt);
+        gt.gridy=2; gt.fill=java.awt.GridBagConstraints.BOTH; gt.weighty=1;
+        pTop.add(spCari, gt);
+        gt.gridy=3; gt.fill=java.awt.GridBagConstraints.HORIZONTAL; gt.weighty=0;
+        gt.insets=new java.awt.Insets(6, 0, 4, 0);
+        pTop.add(lblPilih, gt);
+        gt.gridy=4; gt.insets=new java.awt.Insets(0,0,0,0);
+        pTop.add(new javax.swing.JSeparator(), gt);
+        gt.gridy=5; gt.insets=new java.awt.Insets(6, 0, 2, 0);
+        pTop.add(pInput, gt);
+
+        // ── panel staging (bawah) ──
+        javax.swing.JPanel pStageHeader = new javax.swing.JPanel(new java.awt.BorderLayout());
+        pStageHeader.setBackground(clrCard);
+        javax.swing.JLabel lblStageTitle = new javax.swing.JLabel("  Daftar Obat yang Akan Disimpan");
+        lblStageTitle.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        lblStageTitle.setForeground(new java.awt.Color(46, 125, 50));
+        pStageHeader.add(lblStageTitle, java.awt.BorderLayout.WEST);
+        pStageHeader.add(lblCounter,    java.awt.BorderLayout.EAST);
+
+        javax.swing.JPanel pStageBottom = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 2));
+        pStageBottom.setBackground(clrCard);
+        pStageBottom.add(btnHapusStage);
+
+        javax.swing.JPanel pStage = new javax.swing.JPanel(new java.awt.BorderLayout(0, 4));
+        pStage.setBackground(clrCard);
+        pStage.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(new java.awt.Color(165, 214, 167), 1),
+            javax.swing.BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+        pStage.add(pStageHeader,  java.awt.BorderLayout.NORTH);
+        pStage.add(spStage,       java.awt.BorderLayout.CENTER);
+        pStage.add(pStageBottom,  java.awt.BorderLayout.SOUTH);
+
+        // ── header bar ──
+        javax.swing.JPanel pTitleBar = new javax.swing.JPanel(new java.awt.BorderLayout()) {
+            @Override protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g;
+                g2.setColor(clrPrimary); g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        pTitleBar.setPreferredSize(new java.awt.Dimension(0, 52));
+        pTitleBar.setOpaque(false);
+        javax.swing.JLabel lblTitle = new javax.swing.JLabel("  \u2726  Tambah Obat Non Racikan");
+        lblTitle.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        lblTitle.setForeground(java.awt.Color.WHITE);
+        lblTitle.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 12, 0, 0));
+        pTitleBar.add(lblTitle, java.awt.BorderLayout.CENTER);
+
+        // ── dialog ──
+        javax.swing.JDialog dlg = new javax.swing.JDialog(
+            javax.swing.SwingUtilities.getWindowAncestor(this),
+            "Tambah Obat Non Racikan",
+            java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+
+        // ── tombol Simpan Semua ──
+        javax.swing.JButton btnSimpanSemua = mkBtn.apply("  Simpan Semua ke Resep \u25B6", clrSuccess);
+        btnSimpanSemua.setFont(fntBtn); btnSimpanSemua.setForeground(java.awt.Color.WHITE);
+        btnSimpanSemua.setContentAreaFilled(false); btnSimpanSemua.setOpaque(false);
+        btnSimpanSemua.setBorderPainted(false); btnSimpanSemua.setFocusPainted(false);
+        btnSimpanSemua.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnSimpanSemua.setPreferredSize(new java.awt.Dimension(210, 36));
+
+        // ── tombol Batal ──
+        javax.swing.JButton btnBatal = mkBtn.apply("  Batal", new java.awt.Color(158, 158, 158));
+        btnBatal.setFont(fntBtn); btnBatal.setForeground(java.awt.Color.WHITE);
+        btnBatal.setContentAreaFilled(false); btnBatal.setOpaque(false);
+        btnBatal.setBorderPainted(false); btnBatal.setFocusPainted(false);
+        btnBatal.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnBatal.setPreferredSize(new java.awt.Dimension(100, 36));
+        btnBatal.addActionListener(e -> dlg.dispose());
+
+        javax.swing.JPanel pBtn = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 10));
+        pBtn.setBackground(clrBg);
+        pBtn.setBorder(javax.swing.BorderFactory.createMatteBorder(1, 0, 0, 0, clrBorder));
+        pBtn.add(btnBatal); pBtn.add(btnSimpanSemua);
+
+        javax.swing.JPanel mainPanel = new javax.swing.JPanel(new java.awt.BorderLayout(0, 10));
+        mainPanel.setBackground(clrBg);
+        mainPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(12, 14, 0, 14));
+        mainPanel.add(pTop,   java.awt.BorderLayout.CENTER);
+        mainPanel.add(pStage, java.awt.BorderLayout.SOUTH);
+
+        dlg.getContentPane().setBackground(clrBg);
+        dlg.getContentPane().setLayout(new java.awt.BorderLayout());
+        dlg.getContentPane().add(pTitleBar, java.awt.BorderLayout.NORTH);
+        dlg.getContentPane().add(mainPanel, java.awt.BorderLayout.CENTER);
+        dlg.getContentPane().add(pBtn,      java.awt.BorderLayout.SOUTH);
+        dlg.setSize(600, 660);
+        dlg.setMinimumSize(new java.awt.Dimension(560, 580));
+        dlg.setLocationRelativeTo(this);
+
+        // ── aksi Simpan Semua ──
+        btnSimpanSemua.addActionListener(e -> {
+            if (tmStage.getRowCount() == 0) {
+                javax.swing.JOptionPane.showMessageDialog(dlg,
+                    "Daftar masih kosong.\nTambahkan minimal 1 obat ke daftar terlebih dahulu.",
+                    "Perhatian", javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            try {
+                koneksi.setAutoCommit(false);
+                try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                        "INSERT INTO resep_toko_detail " +
+                        "(no_resep, kode_brng, jml, satuan, aturan_pakai, keterangan, nama_racikan) " +
+                        "VALUES (?, ?, ?, ?, ?, 'Non Racikan', NULL)")) {
+                    for (int ri = 0; ri < tmStage.getRowCount(); ri++) {
+                        double jml = 0;
+                        try { jml = Double.parseDouble(String.valueOf(tmStage.getValueAt(ri, 1))); }
+                        catch (Exception ignored) {}
+                        String sat = String.valueOf(tmStage.getValueAt(ri, 2));
+                        String atr = String.valueOf(tmStage.getValueAt(ri, 3));
+                        ps.setString(1, currentPreviewNoResep);
+                        ps.setString(2, stageKode.get(ri));
+                        ps.setDouble(3, jml);
+                        ps.setString(4, sat.equals("null") || sat.isEmpty() ? null : sat);
+                        ps.setString(5, atr.equals("null") || atr.isEmpty() ? null : atr);
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                koneksi.commit();
+                dlg.dispose();
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    populateResepTokoCombo();
+                    for (int ci = 0; ci < cmbResepToko.getItemCount(); ci++) {
+                        if (((String) cmbResepToko.getItemAt(ci)).startsWith(currentPreviewNoResep)) {
+                            cmbResepToko.setSelectedIndex(ci); break;
+                        }
+                    }
+                    loadResepTokoPreview(currentPreviewNoResep, true);
+                });
+            } catch (Exception ex) {
+                try { koneksi.rollback(); } catch (Exception ignored) {}
+                String pesanTeknis = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+                String pesanUser = pesanTeknis.toLowerCase().contains("connect")
+                    ? "Koneksi database terputus.\nPeriksa koneksi lalu coba simpan ulang."
+                    : pesanTeknis.toLowerCase().contains("duplicate")
+                        ? "Salah satu obat sudah ada di resep ini.\nCek daftar dan hapus yang duplikat."
+                        : "Gagal menyimpan obat. Coba ulangi.\nJika masih gagal, hubungi administrator.";
+                javax.swing.JOptionPane.showMessageDialog(dlg, pesanUser, "Gagal Simpan", javax.swing.JOptionPane.ERROR_MESSAGE);
+                fungsi.TelegramNotifier.sendError("Resep Dokter", akses.getkode(),
+                    "Gagal simpan batch non-racikan: " + pesanTeknis,
+                    "No Resep: " + currentPreviewNoResep + " | Pasien: " + TNoRw.getText());
+            } finally {
+                try { koneksi.setAutoCommit(true); } catch (Exception ignored) {}
+            }
+        });
+
+        // navigasi Enter: Jumlah → Satuan → Aturan → Tambah ke List
+        tfJml.addActionListener(e -> tfSatuan.requestFocus());
+        tfSatuan.addActionListener(e -> tfAturan.requestFocus());
+        tfAturan.addActionListener(e -> btnAddList.doClick());
+
+        tfCari.requestFocusInWindow();
+        dlg.setVisible(true);
     }
-    
+
+    /** Dialog tambah racikan — input bebas via textarea (catatan dokter). */
+    private void showTambahRacikanDialog() {
+
+        // ── warna tema ──
+        java.awt.Color clrPrimary   = new java.awt.Color(25, 118, 210);   // biru
+        java.awt.Color clrPrimaryDk = new java.awt.Color(13,  71, 161);   // biru gelap (hover)
+        java.awt.Color clrSuccess   = new java.awt.Color(46, 125,  50);   // hijau
+        java.awt.Color clrSuccessDk = new java.awt.Color(27,  94,  32);
+        java.awt.Color clrBg        = new java.awt.Color(245, 247, 250);  // abu sangat terang
+        java.awt.Color clrCard      = java.awt.Color.WHITE;
+        java.awt.Color clrBorder    = new java.awt.Color(207, 216, 220);
+        java.awt.Color clrHint      = new java.awt.Color(160, 160, 160);
+        java.awt.Font  fntLabel     = new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12);
+        java.awt.Font  fntField     = new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13);
+        java.awt.Font  fntBtn       = new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13);
+
+        // ── helper: buat field dengan border flat ──
+        javax.swing.border.Border fieldBorder = javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(clrBorder, 1),
+            javax.swing.BorderFactory.createEmptyBorder(5, 8, 5, 8));
+
+        // ── fields ──
+        javax.swing.JTextField tfNamaRacikan = new javax.swing.JTextField("Racikan 1", 22);
+        tfNamaRacikan.setFont(fntField); tfNamaRacikan.setBorder(fieldBorder);
+        tfNamaRacikan.setBackground(clrCard);
+
+        javax.swing.JTextField tfJumlah = new javax.swing.JTextField("1", 8);
+        tfJumlah.setFont(fntField); tfJumlah.setBorder(fieldBorder);
+        tfJumlah.setBackground(clrCard);
+
+        javax.swing.JTextField tfSigna = new javax.swing.JTextField(22);
+        tfSigna.setFont(fntField); tfSigna.setBorder(fieldBorder);
+        tfSigna.setBackground(clrCard);
+
+        // ── textarea komposisi ──
+        javax.swing.JTextArea taKomp = new javax.swing.JTextArea(9, 38);
+        taKomp.setFont(fntField);
+        taKomp.setLineWrap(true);
+        taKomp.setWrapStyleWord(true);
+        taKomp.setBackground(clrCard);
+        taKomp.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        String hint = "Ketik komposisi, contoh:\nParacetamol 500mg  3 tab\nAmbroxol 30mg      3 tab\nCTM 4mg            3 tab";
+        taKomp.setForeground(clrHint);
+        taKomp.setText(hint);
+        taKomp.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if (taKomp.getForeground().equals(clrHint)) {
+                    taKomp.setText(""); taKomp.setForeground(java.awt.Color.BLACK);
+                }
+            }
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (taKomp.getText().trim().isEmpty()) {
+                    taKomp.setForeground(clrHint); taKomp.setText(hint);
+                }
+            }
+        });
+
+        javax.swing.JScrollPane spKomp = new javax.swing.JScrollPane(taKomp);
+        spKomp.setBorder(javax.swing.BorderFactory.createLineBorder(clrBorder, 1));
+
+        // ── helper buat label ──
+        java.util.function.Function<String, javax.swing.JLabel> mkLbl = txt -> {
+            javax.swing.JLabel l = new javax.swing.JLabel(txt);
+            l.setFont(fntLabel);
+            l.setForeground(new java.awt.Color(55, 71, 79));
+            return l;
+        };
+
+        // ── panel form (card putih) ──
+        javax.swing.JPanel pForm = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        pForm.setBackground(clrCard);
+        pForm.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(clrBorder, 1),
+            javax.swing.BorderFactory.createEmptyBorder(16, 16, 16, 16)));
+
+        java.awt.GridBagConstraints gc = new java.awt.GridBagConstraints();
+        gc.insets  = new java.awt.Insets(5, 0, 5, 12);
+        gc.anchor  = java.awt.GridBagConstraints.WEST;
+        gc.fill    = java.awt.GridBagConstraints.NONE;
+
+        // baris 0: Nama Racikan
+        gc.gridx=0; gc.gridy=0; gc.weightx=0; pForm.add(mkLbl.apply("Nama Racikan"), gc);
+        gc.gridx=1; gc.weightx=1; gc.fill=java.awt.GridBagConstraints.HORIZONTAL;
+        pForm.add(tfNamaRacikan, gc);
+
+        // baris 1: Jumlah
+        gc.gridx=0; gc.gridy=1; gc.weightx=0; gc.fill=java.awt.GridBagConstraints.NONE;
+        pForm.add(mkLbl.apply("Jumlah (bungkus/kapsul)"), gc);
+        gc.gridx=1; gc.weightx=1; gc.fill=java.awt.GridBagConstraints.HORIZONTAL;
+        pForm.add(tfJumlah, gc);
+
+        // baris 2: Signa
+        gc.gridx=0; gc.gridy=2; gc.fill=java.awt.GridBagConstraints.NONE;
+        pForm.add(mkLbl.apply("Signa / Aturan Pakai"), gc);
+        gc.gridx=1; gc.fill=java.awt.GridBagConstraints.HORIZONTAL;
+        pForm.add(tfSigna, gc);
+
+        // baris 3: label Komposisi
+        gc.gridx=0; gc.gridy=3; gc.gridwidth=2; gc.fill=java.awt.GridBagConstraints.NONE;
+        gc.insets = new java.awt.Insets(14, 0, 4, 0);
+        pForm.add(mkLbl.apply("Komposisi Racikan"), gc);
+
+        // baris 4: textarea
+        gc.gridy=4; gc.fill=java.awt.GridBagConstraints.BOTH; gc.weighty=1;
+        gc.insets = new java.awt.Insets(0, 0, 0, 0);
+        pForm.add(spKomp, gc);
+
+        // ── header bar berwarna ──
+        javax.swing.JPanel pTitleBar = new javax.swing.JPanel(new java.awt.BorderLayout()) {
+            @Override protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g;
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(clrPrimary);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        pTitleBar.setPreferredSize(new java.awt.Dimension(0, 52));
+        pTitleBar.setOpaque(false);
+        javax.swing.JLabel lblTitle = new javax.swing.JLabel("  \u2726  Tambah Resep Racikan");
+        lblTitle.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        lblTitle.setForeground(java.awt.Color.WHITE);
+        lblTitle.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 12, 0, 0));
+        pTitleBar.add(lblTitle, java.awt.BorderLayout.CENTER);
+
+        // ── tombol Simpan ──
+        javax.swing.JButton btnSimpanR = new javax.swing.JButton("  Simpan Racikan") {
+            @Override protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? clrSuccessDk : clrSuccess);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btnSimpanR.setFont(fntBtn);
+        btnSimpanR.setForeground(java.awt.Color.WHITE);
+        btnSimpanR.setContentAreaFilled(false);
+        btnSimpanR.setOpaque(false);
+        btnSimpanR.setBorderPainted(false);
+        btnSimpanR.setFocusPainted(false);
+        btnSimpanR.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnSimpanR.setPreferredSize(new java.awt.Dimension(160, 36));
+
+        // ── tombol Batal ──
+        javax.swing.JButton btnBatal = new javax.swing.JButton("  Batal") {
+            @Override protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover()
+                    ? new java.awt.Color(224, 224, 224)
+                    : new java.awt.Color(238, 238, 238));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btnBatal.setFont(fntBtn);
+        btnBatal.setForeground(new java.awt.Color(66, 66, 66));
+        btnBatal.setContentAreaFilled(false);
+        btnBatal.setOpaque(false);
+        btnBatal.setBorderPainted(false);
+        btnBatal.setFocusPainted(false);
+        btnBatal.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnBatal.setPreferredSize(new java.awt.Dimension(100, 36));
+
+        // ── panel tombol ──
+        javax.swing.JPanel pBtn = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 10));
+        pBtn.setBackground(clrBg);
+        pBtn.setBorder(javax.swing.BorderFactory.createMatteBorder(1, 0, 0, 0, clrBorder));
+        pBtn.add(btnBatal);
+        pBtn.add(btnSimpanR);
+
+        // ── main panel ──
+        javax.swing.JPanel mainPanel = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
+        mainPanel.setBackground(clrBg);
+        mainPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(12, 14, 0, 14));
+        mainPanel.add(pForm, java.awt.BorderLayout.CENTER);
+
+        // ── dialog ──
+        javax.swing.JDialog dlg = new javax.swing.JDialog(
+            javax.swing.SwingUtilities.getWindowAncestor(this),
+            "Tambah Racikan",
+            java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setUndecorated(false);
+        dlg.getContentPane().setBackground(clrBg);
+        dlg.getContentPane().setLayout(new java.awt.BorderLayout());
+        dlg.getContentPane().add(pTitleBar,  java.awt.BorderLayout.NORTH);
+        dlg.getContentPane().add(mainPanel,  java.awt.BorderLayout.CENTER);
+        dlg.getContentPane().add(pBtn,       java.awt.BorderLayout.SOUTH);
+        dlg.setSize(520, 500);
+        dlg.setMinimumSize(new java.awt.Dimension(480, 460));
+        dlg.setLocationRelativeTo(this);
+
+        // ── aksi Simpan ──
+        btnSimpanR.addActionListener(e -> {
+            String namaR    = tfNamaRacikan.getText().trim();
+            String signa    = tfSigna.getText().trim();
+            String teksKomp = taKomp.getForeground().equals(clrHint) ? "" : taKomp.getText().trim();
+            double jml;
+            try { jml = Double.parseDouble(tfJumlah.getText().trim().replace(",", ".")); }
+            catch (NumberFormatException ex2) { jml = 0; }
+
+            if (namaR.isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(dlg, "Nama racikan tidak boleh kosong.");
+                return;
+            }
+            if (jml <= 0) {
+                javax.swing.JOptionPane.showMessageDialog(dlg, "Jumlah harus lebih dari 0.");
+                tfJumlah.requestFocus(); tfJumlah.selectAll();
+                return;
+            }
+            if (teksKomp.isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(dlg, "Komposisi tidak boleh kosong.");
+                return;
+            }
+            // pastikan header resep ada — baru dibuat di sini, bukan saat dialog dibuka
+            if (!ensureResepHeader()) return;
+
+            final double jmlFinal = jml;
+            try {
+                koneksi.setAutoCommit(false);
+
+                try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                        "INSERT INTO resep_toko_detail (no_resep, kode_brng, jml, satuan, aturan_pakai, keterangan, nama_racikan) " +
+                        "VALUES (?, '', ?, NULL, ?, ?, ?)")) {
+                    ps.setString(1, currentPreviewNoResep);
+                    ps.setDouble(2, jmlFinal);
+                    ps.setString(3, signa.isEmpty() ? null : signa);
+                    ps.setString(4, teksKomp);
+                    ps.setString(5, namaR);
+                    ps.executeUpdate();
+                }
+
+                koneksi.commit();
+                tmPreviewToko.addRow(new Object[]{"[Racikan]", namaR, jmlFinal, "", signa, teksKomp});
+                btnSimpanPreview.setEnabled(true);
+                dlg.dispose();
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    populateResepTokoCombo();
+                    for (int ci = 0; ci < cmbResepToko.getItemCount(); ci++) {
+                        if (((String) cmbResepToko.getItemAt(ci)).startsWith(currentPreviewNoResep)) {
+                            cmbResepToko.setSelectedIndex(ci); break;
+                        }
+                    }
+                    loadResepTokoPreview(currentPreviewNoResep, true);
+                });
+
+            } catch (Exception ex) {
+                try { koneksi.rollback(); } catch (Exception ignored) {}
+
+                // pesan user-friendly
+                String pesanUser;
+                String pesanTeknis = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+                if (pesanTeknis.toLowerCase().contains("duplicate")) {
+                    pesanUser = "Racikan ini sepertinya sudah tersimpan.\nCoba refresh atau pilih resep dari daftar.";
+                } else if (pesanTeknis.toLowerCase().contains("connect") || pesanTeknis.toLowerCase().contains("connection")) {
+                    pesanUser = "Koneksi database terputus.\nPeriksa koneksi lalu coba simpan ulang.";
+                } else {
+                    pesanUser = "Gagal menyimpan racikan. Coba ulangi.\nJika masih gagal, hubungi administrator.";
+                }
+                javax.swing.JOptionPane.showMessageDialog(dlg,
+                    pesanUser, "Gagal Simpan", javax.swing.JOptionPane.ERROR_MESSAGE);
+
+                // kirim notif ke Telegram
+                fungsi.TelegramNotifier.sendError(
+                    "Resep Dokter", akses.getkode(),
+                    "Gagal simpan racikan: " + pesanTeknis,
+                    "No Resep: " + currentPreviewNoResep + " | Racikan: " + namaR + " | Pasien: " + TNoRw.getText()
+                );
+            } finally {
+                try { koneksi.setAutoCommit(true); } catch (Exception ignored) {}
+            }
+        });
+        btnBatal.addActionListener(e -> dlg.dispose());
+
+        // navigasi Enter: Nama → Jumlah → Signa → Komposisi
+        tfNamaRacikan.addActionListener(e -> tfJumlah.requestFocus());
+        tfJumlah.addActionListener(e -> tfSigna.requestFocus());
+        tfSigna.addActionListener(e -> taKomp.requestFocus());
+
+        tfNamaRacikan.requestFocusInWindow();
+        dlg.setVisible(true);
+    }
+
+    /** Lookup nama_brng dan kode_sat dari databarang, isi lblNama dan tfSatuan. */
+    private void lookupNamaBarang(String kode, javax.swing.JLabel lblNama, javax.swing.JTextField tfSatuan) {
+        if (kode == null || kode.isEmpty()) { lblNama.setText("-"); return; }
+        try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                "SELECT nama_brng, kode_sat FROM databarang WHERE kode_brng = ? LIMIT 1")) {
+            ps.setString(1, kode);
+            java.sql.ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                lblNama.setText(rs.getString("nama_brng"));
+                if (tfSatuan.getText().trim().isEmpty()) {
+                    String sat = rs.getString("kode_sat");
+                    if (sat != null) tfSatuan.setText(sat);
+                }
+            } else {
+                lblNama.setText("(tidak ditemukan)");
+                lblNama.setForeground(java.awt.Color.RED);
+            }
+            rs.close();
+        } catch (Exception ex) {
+            lblNama.setText("(error)");
+        }
+    }
+
+    private void initShortcutButtons() {
+        javax.swing.JButton btnFINonRacikan = new javax.swing.JButton("+ Non Racikan") {
+            @Override protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover()
+                    ? new java.awt.Color(13, 71, 161)
+                    : new java.awt.Color(25, 118, 210));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btnFINonRacikan.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        btnFINonRacikan.setForeground(java.awt.Color.WHITE);
+        btnFINonRacikan.setContentAreaFilled(false);
+        btnFINonRacikan.setOpaque(false);
+        btnFINonRacikan.setBorderPainted(false);
+        btnFINonRacikan.setFocusPainted(false);
+        btnFINonRacikan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnFINonRacikan.setBounds(80, 118, 120, 27);
+        btnFINonRacikan.addActionListener(e -> showTambahItemDialog());
+
+        javax.swing.JButton btnFIRacikan = new javax.swing.JButton("+ Racikan") {
+            @Override protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover()
+                    ? new java.awt.Color(106, 27, 154)
+                    : new java.awt.Color(142, 36, 170));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btnFIRacikan.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        btnFIRacikan.setForeground(java.awt.Color.WHITE);
+        btnFIRacikan.setContentAreaFilled(false);
+        btnFIRacikan.setOpaque(false);
+        btnFIRacikan.setBorderPainted(false);
+        btnFIRacikan.setFocusPainted(false);
+        btnFIRacikan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnFIRacikan.setBounds(206, 118, 100, 27);
+        btnFIRacikan.addActionListener(e -> showTambahRacikanDialog());
+
+        FormInput.add(btnFINonRacikan);
+        FormInput.add(btnFIRacikan);
+        FormInput.revalidate();
+        FormInput.repaint();
+    }
+
+    private void hideLegacyInlineRacikanControls() {
+        if (SignaRacikan != null) {
+            SignaRacikan.setVisible(false);
+        }
+        if (LblNRacikan != null) {
+            LblNRacikan.setVisible(false);
+        }
+        if (NamaRacikan != null) {
+            NamaRacikan.setVisible(false);
+        }
+        if (LblSRacik != null) {
+            LblSRacik.setVisible(false);
+        }
+        if (BtnTambahRacikan != null) {
+            BtnTambahRacikan.setVisible(false);
+        }
+        if (jScrollPane3 != null) {
+            jScrollPane3.setVisible(false);
+        }
+    }
+
     private static final int COL_QTY_R      = 0;
 private static final int COL_KODE_R     = 1;
 private static final int COL_SATUAN_R   = 4;
@@ -5205,29 +6475,263 @@ private void commitTableEdits(JTable... tables){
 }
 
 private void tambahRacikan() {
-    if (tbTokoBarang1.isEditing()) try { tbTokoBarang1.getCellEditor().stopCellEditing(); } catch(Exception ignore){}
-
-    String nama = NamaRacikan.getText().trim();
+    String nama  = NamaRacikan.getText().trim();
     String signa = SignaRacikan.getText().trim();
-    if (nama.isEmpty())  { JOptionPane.showMessageDialog(null,"Nama racikan belum diisi.");  return; }
-    if (signa.isEmpty()) { JOptionPane.showMessageDialog(null,"Signa racikan belum diisi."); return; }
+    if (nama.isEmpty())  { JOptionPane.showMessageDialog(null, "Nama racikan belum diisi.");  return; }
+    if (signa.isEmpty()) { JOptionPane.showMessageDialog(null, "Signa racikan belum diisi."); return; }
 
-    boolean ada=false;
-    for (int i=0;i<tbTokoBarang1.getRowCount();i++){
-        double jml = Valid.SetAngka(String.valueOf(tbTokoBarang1.getValueAt(i,0)));
-        if (jml<=0) continue;
-        String kode   = String.valueOf(tbTokoBarang1.getValueAt(i,1));
-        String satuan = String.valueOf(tbTokoBarang1.getValueAt(i,4));
-        if (kode==null || kode.trim().isEmpty()) continue;
-
-        stagedRacikan.add(new RacikanItem(kode,jml,satuan,signa,nama));
-        ada=true;
+    // ambil komposisi dari textarea (jika masih hint → kosong)
+    java.awt.Color hintColor = new java.awt.Color(150, 150, 150);
+    String komp = petunjuk.getForeground().equals(hintColor) ? "" : petunjuk.getText().trim();
+    if (komp.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Ketik komposisi racikan di kolom komposisi.");
+        petunjuk.requestFocus();
+        return;
     }
-    if(!ada){ JOptionPane.showMessageDialog(null,"Isi jumlah minimal 1 item."); return; }
 
-    // kosongkan qty agar siap paket berikutnya (Batuk → Nyeri, dst.)
-    for (int i=0;i<tbTokoBarang1.getRowCount();i++) tbTokoBarang1.setValueAt(0.0,i,0);
-    JOptionPane.showMessageDialog(null,"Racikan \""+nama+"\" ditambahkan. Isi paket berikutnya lalu klik Tambah Racikan lagi.");
+    stagedRacikan.add(new RacikanItem("", 0, null, signa, nama, komp));
+
+    // reset fields untuk racikan berikutnya
+    petunjuk.setForeground(hintColor);
+    petunjuk.setText(HINT_RACIKAN);
+    NamaRacikan.setText("");
+    SignaRacikan.setText("");
+    NamaRacikan.requestFocus();
+    JOptionPane.showMessageDialog(null, "Racikan \"" + nama + "\" ditambahkan.");
+}
+
+/**
+ * Pastikan header resep_toko sudah ada untuk no_resep yang aktif.
+ * Jika belum, INSERT header sekarang. Return true jika berhasil.
+ */
+private boolean ensureResepHeader() {
+    // prioritaskan currentPreviewNoResep, KECUALI resep itu sudah selesai
+    String noResep = NoResep.getText().trim();
+    if (currentPreviewNoResep != null && !currentPreviewNoResep.trim().isEmpty()) {
+        try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                "SELECT COALESCE(status,'baru') AS status FROM resep_toko WHERE no_resep=?")) {
+            ps.setString(1, currentPreviewNoResep.trim());
+            java.sql.ResultSet rs = ps.executeQuery();
+            if (rs.next() && !"selesai".equalsIgnoreCase(rs.getString("status"))) {
+                noResep = currentPreviewNoResep.trim(); // masih aktif, pakai nomor yang sama
+            } else {
+                currentPreviewNoResep = null;
+            }
+            rs.close();
+            // jika selesai atau tidak ditemukan → pakai NoResep.getText() (nomor baru)
+        } catch (Exception ignored) {}
+    }
+    String noRawat = TNoRw.getText().trim();
+    if (noResep.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "No. Resep belum terisi.", "Error", JOptionPane.ERROR_MESSAGE);
+        return false;
+    }
+    try {
+        String statusNoResep = null;
+        // cek apakah header sudah ada sekaligus statusnya
+        try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                "SELECT COALESCE(status,'baru') AS status FROM resep_toko WHERE no_resep = ?")) {
+            ps.setString(1, noResep);
+            java.sql.ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                statusNoResep = rs.getString("status");
+            }
+            rs.close();
+        }
+
+        if (statusNoResep != null) {
+            if (!"selesai".equalsIgnoreCase(statusNoResep)) {
+                // header lama masih aktif — lanjut pakai nomor yang sama
+                currentPreviewNoResep = noResep;
+                populateResepTokoCombo();
+                return true;
+            }
+
+            // header lama sudah selesai — wajib pakai nomor baru
+            if (ChkRM.isSelected()) {
+                emptTeksobat();
+                noResep = NoResep.getText().trim();
+                if (noResep.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Gagal membuat nomor resep baru.",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        "Nomor resep " + noResep + " sudah selesai.\nGunakan nomor resep baru untuk melanjutkan.",
+                        "Nomor Resep Sudah Selesai",
+                        JOptionPane.WARNING_MESSAGE);
+                NoResep.requestFocus();
+                return false;
+            }
+        }
+
+        // belum ada — buat header baru
+        String kdDokter = KdDokter != null ? KdDokter.getText().trim() : "";
+        java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+        try (java.sql.PreparedStatement ps = koneksi.prepareStatement(
+                "INSERT INTO resep_toko (no_resep, no_rawat, kd_dokter, tgl_resep, keterangan) VALUES (?,?,?,?,?)")) {
+            ps.setString(1, noResep);
+            ps.setString(2, noRawat.isEmpty() ? null : noRawat);
+            ps.setString(3, kdDokter.isEmpty() ? null : kdDokter);
+            ps.setTimestamp(4, now);
+            ps.setString(5, "Racikan");
+            ps.executeUpdate();
+        }
+        currentPreviewNoResep = noResep;
+        populateResepTokoCombo();
+        // pilih item di combo yang baru dibuat
+        for (int ci = 0; ci < cmbResepToko.getItemCount(); ci++) {
+            if (((String) cmbResepToko.getItemAt(ci)).startsWith(noResep)) {
+                cmbResepToko.setSelectedIndex(ci);
+                break;
+            }
+        }
+        return true;
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(null, "Gagal membuat header resep: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+        return false;
+    }
+}
+
+// ─── Preview Resep Toko: buat tab + komponen ───────────────────────────────
+private void initPreviewResepToko() {
+    // --- model tabel (kolom 2=Jml, 3=Satuan, 4=Aturan bisa diedit) ---
+    tmPreviewToko = new javax.swing.table.DefaultTableModel(
+            new Object[]{"Kode", "Nama Obat / Racikan", "Jml", "Satuan", "Aturan Pakai", "Keterangan"}, 0) {
+        @Override public boolean isCellEditable(int r, int c) { return c == 2 || c == 3 || c == 4; }
+    };
+    tbPreviewToko = new javax.swing.JTable(tmPreviewToko);
+    sorterPreviewToko = new javax.swing.table.TableRowSorter<>(tmPreviewToko);
+    tbPreviewToko.setRowSorter(sorterPreviewToko);
+    tbPreviewToko.setFont(new java.awt.Font("Tahoma", 0, 12));
+    tbPreviewToko.setRowHeight(22);
+    tbPreviewToko.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+    tbPreviewToko.getColumnModel().getColumn(0).setPreferredWidth(80);
+    tbPreviewToko.getColumnModel().getColumn(1).setPreferredWidth(220);
+    tbPreviewToko.getColumnModel().getColumn(2).setPreferredWidth(50);
+    tbPreviewToko.getColumnModel().getColumn(3).setPreferredWidth(70);
+    tbPreviewToko.getColumnModel().getColumn(4).setPreferredWidth(130);
+    tbPreviewToko.getColumnModel().getColumn(5).setPreferredWidth(250);
+    tbPreviewToko.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+
+    // --- label info ---
+    lblPreviewInfo = new javax.swing.JLabel("Belum ada resep tersimpan.");
+    lblPreviewInfo.setFont(new java.awt.Font("Tahoma", java.awt.Font.ITALIC, 12));
+    lblPreviewInfo.setForeground(new java.awt.Color(100, 100, 100));
+
+    // --- buttons ---
+    btnSimpanPreview = new javax.swing.JButton("Simpan Perubahan");
+    btnSimpanPreview.setFont(new java.awt.Font("Tahoma", java.awt.Font.BOLD, 12));
+    btnSimpanPreview.setForeground(new java.awt.Color(0, 100, 0));
+    btnSimpanPreview.setEnabled(false);
+    btnSimpanPreview.addActionListener(e -> savePreviewChanges());
+
+    btnHapusBaris = new javax.swing.JButton("Hapus Baris");
+    btnHapusBaris.setFont(new java.awt.Font("Tahoma", java.awt.Font.BOLD, 12));
+    btnHapusBaris.setForeground(new java.awt.Color(160, 0, 0));
+    btnHapusBaris.setEnabled(false);
+    btnHapusBaris.addActionListener(e -> deleteSelectedPreviewRow());
+
+    btnTambahItem = new javax.swing.JButton("+ Non Racikan");
+    btnTambahItem.setFont(new java.awt.Font("Tahoma", java.awt.Font.BOLD, 12));
+    btnTambahItem.setForeground(new java.awt.Color(0, 70, 160));
+    btnTambahItem.setEnabled(false);
+    btnTambahItem.addActionListener(e -> showTambahItemDialog());
+
+    btnTambahRacikan = new javax.swing.JButton("+ Racikan");
+    btnTambahRacikan.setFont(new java.awt.Font("Tahoma", java.awt.Font.BOLD, 12));
+    btnTambahRacikan.setForeground(new java.awt.Color(120, 0, 160));
+    btnTambahRacikan.setEnabled(false);
+    btnTambahRacikan.addActionListener(e -> showTambahRacikanDialog());
+
+    // --- combo resep ---
+    cmbResepToko = new javax.swing.JComboBox<>();
+    cmbResepToko.setFont(new java.awt.Font("Tahoma", 0, 12));
+    cmbResepToko.setPreferredSize(new java.awt.Dimension(200, 24));
+    cmbResepToko.setEnabled(false);
+    cmbResepToko.addActionListener(e -> {
+        if (cmbResepToko.getSelectedIndex() > 0) {
+            String selected = (String) cmbResepToko.getSelectedItem();
+            String noResep = selected.split(" ")[0];
+            loadResepTokoPreview(noResep, false);
+        } else {
+            while (tmPreviewToko.getRowCount() > 0) tmPreviewToko.removeRow(0);
+            lblPreviewInfo.setText("Belum ada resep tersimpan.");
+            currentPreviewNoResep = null;
+            btnSimpanPreview.setEnabled(false);
+            btnHapusBaris.setEnabled(false);
+            btnTambahItem.setEnabled(false); btnTambahRacikan.setEnabled(false);
+        }
+    });
+
+    // --- toolbar ---
+    javax.swing.JPanel toolbar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 4));
+    toolbar.add(new javax.swing.JLabel("Resep:"));
+    toolbar.add(cmbResepToko);
+    toolbar.add(btnTambahItem);
+    toolbar.add(btnTambahRacikan);
+    toolbar.add(btnSimpanPreview);
+    toolbar.add(btnHapusBaris);
+    toolbar.add(lblPreviewInfo);
+
+    // enable Hapus Baris on row selection
+    tbPreviewToko.getSelectionModel().addListSelectionListener(ev -> {
+        if (!ev.getValueIsAdjusting())
+            btnHapusBaris.setEnabled(
+                currentPreviewNoResep != null &&
+                tbPreviewToko.isEnabled() &&
+                tbPreviewToko.getSelectedRow() >= 0
+            );
+    });
+
+    // --- assemble panel ---
+    javax.swing.JPanel panelPreview = new javax.swing.JPanel(new java.awt.BorderLayout(0, 4));
+    panelPreview.add(toolbar, java.awt.BorderLayout.NORTH);
+    panelPreview.add(new javax.swing.JScrollPane(tbPreviewToko), java.awt.BorderLayout.CENTER);
+
+    // --- add tab ---
+    TabRawat.addTab("Preview Resep Toko", panelPreview);
+}
+
+private void showOnlyPreviewTab() {
+    String previewTitle = "Preview Resep Toko";
+    for (int i = TabRawat.getTabCount() - 1; i >= 0; i--) {
+        String title = TabRawat.getTitleAt(i);
+        if (!previewTitle.equalsIgnoreCase(title)) {
+            TabRawat.removeTabAt(i);
+        }
+    }
+
+    int previewIdx = TabRawat.indexOfTab(previewTitle);
+    if (previewIdx >= 0) {
+        TabRawat.setSelectedIndex(previewIdx);
+    }
+
+    TAB_IDX_NON_RACIKAN = -1;
+    TAB_IDX_RACIKAN = -1;
+    TabRawat.revalidate();
+    TabRawat.repaint();
+}
+
+private boolean isPreviewOnlyMode() {
+    return TabRawat.getTabCount() == 1 &&
+           "Preview Resep Toko".equalsIgnoreCase(TabRawat.getTitleAt(0));
+}
+
+private void applyPreviewFilter(String keyword) {
+    if (sorterPreviewToko == null) {
+        return;
+    }
+
+    String text = keyword == null ? "" : keyword.trim();
+    if (text.isEmpty()) {
+        sorterPreviewToko.setRowFilter(null);
+        return;
+    }
+
+    sorterPreviewToko.setRowFilter(RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(text)));
 }
 
 // panggil ini setelah initComponents()
@@ -5253,3 +6757,4 @@ private void setToolbarResepVisible(boolean visible) {
 public void hideToolbarResep()  { setToolbarResepVisible(false); }
 public void showToolbarResep()  { setToolbarResepVisible(true);  }
 }
+

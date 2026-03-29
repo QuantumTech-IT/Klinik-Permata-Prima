@@ -1,0 +1,234 @@
+==============================================================
+  PANDUAN MODUL PEMESANAN TOKO (TokoPemesanan)
+  Sistem Informasi Klinik Permata Prima
+==============================================================
+
+DESKRIPSI MODUL
+---------------
+Modul ini digunakan untuk mencatat penerimaan barang dari supplier
+ke toko/minimarket klinik. Petugas input barang yang datang beserta
+harga beli terbaru, lalu sistem menghitung harga jual otomatis
+berdasarkan struktur satuan barang.
+
+
+==============================================================
+  STRUKTUR KOLOM TABEL
+==============================================================
+
+No  Nama Kolom     Keterangan
+--- -------------- -----------------------------------------
+0   Jml            Jumlah barang yang diterima (editable)
+1   Kode Barang    Kode unik barang (read-only)
+2   Nama Barang    Nama barang (read-only)
+3   Satuan         Satuan pembelian: BOX / STRIP / TABLET
+4   G              Checkbox: update harga ke master tokobarang
+5   Harga(Rp)      Harga beli dari supplier (editable)
+6   Subtotal(Rp)   Jml × Harga (otomatis)
+7   Disk(%)        Persentase diskon (editable)
+8   Diskon(Rp)     Nilai diskon rupiah (editable)
+9   Total          Subtotal - Diskon (otomatis)
+10  Dasar          HPP / Harga Dasar = sama dengan H.Beli
+11  Distributor    Harga jual per BOX (input MANUAL)
+12  Grosir         Harga jual per STRIP (otomatis dari Distributor)
+13  Retail         Harga jual per TABLET (otomatis dari Distributor)
+14  No. Batch      Nomor batch / lot barang (editable)
+15  Expired Date   Tanggal kadaluwarsa (editable)
+
+
+==============================================================
+  ALUR KERJA PETUGAS
+==============================================================
+
+LANGKAH 1 - Buka form
+  → Semua barang aktif tampil sebagai daftar pilihan
+
+LANGKAH 2 - Cari barang
+  → Ketik nama/kode di kolom pencarian, daftar filter otomatis
+
+LANGKAH 3 - Input penerimaan barang
+  a. Isi kolom JML (qty diterima)
+  b. Isi kolom HARGA (harga beli dari supplier)
+     → Tekan ENTER → kolom Dasar terupdate
+
+LANGKAH 4 - Jika harga berubah dari supplier, centang G
+  → Centang kolom G pada baris barang tersebut
+  → Kolom Distributor, Grosir, Retail langsung dihitung ulang
+     berdasarkan nilai Distributor yang sudah ada
+
+LANGKAH 5 - Input Distributor (jika harga jual BOX berubah)
+  → Edit kolom Distributor (harga per BOX)
+  → Tekan ENTER → Grosir dan Retail dihitung otomatis
+
+LANGKAH 6 - Input No. Batch dan Expired Date (jika ada)
+
+LANGKAH 7 - Simpan
+  → Klik tombol SIMPAN
+  → Konfirmasi dialog muncul
+  → Jika G dicentang: harga di master tokobarang ikut terupdate
+  → Stok barang bertambah sesuai qty yang diinput
+  → Log transaksi ditulis ke file: logs/pemesanan_toko_YYYYMMDD.txt
+
+
+==============================================================
+  KONSEP PERHITUNGAN HARGA
+==============================================================
+
+STRUKTUR SATUAN BARANG
+-----------------------
+Setiap barang memiliki 3 level satuan:
+
+  BOX  (satuan besar)
+   └── STRIP  × isi       (misal: 1 BOX = 3 STRIP)
+        └── TABLET × kapasitas  (misal: 1 BOX = 30 TABLET total)
+
+  Nilai isi dan kapasitas diambil dari master tokobarang.
+
+PERHITUNGAN HARGA JUAL
+-----------------------
+Acuan utama: Harga Distributor (harga jual per BOX, input manual)
+
+  Grosir = roundUp(Distributor / isi,         100)
+  Retail = roundUp(Distributor / kapasitas,   100)
+
+  Keterangan:
+  - isi        = jumlah strip per BOX
+  - kapasitas  = TOTAL tablet per BOX (bukan per strip)
+  - roundUp    = pembulatan ke atas kelipatan 100
+
+DASAR (HPP)
+-----------
+  Dasar = H.Beli dari supplier (kolom 5, tanpa PPN)
+
+  Yang disimpan ke tokobarang.h_beli = H.Beli + PPN
+  Yang disimpan ke tokobarang.dasar  = H.Beli (tanpa PPN)
+
+
+==============================================================
+  CONTOH PERHITUNGAN
+==============================================================
+
+CONTOH 1: PARACETAMOL 500MG TABLET
+------------------------------------
+  Data master:
+    isi       = 10 (10 strip per BOX)
+    kapasitas = 100 (total 100 tablet per BOX)
+
+  Petugas input:
+    H.Beli (col 5)      = 12,000
+    Distributor (col 11) = 15,000   ← input manual
+
+  Hitung otomatis (Enter di kolom Distributor):
+    Grosir = roundUp(15,000 / 10,  100) = roundUp(1,500, 100) = 1,500
+    Retail = roundUp(15,000 / 100, 100) = roundUp(150,  100) = 200
+
+  Yang tersimpan ke tokobarang (jika G dicentang):
+    tokobarang.dasar       = 12,000
+    tokobarang.h_beli      = 12,000 + (PPN% × 12,000)
+    tokobarang.distributor = 15,000
+    tokobarang.grosir      = 1,500
+    tokobarang.retail      = 200
+
+
+CONTOH 2: ACLONAC 50MG TABLET
+-------------------------------
+  Data master:
+    isi       = 3  (3 strip per BOX)
+    kapasitas = 30 (total 30 tablet per BOX)
+
+  Petugas input:
+    H.Beli (col 5)      = 100,000
+    Distributor (col 11) = 245,000   ← input manual
+
+  Hitung otomatis:
+    Grosir = roundUp(245,000 / 3,  100) = roundUp(81,666, 100) = 81,700
+    Retail = roundUp(245,000 / 30, 100) = roundUp(8,166,  100) = 8,200
+
+  Verifikasi logika:
+    Beli 1 BOX = 100,000 → modal per strip = 100,000/3 = 33,333
+    Jual strip = 81,700 → margin strip = (81,700-33,333)/33,333 = 145%
+    Jual tablet = 8,200 → margin tablet = (8,200-3,333)/3,333  = 146%
+
+
+CONTOH 3: Harga Beli Naik (Update dari Supplier)
+--------------------------------------------------
+  Harga lama: 100,000 → Harga baru dari supplier: 120,000
+
+  Langkah:
+  1. Centang G pada baris barang
+  2. Edit kolom Harga → isi 120,000 → Enter
+     → Dasar otomatis = 120,000
+  3. Edit kolom Distributor → isi 295,000 → Enter
+     → Grosir = roundUp(295,000 / 3,  100) = 98,400
+     → Retail = roundUp(295,000 / 30, 100) = 9,900
+  4. Input Qty yang diterima
+  5. Simpan → tokobarang terupdate
+
+
+==============================================================
+  KOLOM G (GANTI HARGA) - PENJELASAN
+==============================================================
+
+  G = false (tidak dicentang):
+    → Stok bertambah sesuai qty
+    → Harga di tokobarang TIDAK berubah
+    → Digunakan jika harga supplier sama dengan sebelumnya
+
+  G = true (dicentang):
+    → Stok bertambah sesuai qty
+    → Harga di tokobarang DIUPDATE:
+       - tokobarang.dasar       = kolom 10
+       - tokobarang.h_beli      = kolom 5 + PPN
+       - tokobarang.distributor = kolom 11
+       - tokobarang.grosir      = kolom 12
+       - tokobarang.retail      = kolom 13
+    → Diperlukan akses hak: toko_barang = true
+
+
+==============================================================
+  LOG FILE
+==============================================================
+
+  Setiap kali tombol SIMPAN diklik, sistem otomatis menulis
+  log ke file lokal:
+
+  Lokasi : logs/pemesanan_toko_YYYYMMDD.txt
+           (relatif dari direktori aplikasi berjalan)
+
+  Contoh isi log:
+  ==========================================================
+  [09:32:15] SIMPAN PEMESANAN TOKO
+  No.Faktur : PNT202603150001
+  Supplier  : SUP001 - PT. KIMIA FARMA
+  Petugas   : ADM01 - Budi
+  No.Order  : ORD20260315001
+  PPN %     : 11
+  Meterai   : 0
+  Total     : 1200000
+  ----------------------------------------------------------
+  G   Kode     Nama                           Sat   Jml  H.Beli       Dasar ...
+  [G] OBT1149  PARACETAMOL 500 MG TABLET PIM  BOX    10   12000       12000 ...
+  ==========================================================
+
+
+==============================================================
+  CATATAN PENTING
+==============================================================
+
+1. Kolom isi dan kapasitas HARUS diisi di master tokobarang
+   agar perhitungan grosir & retail akurat.
+   → Jika isi=0 atau kapasitas=0, sistem default ke 1
+     (hasil perhitungan akan salah)
+
+2. Distributor diisi MANUAL oleh petugas sesuai harga
+   kesepakatan dengan supplier.
+
+3. PPN dihitung terpisah dan ditambahkan ke h_beli saat
+   disimpan ke tokobarang.
+
+4. Jika tidak ada perubahan harga, JANGAN centang G untuk
+   menghindari perubahan harga master yang tidak disengaja.
+
+==============================================================
+  Dibuat: 2026-03-15
+  Modul : src/toko/TokoPemesanan.java
+==============================================================

@@ -18,6 +18,7 @@ import fungsi.validasi;
 import fungsi.akses;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
@@ -32,6 +33,15 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.JScrollPane;
+import toko.TuslahTokopenjualanService;
+
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -44,9 +54,10 @@ public final class DlgPaymentPoint extends javax.swing.JDialog {
     private validasi Valid=new validasi();
     private PreparedStatement ps,psjamshift;
     private ResultSet rs,rsjamshift;
-    private double all=0,pagi=0,siang=0,sore=0,malam=0;
+    //private double all=0,pagi=0,siang=0,sore=0,malam=0;
     private int i;
     private String shift="",tanggal2="",nonota="",petugas="";
+    private DlgLapKeuanganHarianToko dlgKeuangan = new DlgLapKeuanganHarianToko(null, false);
 
     /** Creates new form DlgLhtBiaya
      * @param parent
@@ -257,6 +268,8 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
         BtnCari = new widget.Button();
         BtnAll = new widget.Button();
         jLabel11 = new javax.swing.JLabel();
+        jButton3 = new javax.swing.JButton();
+        jButton4 = new javax.swing.JButton();
         BtnPrint = new widget.Button();
         BtnKeluar = new widget.Button();
         panelGlass6 = new widget.panelisi();
@@ -273,6 +286,8 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
         qris = new widget.TextBox();
         label20 = new widget.Label();
         TTutupKasir = new widget.TextBox();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
 
         WindowModalAwal.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         WindowModalAwal.setName("WindowModalAwal"); // NOI18N
@@ -426,6 +441,24 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
         jLabel11.setPreferredSize(new java.awt.Dimension(30, 23));
         panelGlass5.add(jLabel11);
 
+        jButton3.setText("Laporan Keuntungan Harian");
+        jButton3.setName("jButton3"); // NOI18N
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+        panelGlass5.add(jButton3);
+
+        jButton4.setText("Rekap Tuslah");
+        jButton4.setName("jButton4"); // NOI18N
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+        panelGlass5.add(jButton4);
+
         BtnPrint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/picture/b_print.png"))); // NOI18N
         BtnPrint.setMnemonic('T');
         BtnPrint.setText("Cetak");
@@ -560,6 +593,24 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
             }
         });
         panelGlass6.add(TTutupKasir);
+
+        jButton1.setText("SIMPAN");
+        jButton1.setName("jButton1"); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+        panelGlass6.add(jButton1);
+
+        jButton2.setText("LIHAT REKAP LAPORAN");
+        jButton2.setName("jButton2"); // NOI18N
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+        panelGlass6.add(jButton2);
 
         internalFrame1.add(panelGlass6, java.awt.BorderLayout.PAGE_START);
 
@@ -729,6 +780,32 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
         // TODO add your handling code here:
     }//GEN-LAST:event_qrisKeyReleased
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        previewDanSimpanTutupKasir();// TODO add your handling code here:
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+      lihatLaporanTersimpan();  // TODO add your handling code here:
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        String tgl = Valid.SetTgl(Tgl1.getSelectedItem()+"");  // sesuaikan nama komponen
+    String shift = CmbStatus.getSelectedItem().toString();            // "Semua"/"1"/"2" dst
+    String user = User.getText().trim();                         // field user di bawah (kalau ada)
+
+    double modal = Valid.SetAngka(ModalAwal.getText());
+    double keluar = Valid.SetAngka(pengeluaran1.getText());
+    double Qris = Valid.SetAngka(qris.getText());
+
+    dlgKeuangan.setParameter(tgl, shift, user, modal, keluar, Qris);
+    dlgKeuangan.setVisible(true);
+    dlgKeuangan.tampil(); // auto preview saat dibuka
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+     tampilPopupTuslahPerNip();
+    }//GEN-LAST:event_jButton4ActionPerformed
+
     /**
     * @param args the command line arguments
     */
@@ -767,6 +844,10 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
     private javax.swing.JDialog WindowModalAwal;
     private widget.InternalFrame internalFrame1;
     private widget.InternalFrame internalFrame2;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel11;
     private widget.Label jLabel8;
     private widget.Label jLabel9;
@@ -783,24 +864,46 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
     private widget.TextBox qris;
     // End of variables declaration//GEN-END:variables
 
-   public void tampil(){
+//   public void tampil(){
+//    this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+//    Valid.tabelKosong(tabMode);
+//
+   // =========================
+// TAMBAH VARIABEL INI DI CLASS (global field)
+// =========================
+//private long all=0, pagi=0, siang=0, sore=0, malam=0;
+
+private long all=0L, pagi=0L, siang=0L, sore=0L, malam=0L;
+private long cashAll=0L, cashPagi=0L, cashSiang=0L, cashSore=0L, cashMalam=0L;
+private long nonCashAll=0L, nonCashPagi=0L, nonCashSiang=0L, nonCashSore=0L, nonCashMalam=0L;
+
+
+//private int i=1;
+
+// =========================
+// METHOD UTAMA
+// =========================
+public void tampil() {
     this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     Valid.tabelKosong(tabMode);
 
+    // reset akumulasi
     all=0; pagi=0; siang=0; sore=0; malam=0;
+
+    cashAll=0; cashPagi=0; cashSiang=0; cashSore=0; cashMalam=0;
+    nonCashAll=0; nonCashPagi=0; nonCashSiang=0; nonCashSore=0; nonCashMalam=0;
+
     i=1;
 
-    String tgl = Valid.SetTgl(Tgl1.getSelectedItem()+""); // pastikan jadi yyyy-MM-dd
+    String tgl  = Valid.SetTgl(Tgl1.getSelectedItem()+""); // yyyy-MM-dd
     String cari = TCari.getText().trim();
+    String st   = CmbStatus.getSelectedItem().toString();  // Semua/Pagi/Siang/Sore/Malam
 
-    // DEBUG wajib biar ketahuan datanya ada atau tidak
-    System.out.println("PAYMENT POINT tgl=" + tgl + " cari=" + cari);
-    System.out.println("closing_kasir count=" + Sequel.cariInteger("select count(*) from closing_kasir"));
-    System.out.println("sadewa count=" + Sequel.cariInteger("select count(*) from tagihan_sadewa where date(tgl_bayar)=?", tgl));
-    System.out.println("toko count=" + Sequel.cariInteger("select count(*) from tokopenjualan where date(tgl_jual)=?", tgl));
+    // DEBUG
+    System.out.println("PAYMENT POINT tgl=" + tgl + " cari=" + cari + " status=" + st);
 
     // =========================
-    // 1) TAGIHAN SADEWA (per tanggal)
+    // 1) TAGIHAN SADEWA (anggap CASH)
     // =========================
     PreparedStatement psSadewa=null;
     ResultSet rsSadewa=null;
@@ -818,6 +921,13 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
 
         rsSadewa = psSadewa.executeQuery();
         while(rsSadewa.next()){
+            String waktu = rsSadewa.getString("tgl_bayar");   // datetime
+            String shift = shiftDariDateTime(waktu);
+
+            // filter tampilan berdasarkan status (kumulatif)
+            if(!bolehTampilShift(shift, st)) continue;
+
+            // mapping nota dari no_rawat (jika memang no_nota berisi no_rawat)
             String nonota = Sequel.cariIsi(
                 "SELECT no_nota FROM nota_inap WHERE no_rawat=?",
                 rsSadewa.getString("no_nota")
@@ -831,16 +941,18 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
             }
 
             String petugas = rsSadewa.getString("petugas") + " " +
-                    Sequel.cariIsi("SELECT pegawai.nama FROM pegawai WHERE pegawai.nik=?",
-                            rsSadewa.getString("petugas"));
+                Sequel.cariIsi("SELECT pegawai.nama FROM pegawai WHERE pegawai.nik=?",
+                    rsSadewa.getString("petugas"));
 
             long jml = Math.round(rsSadewa.getDouble("jumlah_bayar"));
-            all += jml;
+
+            // sadewa diasumsikan CASH
+            akumulasi(shift, jml, true);
 
             tabMode.addRow(new Object[]{
                 i,
-                rsSadewa.getString("tgl_bayar"),
-                "Semua",
+                waktu,
+                shift,
                 nonota,
                 rsSadewa.getString("nama_pasien"),
                 jml,
@@ -856,41 +968,52 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
     }
 
     // =========================
-    // 2) TOKO PENJUALAN (per tanggal) - PENTING: LEFT JOIN biar gak hilang
+    // 2) TOKO PENJUALAN (CASH/NONCASH pakai nama_bayar)
     // =========================
     PreparedStatement psToko=null;
     ResultSet rsToko=null;
     try{
         psToko = koneksi.prepareStatement(
-            "SELECT tp.tgl_jual, tp.nm_member, tp.nip, COALESCE(pg.nama,'') AS nama, " +
-            "       SUM(tp.total) AS total, SUM(tp.ongkir) AS ongkir, SUM(tp.ppn) AS ppn " +
+            "SELECT tp.nota_jual, tp.tgl_jual, tp.nm_member, tp.nama_bayar, tp.nip, " +
+            "       COALESCE(pg.nama,'') AS nama, " +
+            "       (tp.total + tp.ongkir + tp.ppn) AS grand " +
             "FROM tokopenjualan tp " +
             "LEFT JOIN petugas pg ON tp.nip = pg.nip " +
             "WHERE DATE(tp.tgl_jual)=? " +
-            (cari.isEmpty() ? "" : "AND (tp.nip LIKE ? OR pg.nama LIKE ? OR tp.nm_member LIKE ?) ") +
-            "GROUP BY tp.tgl_jual, tp.nip, tp.nm_member " +
-            "ORDER BY tp.tgl_jual, tp.nip"
+            (cari.isEmpty() ? "" :
+                "AND (tp.nip LIKE ? OR pg.nama LIKE ? OR tp.nm_member LIKE ? OR tp.nota_jual LIKE ?) ") +
+            "ORDER BY tp.tgl_jual, tp.nota_jual"
         );
 
         int p=1;
         psToko.setString(p++, tgl);
         if(!cari.isEmpty()){
-            psToko.setString(p++, "%"+cari+"%");
-            psToko.setString(p++, "%"+cari+"%");
-            psToko.setString(p++, "%"+cari+"%");
+            String like = "%"+cari+"%";
+            psToko.setString(p++, like);
+            psToko.setString(p++, like);
+            psToko.setString(p++, like);
+            psToko.setString(p++, like);
         }
 
         rsToko = psToko.executeQuery();
         while(rsToko.next()){
+            String waktu = rsToko.getString("tgl_jual");
+            String shift = shiftDariDateTime(waktu);
+
+            if(!bolehTampilShift(shift, st)) continue;
+
             String petugas = rsToko.getString("nip")+" "+rsToko.getString("nama");
-            long jml = Math.round(rsToko.getDouble("total")+rsToko.getDouble("ongkir")+rsToko.getDouble("ppn"));
-            all += jml;
+            String bayar   = rsToko.getString("nama_bayar");
+            long jml       = Math.round(rsToko.getDouble("grand"));
+
+            boolean isCash = isCashBayar(bayar);
+            akumulasi(shift, jml, isCash);
 
             tabMode.addRow(new Object[]{
                 i,
-                rsToko.getString("tgl_jual"),
-                "Semua",
-                "Toko Penjualan",
+                waktu,
+                shift,
+                "Toko (" + (bayar==null ? "-" : bayar) + ")",
                 rsToko.getString("nm_member"),
                 jml,
                 petugas
@@ -904,215 +1027,936 @@ class SummaryLabelRenderer extends DefaultTableCellRenderer {
         try{ if(psToko!=null) psToko.close(); }catch(Exception e){}
     }
 
-    this.setCursor(Cursor.getDefaultCursor());
+    // ringkasan tutup kasir
     appendRingkasan();
+
+    this.setCursor(Cursor.getDefaultCursor());
 }
 
-  
-    private void appendRingkasan() {
-    double modal   = parseDoubleSafe(ModalAwal.getText());
-double setoran = parseDoubleSafe(TTutupKasir.getText());
-double nonCash = (Valid.SetAngka(pengeluaran1.getText()) + Valid.SetAngka(qris.getText()));
-//double NQris = parseDoubleSafe(qris.getText());
-double totalSistem = 0.0;
-
+// =========================
+// RINGKASAN TUTUP KASIR
+// =========================
+private void appendRingkasan() {
     String st = CmbStatus.getSelectedItem().toString();
 
-    if ("Semua".equals(st)) {
-        totalSistem = all + modal;
-        tabMode.addRow(new Object[]{"","Modal Awal",":","","", modal, ""});
-        tabMode.addRow(new Object[]{"","Uang Masuk",":","","", all, ""});
-        tabMode.addRow(new Object[]{"",">> Total",":","","", totalSistem, ""});
-    } else if ("Pagi".equals(st)) {
-        totalSistem = pagi + modal;
-        tabMode.addRow(new Object[]{"","Modal Awal",":","","", modal, ""});
-        tabMode.addRow(new Object[]{"","Uang Masuk",":","","", pagi, ""});
-        tabMode.addRow(new Object[]{"",">> Total",":","","", totalSistem, ""});
-    } else if ("Siang".equals(st)) {
-        totalSistem = pagi + siang + modal;
-        tabMode.addRow(new Object[]{"","Modal Awal",":","","", modal + pagi, ""});
-        tabMode.addRow(new Object[]{"","Uang Masuk",":","","", siang, ""});
-        tabMode.addRow(new Object[]{"",">> Total",":","","", totalSistem, ""});
-    } else if ("Sore".equals(st)) {
-        totalSistem = pagi + siang + sore + modal;
-        tabMode.addRow(new Object[]{"","Modal Awal",":","","", modal + pagi + siang, ""});
-        tabMode.addRow(new Object[]{"","Uang Masuk",":","","", sore, ""});
-        tabMode.addRow(new Object[]{"",">> Total",":","","", totalSistem, ""});
-    } else if ("Malam".equals(st)) {
-        totalSistem = pagi + siang + sore + malam + modal;
-        tabMode.addRow(new Object[]{"","Modal Awal",":","","", modal + pagi + siang + sore, ""});
-        tabMode.addRow(new Object[]{"","Uang Masuk",":","","", malam, ""});
-        tabMode.addRow(new Object[]{"",">> Total",":","","", totalSistem, ""});
+    long modal     = parseLongSafe(ModalAwal.getText());
+    long cashFisik = parseLongSafe(TTutupKasir.getText());     // uang cash di laci
+    long keluar    = parseLongSafe(pengeluaran1.getText());    // cash out dari laci
+    long nonCashAktual = parseLongSafe(qris.getText());        // isi dari mutasi/settlement (kalau kosong -> default sistem)
+
+    long uangMasukDipakai   = getUangMasukUpTo(st);
+    long cashSistemDipakai  = getCashUpTo(st);
+    long nonCashSistemDipakai = getNonCashUpTo(st);
+
+    long expectedCash    = modal + cashSistemDipakai;
+    long expectedNonCash = nonCashSistemDipakai;
+    long expectedTotal   = expectedCash + expectedNonCash;
+
+    // kalau user tidak isi noncash aktual, default = noncash sistem (biar tetap jalan)
+    if(qris.getText()==null || qris.getText().trim().isEmpty()){
+        nonCashAktual = expectedNonCash;
     }
 
-    // Baris baru: Tutup Kasir & Selisih
-    tabMode.addRow(new Object[]{"","Tutup Kasir",":","","", setoran, ""});
-    tabMode.addRow(new Object[]{"","Selisih",":","","", ((setoran + nonCash) - totalSistem ), ""});
+    long actualCash   = cashFisik + keluar;
+    long actualTotal  = actualCash + nonCashAktual;
+
+    long selisihCash    = actualCash - expectedCash;
+    long selisihNonCash = nonCashAktual - expectedNonCash;
+    long selisihTotal   = actualTotal - expectedTotal;
+
+    tabMode.addRow(new Object[]{"","Modal Awal",":","","", modal, ""});
+    tabMode.addRow(new Object[]{"","Uang Masuk Sistem",":","","", uangMasukDipakai, ""});
+
+    tabMode.addRow(new Object[]{"","Masuk CASH (Sistem)",":","","", cashSistemDipakai, ""});
+    tabMode.addRow(new Object[]{"","Masuk NONCASH (Sistem)",":","","", nonCashSistemDipakai, ""});
+
+    tabMode.addRow(new Object[]{"",">> Total Sistem",":","","", expectedTotal, ""});
+
+    tabMode.addRow(new Object[]{"","Cash Fisik",":","","", cashFisik, ""});
+    tabMode.addRow(new Object[]{"","Pengeluaran (Cash Out)",":","","", keluar, ""});
+    tabMode.addRow(new Object[]{"","NONCASH Aktual",":","","", nonCashAktual, ""});
+
+    tabMode.addRow(new Object[]{"","Selisih CASH",":","","", selisihCash, ""});
+    tabMode.addRow(new Object[]{"","Selisih NONCASH",":","","", selisihNonCash, ""});
+    tabMode.addRow(new Object[]{"","Selisih TOTAL",":","","", selisihTotal, ""});
 }
+
+// =========================
+// AKUMULATOR
+// =========================
+private void akumulasi(String shift, long jml, boolean isCash){
+    // total per shift (semua jenis bayar)
+    all += jml;
+    if ("Pagi".equals(shift)) pagi += jml;
+    else if ("Siang".equals(shift)) siang += jml;
+    else if ("Sore".equals(shift)) sore += jml;
+    else if ("Malam".equals(shift)) malam += jml;
+
+    // cash/noncash per shift
+    if(isCash){
+        cashAll += jml;
+        if ("Pagi".equals(shift)) cashPagi += jml;
+        else if ("Siang".equals(shift)) cashSiang += jml;
+        else if ("Sore".equals(shift)) cashSore += jml;
+        else if ("Malam".equals(shift)) cashMalam += jml;
+    }else{
+        nonCashAll += jml;
+        if ("Pagi".equals(shift)) nonCashPagi += jml;
+        else if ("Siang".equals(shift)) nonCashSiang += jml;
+        else if ("Sore".equals(shift)) nonCashSore += jml;
+        else if ("Malam".equals(shift)) nonCashMalam += jml;
+    }
+}
+
+// =========================
+// SHIFT & FILTER (KUMULATIF)
+// =========================
+private boolean bolehTampilShift(String shiftRow, String statusDipilih){
+    if(statusDipilih == null || "Semua".equalsIgnoreCase(statusDipilih)) return true;
+
+    // kumulatif: Siang = tampil Pagi+Siang, Sore = Pagi+Siang+Sore, dst
+    return urutanShift(shiftRow) <= urutanShift(statusDipilih);
+}
+
+private int urutanShift(String s){
+    if(s == null) return 99;
+    if("Pagi".equalsIgnoreCase(s)) return 1;
+    if("Siang".equalsIgnoreCase(s)) return 2;
+    if("Sore".equalsIgnoreCase(s)) return 3;
+    if("Malam".equalsIgnoreCase(s)) return 4;
+    if("Semua".equalsIgnoreCase(s)) return 4;
+    return 99;
+}
+
+private long getUangMasukUpTo(String st){
+    if(st == null || "Semua".equalsIgnoreCase(st)) return all;
+    if("Pagi".equalsIgnoreCase(st))  return pagi;
+    if("Siang".equalsIgnoreCase(st)) return pagi + siang;
+    if("Sore".equalsIgnoreCase(st))  return pagi + siang + sore;
+    if("Malam".equalsIgnoreCase(st)) return pagi + siang + sore + malam;
+    return all;
+}
+
+private long getCashUpTo(String st){
+    if(st == null || "Semua".equalsIgnoreCase(st)) return cashAll;
+    if("Pagi".equalsIgnoreCase(st))  return cashPagi;
+    if("Siang".equalsIgnoreCase(st)) return cashPagi + cashSiang;
+    if("Sore".equalsIgnoreCase(st))  return cashPagi + cashSiang + cashSore;
+    if("Malam".equalsIgnoreCase(st)) return cashPagi + cashSiang + cashSore + cashMalam;
+    return cashAll;
+}
+
+private long getNonCashUpTo(String st){
+    if(st == null || "Semua".equalsIgnoreCase(st)) return nonCashAll;
+    if("Pagi".equalsIgnoreCase(st))  return nonCashPagi;
+    if("Siang".equalsIgnoreCase(st)) return nonCashPagi + nonCashSiang;
+    if("Sore".equalsIgnoreCase(st))  return nonCashPagi + nonCashSiang + nonCashSore;
+    if("Malam".equalsIgnoreCase(st)) return nonCashPagi + nonCashSiang + nonCashSore + nonCashMalam;
+    return nonCashAll;
+}
+
+// =========================
+// DETEKSI CASH / NONCASH (nama_bayar)
+// =========================
+private boolean isCashBayar(String namaBayar){
+    if(namaBayar == null) return false;
+    String s = namaBayar.toLowerCase();
+    return s.contains("cash") || s.contains("tunai");
+}
+
+// =========================
+// SHIFT DARI DATETIME
+// (atur jam sesuai kebutuhanmu kalau beda definisi shift)
+// =========================
+private String shiftDariDateTime(String dt){
+    String jam = dt;
+    int sp = dt == null ? -1 : dt.indexOf(' ');
+    if(sp > -1 && sp + 1 < dt.length()){
+        jam = dt.substring(sp + 1);
+    }
+    jam = normJam(jam); // pastikan HH:mm:ss
+
+    java.time.LocalTime t;
+    try{
+        t = java.time.LocalTime.parse(jam);
+    }catch(Exception e){
+        return "Pagi";
+    }
+
+    // contoh batas shift (silakan ubah)
+    if(t.isBefore(java.time.LocalTime.of(12, 0))) return "Pagi";
+    if(t.isBefore(java.time.LocalTime.of(15, 0))) return "Siang";
+    if(t.isBefore(java.time.LocalTime.of(18, 0))) return "Sore";
+    return "Malam";
+}
+
+// =========================
+// PARSER RUPIAH AMAN
+// =========================
 private long parseLongSafe(String s){
     if(s==null) return 0L;
-    s=s.trim().replace(".", "").replace(",", "").replace("Rp", "").replace("rp", "");
+    s=s.trim().replace("Rp","").replace("rp","")
+         .replace(".","").replace(",","").replace(" ","");
     if(s.isEmpty()) return 0L;
-    try { 
-        // dukung desimal, tapi kita bulatkan ke rupiah
+    try{
         double d = Double.parseDouble(s);
         return Math.round(d);
-    } catch(Exception e){ 
-        return 0L; 
+    }catch(Exception e){
+        return 0L;
     }
 }
-//    private void hitungTutupKasir() {
-//    double modal   = Valid.SetAngka(ModalAwal.getText());
-//    double total   = Valid.SetAngka(TTotalSistem.getText());
-//    double setoran = Valid.SetAngka(TTutupKasir.getText());
-//
-//    double expected = modal + total;                // seharusnya disetor
-//    double selisih  = setoran - expected;
-//
-//    TExpected.setText(Valid.SetAngka2(expected));   // jika Anda sediakan field “Seharusnya”
-//    TSelisih.setText(Valid.SetAngka2(selisih));     // field “Selisih”
-//
-//    if (Math.abs(selisih) < 0.0001) {
-//        LStatus.setText("✅ SESUAI");
-//        LStatus.setForeground(new java.awt.Color(0,128,0));
-//    } else if (selisih > 0) {
-//        LStatus.setText("LEBIH " + Valid.SetAngka2(selisih));
-//        LStatus.setForeground(new java.awt.Color(0,102,204));
-//    } else {
-//        LStatus.setText("KURANG " + Valid.SetAngka2(Math.abs(selisih)));
-//        LStatus.setForeground(java.awt.Color.RED);
-//    }
-//}
-    // untuk format nominal
-class MoneyRenderer extends javax.swing.table.DefaultTableCellRenderer {
-    private final java.text.NumberFormat rupiah = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
-    private final java.awt.Font boldFont;
 
-    public MoneyRenderer(javax.swing.JTable table) {
-        setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        boldFont = table.getFont().deriveFont(java.awt.Font.BOLD);
-    }
-
-    @Override
-    public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
-                                                           boolean isSelected, boolean hasFocus,
-                                                           int row, int column) {
-        java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-        // default reset warna/font
-        c.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
-        c.setFont(table.getFont());
-
-        // ambil label di kolom 1 (index 1)
-        Object labelObj = table.getValueAt(row, 1);
-        String label = labelObj == null ? "" : labelObj.toString();
-
-        // format rupiah
-        if (value != null) {
-            try {
-                double d = Double.parseDouble(value.toString());
-                setText(rupiah.format(d));
-            } catch (Exception e) {
-                // biarkan apa adanya
-            }
-        }
-
-        // >> Total ditebalkan
-        if (">> Total".equalsIgnoreCase(label)) {
-            c.setFont(boldFont);
-        }
-
-        // Selisih → merah kalau minus, hijau kalau plus
-        if ("Selisih".equalsIgnoreCase(label)) {
-            double angka = 0;
-            try { angka = Double.parseDouble(value.toString()); } catch (Exception ignored) {}
-            if (angka < 0) {
-                c.setForeground(new java.awt.Color(200, 0, 0));
-            } else {
-                c.setForeground(new java.awt.Color(0, 128, 0));
-            }
-            c.setFont(boldFont);
-        }
-
-        return c;
-    }
-    class SummaryLabelRenderer extends DefaultTableCellRenderer {
-    private final Font bold;
-    public SummaryLabelRenderer(JTable table) { bold = table.getFont().deriveFont(Font.BOLD); }
-
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value,
-            boolean isSelected, boolean hasFocus, int row, int column) {
-        Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        String label = value == null ? "" : value.toString();
-        if ("Modal Awal".equalsIgnoreCase(label) ||
-            "Uang Masuk".equalsIgnoreCase(label) ||
-            ">> Total".equalsIgnoreCase(label) ||
-            "Tutup Kasir".equalsIgnoreCase(label) ||
-            "Selisih".equalsIgnoreCase(label)) {
-            c.setFont(bold);
-        }
-        return c;
-    }
-}
-}
-private double parseDoubleSafe(String s){
-    if(s == null) return 0.0;
-    s = s.trim()
-         .replace("Rp","")
-         .replace("rp","")
-         .replace(".","")
-         .replace(",","");
-    if(s.isEmpty()) return 0.0;
-    try {
-        return Double.parseDouble(s);
-    } catch(Exception e){
-        return 0.0;
-    }
-}
 private String normJam(String jam){
     if(jam == null) return "00:00:00";
     jam = jam.trim();
     if(jam.isEmpty()) return "00:00:00";
     if(jam.length() == 5) return jam + ":00"; // HH:mm -> HH:mm:00
-    return jam; // asumsi HH:mm:ss
+    return jam; // HH:mm:ss
+}
+// =========================
+// 1) DATA REKAP (POJO kecil)
+// =========================
+private static class RekapTutupKasir {
+    String tgl;          // yyyy-MM-dd
+    String statusShift;  // Semua / Pagi / Siang / Sore / Malam
+    String nip;
+    String catatan;
+    String tglInput;
+
+    long modal;
+    long cashSistem;
+    long nonCashSistem;
+    long totalSistem;
+
+    long cashFisik;
+    long pengeluaran;
+    long nonCashAktual;
+
+    long selisihCash;
+    long selisihNonCash;
+    long selisihTotal;
+
+    boolean nonCashAutoDariSistem; // true kalau field noncash kosong -> auto
 }
 
-private boolean kolomAda(String table, String col){
-    try{
-        return Sequel.cariInteger(
-            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-            "WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?",
-            table, col
-        ) > 0;
-    }catch(Exception e){
+// =========================
+// 2) PANGGIL INI SAAT KLIK "Simpan Tutup Kasir"
+// =========================
+private void previewDanSimpanTutupKasir() {
+    // pastikan sudah dihitung (minimal pernah klik tampil)
+    if (tabMode.getRowCount() <= 0) {
+        JOptionPane.showMessageDialog(null, "Data masih kosong. Klik TAMPIL dulu ya.");
+        return;
+    }
+
+    RekapTutupKasir r = hitungRekapSekarang();
+
+    // tampilkan preview -> OK = Simpan
+    boolean ok = tampilkanPreviewKonfirmasi(r);
+    if (!ok) return;
+
+    if (simpanRekapKeDB(r)) {
+        tutupShiftGlobal(r.tgl);
+        JOptionPane.showMessageDialog(null, "✅ Laporan tutup kasir berhasil disimpan.");
+        
+    } else {
+        JOptionPane.showMessageDialog(null, "❌ Gagal menyimpan laporan tutup kasir. Cek console log.");
+    }
+}
+
+// =========================
+// 3) HITUNG REKAP DARI AKUMULASI + INPUT USER
+// =========================
+private RekapTutupKasir hitungRekapSekarang() {
+    RekapTutupKasir r = new RekapTutupKasir();
+
+    r.tgl = Valid.SetTgl(Tgl1.getSelectedItem() + ""); // yyyy-MM-dd
+    r.statusShift = CmbStatus.getSelectedItem().toString();
+
+    // ambil nip login (sesuaikan dengan project kamu)
+    // kalau di Khanza biasanya: akses.getkode()
+    String nipLogin = "";
+    try { nipLogin = akses.getkode(); } catch (Exception e) { nipLogin = ""; }
+    r.nip = nipLogin;
+
+    r.modal = parseLongSafe(ModalAwal.getText());
+    r.cashFisik = parseLongSafe(TTutupKasir.getText());
+    r.pengeluaran = parseLongSafe(pengeluaran1.getText());
+
+    // noncash aktual: kalau kosong -> auto pakai noncash sistem (biar tidak bikin selisih noncash)
+    String txtNonCash = (qris.getText() == null ? "" : qris.getText().trim());
+    if (txtNonCash.isEmpty()) {
+        r.nonCashAutoDariSistem = true;
+    }
+    r.nonCashAktual = parseLongSafe(txtNonCash);
+
+    // ambil sistem sesuai status (kumulatif)
+    r.cashSistem = getCashUpTo(r.statusShift);
+    r.nonCashSistem = getNonCashUpTo(r.statusShift);
+
+    // total sistem = modal + semua pemasukan (cash + noncash)
+    r.totalSistem = r.modal + r.cashSistem + r.nonCashSistem;
+
+    if (r.nonCashAutoDariSistem) {
+        r.nonCashAktual = r.nonCashSistem;
+    }
+
+    // rekonsiliasi:
+    // CASH: (cash fisik + pengeluaran) vs (modal + cash sistem)
+    long expectedCash = r.modal + r.cashSistem;
+    long actualCash = r.cashFisik + r.pengeluaran;
+    r.selisihCash = actualCash - expectedCash;
+
+    // NONCASH: noncash aktual vs noncash sistem
+    r.selisihNonCash = r.nonCashAktual - r.nonCashSistem;
+
+    // TOTAL: (cash fisik + pengeluaran + noncash aktual) vs (modal + cash sistem + noncash sistem)
+    long actualTotal = actualCash + r.nonCashAktual;
+    r.selisihTotal = actualTotal - r.totalSistem;
+
+    return r;
+}
+
+// =========================
+// 4) PREVIEW HTML + KONFIRMASI SIMPAN
+// =========================
+private boolean tampilkanPreviewKonfirmasi(RekapTutupKasir r) {
+    java.text.NumberFormat nf = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
+    nf.setMaximumFractionDigits(0);
+    nf.setMinimumFractionDigits(0);
+
+    String badgeNonCash = r.nonCashAutoDariSistem ? " <span style='color:#666'>(auto dari sistem)</span>" : "";
+
+    String html =
+        "<html><body style='font-family:Tahoma; font-size:12px;'>" +
+        "<h3 style='margin:0;'>Preview Tutup Kasir - Payment Point</h3>" +
+        "<div style='margin-top:6px;'>Tanggal: <b>" + r.tgl + "</b> &nbsp; | &nbsp; Shift: <b>" + r.statusShift + "</b></div>" +
+        "<div style='margin-top:2px;'>Petugas: <b>" + (r.nip==null?"":r.nip) + "</b></div>" +
+
+        "<hr/>" +
+
+        "<table width='100%' cellspacing='0' cellpadding='6' style='border-collapse:collapse;'>" +
+        "<tr><td style='border:1px solid #ccc;'>Modal Awal</td><td align='right' style='border:1px solid #ccc;'><b>" + nf.format(r.modal) + "</b></td></tr>" +
+        "<tr><td style='border:1px solid #ccc;'>Masuk CASH (Sistem)</td><td align='right' style='border:1px solid #ccc;'>" + nf.format(r.cashSistem) + "</td></tr>" +
+        "<tr><td style='border:1px solid #ccc;'>Masuk NONCASH (Sistem)</td><td align='right' style='border:1px solid #ccc;'>" + nf.format(r.nonCashSistem) + "</td></tr>" +
+        "<tr><td style='border:1px solid #ccc;'><b>> Total Sistem</b></td><td align='right' style='border:1px solid #ccc;'><b>" + nf.format(r.totalSistem) + "</b></td></tr>" +
+
+        "<tr><td colspan='2' style='height:6px;'></td></tr>" +
+
+        "<tr><td style='border:1px solid #ccc;'>Cash Fisik</td><td align='right' style='border:1px solid #ccc;'>" + nf.format(r.cashFisik) + "</td></tr>" +
+        "<tr><td style='border:1px solid #ccc;'>Pengeluaran (Cash Out)</td><td align='right' style='border:1px solid #ccc;'>" + nf.format(r.pengeluaran) + "</td></tr>" +
+        "<tr><td style='border:1px solid #ccc;'>NONCASH Aktual" + badgeNonCash + "</td><td align='right' style='border:1px solid #ccc;'>" + nf.format(r.nonCashAktual) + "</td></tr>" +
+
+        "<tr><td colspan='2' style='height:6px;'></td></tr>" +
+
+        "<tr><td style='border:1px solid #ccc;'><b>Selisih CASH</b></td><td align='right' style='border:1px solid #ccc;'><b style='color:" + (r.selisihCash<0?"#c00":"#080") + ";'>" + nf.format(r.selisihCash) + "</b></td></tr>" +
+        "<tr><td style='border:1px solid #ccc;'><b>Selisih NONCASH</b></td><td align='right' style='border:1px solid #ccc;'><b style='color:" + (r.selisihNonCash<0?"#c00":"#080") + ";'>" + nf.format(r.selisihNonCash) + "</b></td></tr>" +
+        "<tr><td style='border:1px solid #ccc;'><b>Selisih TOTAL</b></td><td align='right' style='border:1px solid #ccc;'><b style='color:" + (r.selisihTotal<0?"#c00":"#080") + ";'>" + nf.format(r.selisihTotal) + "</b></td></tr>" +
+        "</table>" +
+
+        "<hr/>" +
+        "<div style='color:#555;'>Klik <b>OK</b> untuk simpan laporan ini.</div>" +
+        "</body></html>";
+
+    javax.swing.JEditorPane pane = new javax.swing.JEditorPane("text/html", html);
+    pane.setEditable(false);
+    pane.putClientProperty(javax.swing.JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+    pane.setFont(new java.awt.Font("Tahoma", java.awt.Font.PLAIN, 12));
+
+    javax.swing.JScrollPane sp = new javax.swing.JScrollPane(pane);
+    sp.setPreferredSize(new java.awt.Dimension(560, 520));
+
+    int res = JOptionPane.showConfirmDialog(
+        null,
+        sp,
+        "Preview Tutup Kasir",
+        JOptionPane.OK_CANCEL_OPTION,
+        JOptionPane.PLAIN_MESSAGE
+    );
+
+    return res == JOptionPane.OK_OPTION;
+}
+
+// =========================
+// 5) SIMPAN KE DB (UPSERT)
+// =========================
+private boolean simpanRekapKeDB(RekapTutupKasir r) {
+    String sql =
+        "INSERT INTO closing_kasir_payment_point " +
+        "(tgl, status_shift, nip, modal_awal, cash_sistem, noncash_sistem, total_sistem, " +
+        " cash_fisik, pengeluaran, noncash_aktual, selisih_cash, selisih_noncash, selisih_total, catatan) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+        "ON DUPLICATE KEY UPDATE " +
+        " modal_awal=VALUES(modal_awal), cash_sistem=VALUES(cash_sistem), noncash_sistem=VALUES(noncash_sistem), total_sistem=VALUES(total_sistem), " +
+        " cash_fisik=VALUES(cash_fisik), pengeluaran=VALUES(pengeluaran), noncash_aktual=VALUES(noncash_aktual), " +
+        " selisih_cash=VALUES(selisih_cash), selisih_noncash=VALUES(selisih_noncash), selisih_total=VALUES(selisih_total), " +
+        " catatan=VALUES(catatan), tgl_input=NOW()";
+
+    // catatan optional (kalau kamu punya field catatan, ambil dari form; kalau tidak, kosongkan)
+    String catatan = "";
+
+    try (PreparedStatement ps = koneksi.prepareStatement(sql)) {
+        int p = 1;
+        ps.setString(p++, r.tgl);
+        ps.setString(p++, r.statusShift);
+        ps.setString(p++, r.nip == null ? "" : r.nip);
+
+        ps.setLong(p++, r.modal);
+        ps.setLong(p++, r.cashSistem);
+        ps.setLong(p++, r.nonCashSistem);
+        ps.setLong(p++, r.totalSistem);
+
+        ps.setLong(p++, r.cashFisik);
+        ps.setLong(p++, r.pengeluaran);
+        ps.setLong(p++, r.nonCashAktual);
+
+        ps.setLong(p++, r.selisihCash);
+        ps.setLong(p++, r.selisihNonCash);
+        ps.setLong(p++, r.selisihTotal);
+
+        ps.setString(p++, catatan);
+
+        ps.executeUpdate();
+        return true;
+    } catch (Exception e) {
+        System.out.println("Notifikasi simpan tutup kasir: " + e);
         return false;
     }
 }
 
-private String tipeKolom(String table, String col){
-    try{
-        return Sequel.cariIsi(
-            "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS " +
-            "WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?",
-            table, col
-        );
-    }catch(Exception e){
-        return "";
+private void lihatLaporanTersimpan() {
+    String tgl   = Valid.SetTgl(Tgl1.getSelectedItem() + "");     // yyyy-MM-dd
+    String shift = CmbStatus.getSelectedItem().toString();        // Semua/Pagi/Siang/Sore/Malam
+    String nip   = "";
+    try { nip = akses.getkode(); } catch (Exception e) { nip = ""; }
+
+    RekapTutupKasir r = ambilRekapDariDB(tgl, shift, nip);
+
+    // Kalau tidak ketemu persis (tgl+shift+nip), tampilkan daftar untuk dipilih
+    if (r == null) {
+        boolean dipilih = pilihLaporanDariDaftar(tgl);
+        if (!dipilih) return; // user cancel
+        return;
     }
+
+    tampilkanPreviewTersimpan(r);
 }
 
-private String cariKolomJam(String table, String[] kandidat){
-    for(String k : kandidat){
-        if(kolomAda(table, k)) return k;
+private RekapTutupKasir ambilRekapDariDB(String tgl, String shift, String nip) {
+    String sql =
+        "SELECT tgl, status_shift, nip, modal_awal, cash_sistem, noncash_sistem, total_sistem, " +
+        "       cash_fisik, pengeluaran, noncash_aktual, selisih_cash, selisih_noncash, selisih_total, " +
+        "       catatan, tgl_input " +
+        "FROM closing_kasir_payment_point " +
+        "WHERE tgl=? AND status_shift=? AND nip=? " +
+        "LIMIT 1";
+
+    try (PreparedStatement ps = koneksi.prepareStatement(sql)) {
+        ps.setString(1, tgl);
+        ps.setString(2, shift);
+        ps.setString(3, nip);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                RekapTutupKasir r = new RekapTutupKasir();
+                r.tgl = rs.getString("tgl");
+                r.statusShift = rs.getString("status_shift");
+                r.nip = rs.getString("nip");
+
+                r.modal = rs.getLong("modal_awal");
+                r.cashSistem = rs.getLong("cash_sistem");
+                r.nonCashSistem = rs.getLong("noncash_sistem");
+                r.totalSistem = rs.getLong("total_sistem");
+
+                r.cashFisik = rs.getLong("cash_fisik");
+                r.pengeluaran = rs.getLong("pengeluaran");
+                r.nonCashAktual = rs.getLong("noncash_aktual");
+
+                r.selisihCash = rs.getLong("selisih_cash");
+                r.selisihNonCash = rs.getLong("selisih_noncash");
+                r.selisihTotal = rs.getLong("selisih_total");
+
+                r.catatan = rs.getString("catatan");
+                r.tglInput = rs.getString("tgl_input");
+                return r;
+            }
+        }
+    } catch (Exception e) {
+        System.out.println("Notifikasi ambilRekapDariDB: " + e);
     }
     return null;
 }
 
-private boolean isDateTimeType(String dt){
-    dt = dt == null ? "" : dt.toLowerCase();
-    return dt.equals("datetime") || dt.equals("timestamp");
+/**
+ * Kalau record spesifik tidak ketemu, tampilkan daftar laporan pada tanggal itu,
+ * user pilih salah satu -> tampilkan preview.
+ */
+private boolean pilihLaporanDariDaftar(String tgl) {
+    String sql =
+        "SELECT status_shift, nip, total_sistem, selisih_total, tgl_input " +
+        "FROM closing_kasir_payment_point " +
+        "WHERE tgl=? " +
+        "ORDER BY tgl_input DESC";
+
+    javax.swing.table.DefaultTableModel dm = new javax.swing.table.DefaultTableModel(
+        new Object[]{"Shift", "NIP", "Total Sistem", "Selisih Total", "Tgl Input"}, 0
+    ) {
+        @Override public boolean isCellEditable(int row, int col) { return false; }
+    };
+
+    try (PreparedStatement ps = koneksi.prepareStatement(sql)) {
+        ps.setString(1, tgl);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                dm.addRow(new Object[]{
+                    rs.getString("status_shift"),
+                    rs.getString("nip"),
+                    rs.getLong("total_sistem"),
+                    rs.getLong("selisih_total"),
+                    rs.getString("tgl_input")
+                });
+            }
+        }
+    } catch (Exception e) {
+        System.out.println("Notifikasi pilihLaporanDariDaftar: " + e);
+        return false;
+    }
+
+    if (dm.getRowCount() == 0) {
+        JOptionPane.showMessageDialog(null, "Belum ada laporan tersimpan untuk tanggal " + tgl);
+        return false;
+    }
+javax.swing.table.DefaultTableCellRenderer money = new javax.swing.table.DefaultTableCellRenderer() {
+    final java.text.NumberFormat nf =
+        java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id","ID"));
+    {
+        setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        nf.setMaximumFractionDigits(0);
+        nf.setMinimumFractionDigits(0);
+    }
+    @Override
+    public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
+            boolean isSelected, boolean hasFocus, int row, int column) {
+        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        long v = 0;
+        try { if(value != null) v = Long.parseLong(value.toString()); } catch(Exception ignored) {}
+        setText(nf.format(v));
+        return this;
+    }
+};
+    JTable tb = new JTable(dm);
+    tb.setRowHeight(24);
+    tb.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+    tb.getColumnModel().getColumn(2).setCellRenderer(money);
+    tb.getColumnModel().getColumn(3).setCellRenderer(money);
+
+    JScrollPane sp = new JScrollPane(tb);
+    sp.setPreferredSize(new java.awt.Dimension(720, 280));
+
+    int res = JOptionPane.showConfirmDialog(
+        null, sp, "Pilih Laporan (" + tgl + ")", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+    );
+    if (res != JOptionPane.OK_OPTION) return false;
+
+    int row = tb.getSelectedRow();
+    if (row < 0) {
+        JOptionPane.showMessageDialog(null, "Pilih salah satu baris dulu.");
+        return false;
+    }
+
+    String shift = String.valueOf(tb.getValueAt(row, 0));
+    String nip   = String.valueOf(tb.getValueAt(row, 1));
+
+    RekapTutupKasir r = ambilRekapDariDB(tgl, shift, nip);
+    if (r == null) {
+        JOptionPane.showMessageDialog(null, "Data laporan tidak ditemukan lagi (mungkin terhapus/berubah).");
+        return false;
+    }
+
+    tampilkanPreviewTersimpan(r);
+    return true;
 }
+
+private void tampilkanPreviewTersimpan(RekapTutupKasir r) {
+    java.text.NumberFormat nf = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("id", "ID"));
+    nf.setMaximumFractionDigits(0);
+    nf.setMinimumFractionDigits(0);
+
+    String cat = (r.catatan == null || r.catatan.trim().isEmpty()) ? "-" : r.catatan;
+
+    String html =
+        "<html><body style='font-family:Tahoma; font-size:12px;'>" +
+        "<h3 style='margin:0;'>Laporan Tutup Kasir (Tersimpan)</h3>" +
+        "<div style='margin-top:6px;'>Tanggal: <b>" + r.tgl + "</b> &nbsp; | &nbsp; Shift: <b>" + r.statusShift + "</b></div>" +
+        "<div style='margin-top:2px;'>Petugas: <b>" + (r.nip==null?"":r.nip) + "</b></div>" +
+        "<div style='margin-top:2px; color:#555;'>Tgl Input: <b>" + (r.tglInput==null?"":r.tglInput) + "</b></div>" +
+        "<hr/>" +
+
+        "<table width='100%' cellspacing='0' cellpadding='6' style='border-collapse:collapse;'>" +
+        "<tr><td style='border:1px solid #00f;'>Modal Awal</td><td align='right' style='border:1px solid #00f;'><b>" + nf.format(r.modal) + "</b></td></tr>" +
+        "<tr><td style='border:1px solid #00f;'>Masuk CASH (Sistem)</td><td align='right' style='border:1px solid #00f;'>" + nf.format(r.cashSistem) + "</td></tr>" +
+        "<tr><td style='border:1px solid #00f;'>Masuk NONCASH (Sistem)</td><td align='right' style='border:1px solid #00f;'>" + nf.format(r.nonCashSistem) + "</td></tr>" +
+        "<tr><td style='border:1px solid #00f;'><b>> Total Sistem</b></td><td align='right' style='border:1px solid #00f;'><b>" + nf.format(r.totalSistem) + "</b></td></tr>" +
+
+        "<tr><td colspan='2' style='height:10px;'></td></tr>" +
+
+        "<tr><td style='border:1px solid #00f;'>Cash Fisik</td><td align='right' style='border:1px solid #00f;'>" + nf.format(r.cashFisik) + "</td></tr>" +
+        "<tr><td style='border:1px solid #00f;'>Pengeluaran (Cash Out)</td><td align='right' style='border:1px solid #00f;'>" + nf.format(r.pengeluaran) + "</td></tr>" +
+        "<tr><td style='border:1px solid #00f;'>NONCASH Aktual</td><td align='right' style='border:1px solid #00f;'>" + nf.format(r.nonCashAktual) + "</td></tr>" +
+
+        "<tr><td colspan='2' style='height:10px;'></td></tr>" +
+
+        "<tr><td style='border:1px solid #00f;'><b>Selisih CASH</b></td><td align='right' style='border:1px solid #00f;'><b>" + nf.format(r.selisihCash) + "</b></td></tr>" +
+        "<tr><td style='border:1px solid #00f;'><b>Selisih NONCASH</b></td><td align='right' style='border:1px solid #00f;'><b>" + nf.format(r.selisihNonCash) + "</b></td></tr>" +
+        "<tr><td style='border:1px solid #00f;'><b>Selisih TOTAL</b></td><td align='right' style='border:1px solid #00f;'><b>" + nf.format(r.selisihTotal) + "</b></td></tr>" +
+        "</table>" +
+
+        "<hr/>" +
+        "<div><b>Catatan:</b> " + cat + "</div>" +
+        "</body></html>";
+
+    javax.swing.JEditorPane pane = new javax.swing.JEditorPane("text/html", html);
+    pane.setEditable(false);
+    pane.putClientProperty(javax.swing.JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+    pane.setFont(new java.awt.Font("Tahoma", java.awt.Font.PLAIN, 12));
+
+    javax.swing.JScrollPane sp = new javax.swing.JScrollPane(pane);
+    sp.setPreferredSize(new java.awt.Dimension(560, 520));
+
+    Object[] options = {"🖨 Print", "Tutup"};
+    int res = javax.swing.JOptionPane.showOptionDialog(
+        null,
+        sp,
+        "Laporan Tutup Kasir",
+        javax.swing.JOptionPane.DEFAULT_OPTION,
+        javax.swing.JOptionPane.PLAIN_MESSAGE,
+        null,
+        options,
+        options[1]
+    );
+
+    if (res == 0) { // klik Print
+        cetakPane(pane);
+    }
+}
+
+private boolean tutupShiftOpen(String tgl, String nip){
+    try (PreparedStatement ps = koneksi.prepareStatement(
+        "UPDATE toko_kasir_shift " +
+        "SET jam_tutup = CURTIME() " +
+        "WHERE tgl=? AND nip=? AND jam_tutup IS NULL"
+    )) {
+        ps.setString(1, tgl);
+        ps.setString(2, nip);
+        ps.executeUpdate();
+        return true;
+    } catch (Exception e) {
+        System.out.println("Notifikasi tutupShiftOpen: " + e);
+        return false;
+    }
+}
+private void cetakPane(javax.swing.JEditorPane pane) {
+    try {
+        // ini akan munculin dialog printer bawaan Windows
+        boolean done = pane.print();
+        if (!done) {
+            System.out.println("Print dibatalkan user.");
+        }
+    } catch (java.awt.print.PrinterException e) {
+        System.out.println("Notifikasi print: " + e);
+        javax.swing.JOptionPane.showMessageDialog(null, "Gagal print: " + e.getMessage());
+    }
+}
+
+private boolean tutupShiftGlobal(String tgl) {
+    String sql =
+        "UPDATE toko_kasir_shift " +
+        "SET jam_tutup = CURTIME() " +
+        "WHERE tgl = ? AND jam_tutup IS NULL " +
+        "ORDER BY id DESC LIMIT 1";
+    try (PreparedStatement ps = koneksi.prepareStatement(sql)) {
+        ps.setString(1, tgl);
+        int aff = ps.executeUpdate();
+        System.out.println("tutupShiftGlobal affected_rows=" + aff);
+        return aff > 0;
+    } catch (Exception e) {
+        System.out.println("Gagal tutupShiftGlobal: " + e);
+        return false;
+    }
+}
+
+private void tampilPopupTuslahPerNip() {
+    try {
+        final toko.TuslahTokopenjualanService svc = new toko.TuslahTokopenjualanService(koneksi);
+
+        // formatter Rp
+        java.text.DecimalFormatSymbols sym = new java.text.DecimalFormatSymbols();
+        sym.setGroupingSeparator('.');
+        sym.setDecimalSeparator(',');
+        final java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0", sym);
+
+        final java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+
+        // ===== dialog
+        final JDialog dlg = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Rekap Tuslah Per NIP",
+                Dialog.ModalityType.APPLICATION_MODAL
+        );
+        dlg.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dlg.setSize(940, 600);
+        dlg.setLocationRelativeTo(this);
+
+        JPanel root = new JPanel(new java.awt.BorderLayout(10, 10));
+        root.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+
+        // ===== komponen tanggal (dibuat DI DALAM POPUP)
+        final widget.Tanggal dt1 = new widget.Tanggal();
+        final widget.Tanggal dt2 = new widget.Tanggal();
+
+        java.util.Date now = new java.util.Date();
+        dt1.setDate(now);
+        dt2.setDate(now);
+
+        JButton btnTampil   = new JButton("Tampilkan");
+        JButton btnHariIni  = new JButton("Hari Ini");
+        JButton btnBulanIni = new JButton("Bulan Ini");
+
+        JPanel pFilter = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 2));
+        pFilter.add(new JLabel("Periode:"));
+        dt1.setPreferredSize(new java.awt.Dimension(110, 26));
+        dt2.setPreferredSize(new java.awt.Dimension(110, 26));
+        pFilter.add(dt1);
+        pFilter.add(new JLabel(" s/d "));
+        pFilter.add(dt2);
+        pFilter.add(btnTampil);
+        pFilter.add(btnHariIni);
+        pFilter.add(btnBulanIni);
+
+        // ===== judul + ringkasan
+        JLabel lTitle = new JLabel("REKAP TUSLAH PER NIP");
+        lTitle.setFont(lTitle.getFont().deriveFont(java.awt.Font.BOLD, 16f));
+
+        final JLabel lPrd = new JLabel("Periode: -");
+        final JLabel lJml = new JLabel("Total Nota: 0");
+        final JLabel lTot = new JLabel("Total Transaksi: Rp0");
+        final JLabel lTus = new JLabel("Total Tuslah: Rp0");
+        lTus.setFont(lTus.getFont().deriveFont(java.awt.Font.BOLD, 12f));
+
+        JPanel info = new JPanel(new java.awt.GridLayout(0, 2, 12, 6));
+        info.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Ringkasan"),
+                BorderFactory.createEmptyBorder(8, 8, 8, 8)
+        ));
+        info.add(lPrd); info.add(new JLabel(""));
+        info.add(lJml); info.add(new JLabel(""));
+        info.add(lTot); info.add(new JLabel(""));
+        info.add(lTus); info.add(new JLabel(""));
+
+        JPanel top = new JPanel(new java.awt.BorderLayout(10, 10));
+        top.add(lTitle, java.awt.BorderLayout.NORTH);
+        top.add(pFilter, java.awt.BorderLayout.CENTER);
+        top.add(info, java.awt.BorderLayout.SOUTH);
+
+        root.add(top, java.awt.BorderLayout.NORTH);
+
+        // ===== tabel
+        final DefaultTableModel model = new DefaultTableModel(
+                new Object[]{"NIP", "Nama", "Jml Nota", "Total Transaksi", "Total Tuslah"}, 0
+        ) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override public Class<?> getColumnClass(int c) {
+                if (c == 2) return Long.class;
+                if (c == 3 || c == 4) return Double.class;
+                return String.class;
+            }
+        };
+
+        final JTable tb = new JTable(model);
+        tb.setAutoCreateRowSorter(true);
+        tb.setRowHeight(24);
+        tb.setShowVerticalLines(false);
+        tb.setShowHorizontalLines(true);
+        tb.getTableHeader().setFont(tb.getTableHeader().getFont().deriveFont(java.awt.Font.BOLD, 12f));
+        tb.getTableHeader().setReorderingAllowed(false);
+
+        // zebra + align + format Rp
+        final javax.swing.table.DefaultTableCellRenderer rLeft = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) setBackground((row % 2 == 0) ? new java.awt.Color(250,250,250) : java.awt.Color.WHITE);
+                setHorizontalAlignment(SwingConstants.LEFT);
+                return this;
+            }
+        };
+
+        final javax.swing.table.DefaultTableCellRenderer rCenter = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) setBackground((row % 2 == 0) ? new java.awt.Color(250,250,250) : java.awt.Color.WHITE);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return this;
+            }
+        };
+
+        final javax.swing.table.DefaultTableCellRenderer rRightNum = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) setBackground((row % 2 == 0) ? new java.awt.Color(250,250,250) : java.awt.Color.WHITE);
+                setHorizontalAlignment(SwingConstants.RIGHT);
+                return this;
+            }
+        };
+
+        final javax.swing.table.DefaultTableCellRenderer rRightRp = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) setBackground((row % 2 == 0) ? new java.awt.Color(250,250,250) : java.awt.Color.WHITE);
+                setHorizontalAlignment(SwingConstants.RIGHT);
+                if (value instanceof Number) setText("Rp" + df.format(((Number) value).doubleValue()));
+                if (column == 4) setFont(getFont().deriveFont(java.awt.Font.BOLD));
+                return this;
+            }
+        };
+
+        tb.getColumnModel().getColumn(0).setCellRenderer(rCenter);    // NIP
+        tb.getColumnModel().getColumn(1).setCellRenderer(rLeft);      // Nama
+        tb.getColumnModel().getColumn(2).setCellRenderer(rRightNum);  // Jml
+        tb.getColumnModel().getColumn(3).setCellRenderer(rRightRp);   // Total
+        tb.getColumnModel().getColumn(4).setCellRenderer(rRightRp);   // Tuslah
+
+        tb.getColumnModel().getColumn(0).setPreferredWidth(70);
+        tb.getColumnModel().getColumn(1).setPreferredWidth(260);
+        tb.getColumnModel().getColumn(2).setPreferredWidth(90);
+        tb.getColumnModel().getColumn(3).setPreferredWidth(140);
+        tb.getColumnModel().getColumn(4).setPreferredWidth(140);
+
+        root.add(new JScrollPane(tb), java.awt.BorderLayout.CENTER);
+
+        // ===== tombol bawah
+        JButton btnPrint = new JButton("Print");
+        JButton btnClose = new JButton("Tutup");
+
+        // biar print pakai total terakhir yang tampil
+        final double[] grandTuslahHolder = new double[]{0.0};
+        final String[] periodeHolder = new String[]{"-"};
+
+        btnPrint.addActionListener(e -> {
+            try {
+                java.text.MessageFormat header = new java.text.MessageFormat(
+                        "REKAP TUSLAH PER NIP • Periode: " + periodeHolder[0] +
+                        " • Total Tuslah: Rp" + df.format(grandTuslahHolder[0])
+                );
+                java.text.MessageFormat footer = new java.text.MessageFormat("Halaman {0}");
+                tb.print(JTable.PrintMode.FIT_WIDTH, header, footer);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dlg, "Gagal print: " + ex.getMessage());
+            }
+        });
+
+        btnClose.addActionListener(e -> dlg.dispose());
+
+        JPanel bottom = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+        bottom.add(btnPrint);
+        bottom.add(btnClose);
+        root.add(bottom, java.awt.BorderLayout.SOUTH);
+
+        dlg.setContentPane(root);
+
+        // ===== fungsi reload data (dipanggil tombol Tampilkan/HariIni/BulanIni)
+        Runnable reload = () -> {
+            try {
+                java.util.Date dA = dt1.getDate();
+                java.util.Date dB = dt2.getDate();
+
+                if (dA == null || dB == null) {
+                    JOptionPane.showMessageDialog(dlg, "Tanggal periode masih kosong.");
+                    return;
+                }
+
+                java.sql.Date tgl1 = new java.sql.Date(dA.getTime());
+                java.sql.Date tgl2 = new java.sql.Date(dB.getTime());
+
+                if (tgl2.before(tgl1)) {
+                    JOptionPane.showMessageDialog(dlg, "Tanggal akhir tidak boleh lebih kecil dari tanggal awal.");
+                    return;
+                }
+
+                java.util.List<toko.TuslahTokopenjualanService.RowNip> rows =
+                        svc.listRekapPerNip(tgl1, tgl2, 5000);
+
+                long grandNota = 0;
+                double grandTrans = 0;
+                double grandTuslah = 0;
+
+                // reset tabel
+                model.setRowCount(0);
+
+                for (toko.TuslahTokopenjualanService.RowNip r : rows) {
+                    grandNota += r.jumlahNota;
+                    grandTrans += r.totalTransaksi;
+                    grandTuslah += r.totalTuslah;
+
+                    model.addRow(new Object[]{
+                            r.nip,
+                            (r.nama == null ? "-" : r.nama),
+                            r.jumlahNota,
+                            r.totalTransaksi,
+                            r.totalTuslah
+                    });
+                }
+
+                String periode = sdf.format(tgl1) + " s/d " + sdf.format(tgl2);
+                periodeHolder[0] = periode;
+                grandTuslahHolder[0] = grandTuslah;
+
+                lPrd.setText("Periode: " + periode);
+                lJml.setText("Total Nota: " + grandNota);
+                lTot.setText("Total Transaksi: Rp" + df.format(grandTrans));
+                lTus.setText("Total Tuslah: Rp" + df.format(grandTuslah));
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dlg, "Gagal load data: " + ex.getMessage());
+            }
+        };
+
+        // tombol aksi
+        btnTampil.addActionListener(e -> reload.run());
+
+        btnHariIni.addActionListener(e -> {
+            java.util.Date x = new java.util.Date();
+            dt1.setDate(x);
+            dt2.setDate(x);
+            reload.run();
+        });
+
+        btnBulanIni.addActionListener(e -> {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate first = today.withDayOfMonth(1);
+            dt1.setDate(java.sql.Date.valueOf(first));
+            dt2.setDate(java.sql.Date.valueOf(today));
+            reload.run();
+        });
+
+        // load awal
+        reload.run();
+
+        dlg.setVisible(true);
+
+    } catch (Exception e) {
+        System.out.println("Notifikasi Popup Tuslah Per NIP: " + e);
+        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+    }
+}
+
 
 
 

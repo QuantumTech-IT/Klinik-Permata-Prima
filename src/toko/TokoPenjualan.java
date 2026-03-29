@@ -3450,27 +3450,91 @@ cm.getColumn(8).setPreferredWidth(80);
     tbResepDetail.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 TableColumnModel colModel = tbResepDetail.getColumnModel();
 
-// Kolom Kode
-colModel.getColumn(0).setMinWidth(0);
-colModel.getColumn(0).setMaxWidth(0);
-colModel.getColumn(0).setPreferredWidth(0);
-colModel.getColumn(1).setPreferredWidth(100);
+// ID → hidden
+colModel.getColumn(0).setMinWidth(0); colModel.getColumn(0).setMaxWidth(0); colModel.getColumn(0).setPreferredWidth(0);
+// Kode
+colModel.getColumn(1).setPreferredWidth(90);
+colModel.getColumn(1).setHeaderValue("Kode");
+// Nama Obat / Racikan
+colModel.getColumn(2).setPreferredWidth(200);
+colModel.getColumn(2).setHeaderValue("Nama Obat / Racikan");
+// Jml
+colModel.getColumn(3).setPreferredWidth(50);
+// Satuan
+colModel.getColumn(4).setPreferredWidth(65);
+// Aturan Pakai
+colModel.getColumn(5).setPreferredWidth(120);
+// Komposisi / Keterangan → perlebar
+colModel.getColumn(6).setPreferredWidth(380);
+colModel.getColumn(6).setHeaderValue("Komposisi / Keterangan");
+// Nama Racikan → sembunyikan (duplikat)
+colModel.getColumn(7).setMinWidth(0); colModel.getColumn(7).setMaxWidth(0); colModel.getColumn(7).setPreferredWidth(0);
 
-// Kolom Nama Obat â†’ dibuat lebih lebar
-colModel.getColumn(2).setPreferredWidth(250);
+// --- custom renderer untuk baris racikan ---
+tbResepDetail.setRowHeight(24);
+javax.swing.table.TableCellRenderer racikanRenderer = new javax.swing.table.DefaultTableCellRenderer() {
+    private final java.awt.Color BG_RACIKAN  = new java.awt.Color(240, 232, 255); // lavender
+    private final java.awt.Color FG_RACIKAN  = new java.awt.Color(90, 0, 150);
+    private final java.awt.Color BG_NORMAL   = java.awt.Color.WHITE;
+    private final java.awt.Color BG_SELECTED = new java.awt.Color(198, 181, 230);
 
-// Kolom Jml
-colModel.getColumn(3).setPreferredWidth(60);
+    @Override
+    public java.awt.Component getTableCellRendererComponent(
+            javax.swing.JTable table, Object value, boolean isSelected,
+            boolean hasFocus, int row, int col) {
 
-// Kolom Satuan
-colModel.getColumn(4).setPreferredWidth(80);
+        // ambil kode dari model (kolom 1 = Kode)
+        Object kodeObj = table.getModel().getValueAt(
+                table.convertRowIndexToModel(row), 1);
+        boolean isRacikan = (kodeObj == null || kodeObj.toString().trim().isEmpty());
 
-// Kolom Aturan Pakai
-colModel.getColumn(5).setPreferredWidth(160);
+        // nilai tampilan
+        String display;
+        int modelCol = table.convertColumnIndexToModel(col);
+        if (isRacikan) {
+            if (modelCol == 1) {
+                display = "[Racikan]";
+            } else if (modelCol == 3) {
+                display = "-";          // jml
+            } else if (modelCol == 4) {
+                display = "-";          // satuan
+            } else {
+                display = value == null ? "" : value.toString();
+            }
+        } else {
+            display = value == null ? "" : value.toString();
+        }
 
-// Kolom Keterangan
-colModel.getColumn(6).setPreferredWidth(120);
-colModel.getColumn(7).setPreferredWidth(140);
+        super.getTableCellRendererComponent(table, display, isSelected, hasFocus, row, col);
+
+        // warna baris
+        if (isSelected) {
+            setBackground(isRacikan ? BG_SELECTED : table.getSelectionBackground());
+        } else {
+            setBackground(isRacikan ? BG_RACIKAN : BG_NORMAL);
+        }
+        if (isRacikan) {
+            setForeground(modelCol == 1 ? FG_RACIKAN : java.awt.Color.DARK_GRAY);
+            if (modelCol == 1) setFont(getFont().deriveFont(java.awt.Font.BOLD | java.awt.Font.ITALIC));
+            else setFont(getFont().deriveFont(java.awt.Font.PLAIN));
+        } else {
+            setForeground(table.getForeground());
+            setFont(getFont().deriveFont(java.awt.Font.PLAIN));
+        }
+
+        // tooltip full teks untuk kolom Komposisi
+        if (modelCol == 6 && value != null) {
+            String full = value.toString().replace("\n", "<br>");
+            setToolTipText("<html>" + full + "</html>");
+        } else {
+            setToolTipText(null);
+        }
+        return this;
+    }
+};
+for (int ci = 1; ci <= 6; ci++) {
+    colModel.getColumn(ci).setCellRenderer(racikanRenderer);
+}
     
     
     JPopupMenu pmDetail = new JPopupMenu();
@@ -3618,10 +3682,12 @@ private void showResepDetailDialog(String noResep) {
     Valid.tabelKosong(tmResepDetailPopup);
 
     // load data detail
-    String sql = "SELECT rtd.kode_brng, tb.nama_brng, rtd.jml, rtd.satuan, rtd.aturan_pakai, rtd.keterangan, rtd.nama_racikan " +
+    String sql = "SELECT rtd.kode_brng, " +
+                 "       COALESCE(tb.nama_brng, rtd.nama_racikan, rtd.keterangan, '[Racikan]') AS nama_brng, " +
+                 "       rtd.jml, rtd.satuan, rtd.aturan_pakai, rtd.keterangan, rtd.nama_racikan " +
                  "FROM resep_toko_detail rtd " +
-                 "JOIN tokobarang tb ON tb.kode_brng = rtd.kode_brng " +
-                 "WHERE rtd.no_resep = ? ORDER BY tb.nama_brng";
+                 "LEFT JOIN tokobarang tb ON tb.kode_brng = rtd.kode_brng AND rtd.kode_brng <> '' " +
+                 "WHERE rtd.no_resep = ? ORDER BY nama_brng";
     try (PreparedStatement ps = koneksi.prepareStatement(sql)) {
         ps.setString(1, noResep);
         try (ResultSet rs = ps.executeQuery()) {
@@ -3734,12 +3800,14 @@ private void loadResepDetail(String noResep) {
         }
 
         final String sql =
-            "SELECT rtd.id, rtd.kode_brng, tb.nama_brng, rtd.jml, rtd.satuan, rtd.aturan_pakai, " +
+            "SELECT rtd.id, rtd.kode_brng, " +
+            "       COALESCE(tb.nama_brng, rtd.nama_racikan, rtd.keterangan, '[Racikan]') AS nama_brng, " +
+            "       rtd.jml, rtd.satuan, rtd.aturan_pakai, " +
             "       rtd.keterangan, COALESCE(rtd.nama_racikan,'-') AS nama_racikan " +
             "FROM resep_toko_detail rtd " +
-            "JOIN tokobarang tb ON tb.kode_brng = rtd.kode_brng " +
+            "LEFT JOIN tokobarang tb ON tb.kode_brng = rtd.kode_brng AND rtd.kode_brng <> '' " +
             "WHERE rtd.no_resep = ? " +
-            "ORDER BY (rtd.keterangan='Racikan'), rtd.nama_racikan, tb.nama_brng";
+            "ORDER BY (rtd.kode_brng = '' OR rtd.kode_brng IS NULL), rtd.nama_racikan, nama_brng";
 
         try (PreparedStatement ps = koneksi.prepareStatement(sql)) {
             ps.setString(1, noResep);

@@ -66,6 +66,7 @@ public class DlgBilingRalan extends javax.swing.JDialog {
                    ttlLaborat=0,ttlRadiologi=0,ttlObat=0,ttlRalan_Dokter=0,ttlRalan_Paramedis=0,
                    ttlTambahan=0,ttlPotongan=0,ttlRegistrasi=0,ttlRalan_Dokter_Param=0,ppnobat=0,ttlOperasi=0,
                    kekurangan=0,obatlangsung;
+    private String alasanGagalAutoBilling = "";
     private int i,r,cek,row2,countbayar=0,z=0,jml=0;
     private String nota_jalan="",dokterrujukan="",polirujukan="",status="",biaya="",tambahan="",totals="",kdptg="",nmptg="",kd_pj="",notaralan="",centangdokterralan="",
             rinciandokterralan="",Tindakan_Ralan="",Laborat_Ralan="",Radiologi_Ralan="",no_rkm_medis, nm_pasien, alamat, jk, umurdaftar, tgl_registrasi, no_nota,
@@ -124,19 +125,21 @@ public class DlgBilingRalan extends javax.swing.JDialog {
                     "sum(periksa_lab.tarif_tindakan_petugas) as totalpetugas,sum(periksa_lab.kso) as totalkso,sum(periksa_lab.bhp) as totalbhp "+
                     " from periksa_lab inner join jns_perawatan_lab on jns_perawatan_lab.kd_jenis_prw=periksa_lab.kd_jenis_prw where "+
                     " periksa_lab.no_rawat=? group by periksa_lab.kd_jenis_prw  ",
-            sqlpscariobat=   "SELECT tb.nama_brng, j.nama AS nama, " +
-  "       td.h_jual AS biaya_obat, " +
-  "       SUM(td.jumlah) AS jml, " +
-  "       SUM(COALESCE(td.tambahan,0)) AS tambahan, " +
-  "       (SUM(td.jumlah*td.h_jual) + SUM(COALESCE(td.tambahan,0))) AS total, " +
-  "       SUM(COALESCE(td.h_beli, tb.h_beli)*td.jumlah) AS totalbeli " +
-  "FROM tokopenjualan tp " +
-  "JOIN toko_detail_jual td ON td.nota_jual = tp.nota_jual " +
-  "JOIN tokobarang tb       ON tb.kode_brng = td.kode_brng " +
-  "LEFT JOIN jenis j        ON j.kdjns = tb.jenis " +
-  "WHERE tp.no_rawat = ? " +
-  "GROUP BY td.kode_brng, td.h_jual, tb.nama_brng, j.nama " +
-  "ORDER BY j.nama, tb.nama_brng",
+           sqlpscariobat =
+"SELECT tp.nota_jual, tp.tgl_jual, " +
+"       tb.nama_brng, COALESCE(j.nama,'') AS nama, " +
+"       td.h_jual AS biaya_obat, " +
+"       SUM(td.jumlah) AS jml, " +
+"       SUM(COALESCE(td.tambahan,0)) AS tambahan, " +
+"       SUM(td.jumlah*td.h_jual) AS total, " +   // total murni (tanpa tambahan)
+"       SUM(COALESCE(td.h_beli, tb.h_beli)*td.jumlah) AS totalbeli " +
+"FROM tokopenjualan tp " +
+"JOIN toko_detail_jual td ON td.nota_jual = tp.nota_jual " +
+"JOIN tokobarang tb       ON tb.kode_brng = td.kode_brng " +
+"LEFT JOIN jenis j        ON j.kdjns = tb.jenis " +
+"WHERE tp.no_rawat = ? " +
+"GROUP BY tp.nota_jual, tp.tgl_jual, td.kode_brng, td.h_jual, tb.nama_brng, j.nama " +
+"ORDER BY tp.tgl_jual, tp.nota_jual, j.nama, tb.nama_brng",
 //            "select databarang.nama_brng,jenis.nama,detail_pemberian_obat.biaya_obat,"+
 //                          "sum(detail_pemberian_obat.jml) as jml,sum(detail_pemberian_obat.embalase+detail_pemberian_obat.tuslah) as tambahan,"+
 //                          "(sum(detail_pemberian_obat.total)-sum(detail_pemberian_obat.embalase+detail_pemberian_obat.tuslah)) as total, "+
@@ -5277,6 +5280,129 @@ private void prosesCariPenjualanTokoPerRM(String noRM, java.sql.Timestamp mulai,
                 
             TKembali.setText(Valid.SetAngka3(kekurangan));  
         }  
+    }
+
+    public String getAlasanGagalAutoBilling() {
+        return alasanGagalAutoBilling;
+    }
+
+    // Dipakai dari TokoPenjualan: simpan billing tanpa membuka popup Billing manual.
+    public boolean simpanOtomatisDariToko(String noRawat, String namaAkunBayar) {
+        alasanGagalAutoBilling = "";
+        try {
+            if (noRawat == null || noRawat.trim().isEmpty()) {
+                alasanGagalAutoBilling = "No.Rawat kosong";
+                return false;
+            }
+
+            TNoRw.setText(noRawat.trim());
+            isCek();
+
+            // Validasi langsung ke DB dulu, agar tidak false negative karena field UI belum diisi.
+            String noRm = Sequel.cariIsi(
+                "SELECT no_rkm_medis FROM reg_periksa WHERE no_rawat=? LIMIT 1",
+                TNoRw.getText()
+            );
+            if (noRm == null || noRm.trim().isEmpty()) {
+                alasanGagalAutoBilling = "No.Rawat tidak ditemukan di reg_periksa";
+                return false;
+            }
+            String nmPas = Sequel.cariIsi(
+                "SELECT nm_pasien FROM pasien WHERE no_rkm_medis=? LIMIT 1",
+                noRm.trim()
+            );
+            if (nmPas == null || nmPas.trim().isEmpty()) {
+                alasanGagalAutoBilling = "No.RM ditemukan, tapi pasien tidak ditemukan";
+                return false;
+            }
+
+            TNoRM.setText(noRm.trim());
+            TPasien.setText(nmPas.trim());
+
+            double sudahAda = Sequel.cariIsiAngka("select count(*) from billing where no_rawat=?", TNoRw.getText());
+            if (sudahAda > 0) {
+                return true;
+            }
+
+            chkLaborat.setSelected(true);
+            chkRadiologi.setSelected(true);
+            chkPotongan.setSelected(true);
+            chkTambahan.setSelected(true);
+            chkObat.setSelected(true);
+            chkAdministrasi.setSelected(true);
+            chkSarpras.setSelected(true);
+            chkTarifDokter.setSelected(true);
+            chkTarifPrm.setSelected(true);
+            isRawat();
+
+            if (tabModeAkunBayar.getRowCount() <= 0) {
+                tampilAkunBayar();
+                if (tabModeAkunBayar.getRowCount() <= 0) {
+                    alasanGagalAutoBilling = "Daftar akun bayar kosong (cache/DB akun_bayar)";
+                    return false;
+                }
+            }
+
+            for (int r = 0; r < tabModeAkunBayar.getRowCount(); r++) {
+                tabModeAkunBayar.setValueAt("", r, 2);
+                tabModeAkunBayar.setValueAt("", r, 4);
+            }
+
+            int rowAkun = -1;
+            if (namaAkunBayar != null && !namaAkunBayar.trim().isEmpty()) {
+                for (int r = 0; r < tabModeAkunBayar.getRowCount(); r++) {
+                    String nm = String.valueOf(tabModeAkunBayar.getValueAt(r, 0));
+                    if (namaAkunBayar.trim().equalsIgnoreCase(nm.trim())) {
+                        rowAkun = r;
+                        break;
+                    }
+                }
+            }
+            if (rowAkun < 0) {
+                rowAkun = 0;
+            }
+
+            double nominal = ttl;
+            if (nominal <= 0) {
+                nominal = Valid.SetAngka(TagihanPPn.getText());
+            }
+            if (nominal <= 0) {
+                alasanGagalAutoBilling = "Total tagihan billing 0, tidak ada yang bisa disimpan";
+                return false;
+            }
+
+            tabModeAkunBayar.setValueAt(Double.toString(nominal), rowAkun, 2);
+            double persenPpn = Valid.SetAngka(String.valueOf(tabModeAkunBayar.getValueAt(rowAkun, 3)));
+            if (persenPpn > 0) {
+                tabModeAkunBayar.setValueAt(Valid.roundUp((persenPpn / 100d) * nominal, 100), rowAkun, 4);
+            } else {
+                tabModeAkunBayar.setValueAt("", rowAkun, 4);
+            }
+
+            isKembali();
+            if (kekurangan < 0) {
+                nominal += Math.abs(kekurangan);
+                tabModeAkunBayar.setValueAt(Double.toString(nominal), rowAkun, 2);
+                if (persenPpn > 0) {
+                    tabModeAkunBayar.setValueAt(Valid.roundUp((persenPpn / 100d) * nominal, 100), rowAkun, 4);
+                }
+                isKembali();
+            }
+
+            BtnSimpanActionPerformed(null);
+
+            boolean tersimpan = Sequel.cariIsiAngka("select count(*) from billing where no_rawat=?", TNoRw.getText()) > 0;
+            if (!tersimpan) {
+                alasanGagalAutoBilling =
+                    "Simpan billing ditolak validasi internal (cek kekurangan/piutang/kelengkapan tagihan). " +
+                    "ttl=" + ttl + ", tagihanPPN=" + tagihanppn + ", kekurangan=" + kekurangan;
+            }
+            return tersimpan;
+        } catch (Exception e) {
+            System.out.println("Auto billing dari toko gagal: " + e);
+            alasanGagalAutoBilling = "Exception: " + e.getMessage();
+            return false;
+        }
     }
     
     

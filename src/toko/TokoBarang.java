@@ -41,6 +41,11 @@ import restore.DlgRestoreTokoBarang;
  import java.text.*;
  import java.util.*;
  import java.awt.geom.*; 
+import java.awt.print.PrinterException;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.MediaSizeName;
+import javax.print.attribute.standard.OrientationRequested;
 
 /**
  *
@@ -62,6 +67,11 @@ public final class TokoBarang extends javax.swing.JDialog {
     private static final int C_EXPIRE = 16;
     private javax.swing.JTable tbExp;
 private javax.swing.table.DefaultTableModel expModel;
+private boolean modeSKU = false;
+private javax.swing.table.TableModel modelMaster;
+private final StokMinTableModel stokMinModel = new StokMinTableModel();
+
+
    
     /** Creates new form DlgJnsPerawatan
      * @param parent
@@ -69,12 +79,16 @@ private javax.swing.table.DefaultTableModel expModel;
     public TokoBarang(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        modelMaster = tbJnsPerawatan.getModel();
         initExpireCombo();
         initExpiredTable(); 
         styleExpTable(tbExp); // sekali, setelah initComponents
 reloadExpiredTableFromDB();
+tbJnsPerawatan.setModel(stokMinModel);
+tbJnsPerawatan.setAutoCreateRowSorter(true);
         
-
+// load data pertama kali
+tampilStokMin();
         this.setLocation(8,1);
         setSize(628,674);
 
@@ -429,6 +443,8 @@ tbJnsPerawatan.setModel(tabMode);
         ChkKadaluarsa = new widget.CekBox();
         ExpiredList = new javax.swing.JPanel();
         label11 = new widget.Label();
+        stokMinimal = new javax.swing.JButton();
+        printSku = new javax.swing.JButton();
         ChkInput = new widget.CekBox();
 
         Popup.setName("Popup"); // NOI18N
@@ -1281,7 +1297,7 @@ tbJnsPerawatan.setModel(tabMode);
         label31.setBounds(10, 190, 88, 23);
 
         DTPExpired.setForeground(new java.awt.Color(50, 70, 50));
-        DTPExpired.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "11-12-2025" }));
+        DTPExpired.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "01-01-2026" }));
         DTPExpired.setDisplayFormat("dd-MM-yyyy");
         DTPExpired.setName("DTPExpired"); // NOI18N
         DTPExpired.setOpaque(false);
@@ -1314,6 +1330,26 @@ tbJnsPerawatan.setModel(tabMode);
         label11.setName("label11"); // NOI18N
         FormInput.add(label11);
         label11.setBounds(0, 10, 89, 23);
+
+        stokMinimal.setText("SKU");
+        stokMinimal.setName("stokMinimal"); // NOI18N
+        stokMinimal.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stokMinimalActionPerformed(evt);
+            }
+        });
+        FormInput.add(stokMinimal);
+        stokMinimal.setBounds(740, 10, 140, 23);
+
+        printSku.setText("Print SKU");
+        printSku.setName("printSku"); // NOI18N
+        printSku.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                printSkuActionPerformed(evt);
+            }
+        });
+        FormInput.add(printSku);
+        printSku.setBounds(740, 40, 140, 23);
 
         PanelInput.add(FormInput, java.awt.BorderLayout.CENTER);
 
@@ -1863,6 +1899,38 @@ i=2;
        // Valid.pindah(evt, stok_minimal, KdIF);
     }//GEN-LAST:event_DTPExpiredKeyPressed
 
+    private void stokMinimalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stokMinimalActionPerformed
+        System.out.println("Klik SKU"); // debug biar kelihatan pasti kepanggil
+
+    try {
+        if (!modeSKU) {
+            // masuk mode SKU (stok minim)
+            modelMaster = tbJnsPerawatan.getModel(); // simpan lagi biar aman
+            tbJnsPerawatan.setModel(stokMinModel);
+            tbJnsPerawatan.setAutoCreateRowSorter(true);
+
+            tampilStokMin(); // ini method yang panggil DAO dan setRows()
+
+            stokMinimal.setText("Kembali");
+            modeSKU = true;
+        } else {
+            // balik ke master barang
+            tbJnsPerawatan.setModel(modelMaster);
+            tbJnsPerawatan.setAutoCreateRowSorter(true);
+
+            tampil(); // GANTI dengan method yang biasanya dipanggil tombol "Semua"
+            stokMinimal.setText("SKU");
+            modeSKU = false;
+        }
+    } catch (Exception e) {
+        System.out.println("Error klik SKU: " + e);
+    }
+    }//GEN-LAST:event_stokMinimalActionPerformed
+
+    private void printSkuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printSkuActionPerformed
+       cetakStokMin();
+    }//GEN-LAST:event_printSkuActionPerformed
+
     /**
     * @param args the command line arguments
     */
@@ -1954,8 +2022,10 @@ i=2;
     private widget.TextBox percenresep;
     private widget.TextBox percensatuanbesar;
     private widget.TextBox percensatuankecil;
+    private javax.swing.JButton printSku;
     private widget.TextBox retail;
     private widget.TextBox stok;
+    private javax.swing.JButton stokMinimal;
     private widget.Table tbJnsPerawatan;
     // End of variables declaration//GEN-END:variables
 
@@ -2941,4 +3011,50 @@ public void styleExpTable(JTable tbl) {
     }
 }
 
+private void tampilStokMin() {
+    try {
+        // GANTI "koneksi" dengan Connection yang kamu pakai di TokoBarang.java
+        // biasanya sudah ada: Connection koneksi = koneksiDB.condb(); atau semacamnya
+        TokobarangStokMinDao dao = new TokobarangStokMinDao(koneksi);
+
+        stokMinModel.setRows(dao.getStokMinAktif());
+
+        // kalau kamu punya label Record (mis: LCount)
+        // LCount.setText(String.valueOf(stokMinModel.getRowCount()));
+
+    } catch (Exception e) {
+        System.out.println("Notifikasi tampilStokMin: " + e);
+    }
+}
+private void cetakStokMin() {
+    // commit edit terakhir kalau ada
+    if (tbJnsPerawatan.isEditing()) {
+        try { tbJnsPerawatan.getCellEditor().stopCellEditing(); } catch (Exception ignored) {}
+    }
+
+    try {
+        String tgl = new SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date());
+        MessageFormat header = new MessageFormat("Laporan Stok Minim (SKU) - " + tgl);
+        MessageFormat footer = new MessageFormat("Halaman {0}");
+
+        PrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+        attr.add(OrientationRequested.LANDSCAPE); // biar muat kolom
+        attr.add(MediaSizeName.ISO_A4);
+
+        boolean ok = tbJnsPerawatan.print(
+                JTable.PrintMode.FIT_WIDTH,
+                header,
+                footer,
+                true,      // show print dialog
+                attr,
+                true       // interactive
+        );
+
+        if (ok) {
+            JOptionPane.showMessageDialog(null, "Cetak berhasil dikirim ke printer.");
+        }
+    } catch (PrinterException e) {
+        JOptionPane.showMessageDialog(null, "Gagal cetak: " + e.getMessage());
+    }
+}
 }

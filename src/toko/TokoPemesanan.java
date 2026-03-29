@@ -23,6 +23,11 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import keuangan.Jurnal;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class TokoPemesanan extends javax.swing.JDialog {
     private final DefaultTableModel tabMode;
@@ -58,7 +63,7 @@ private String[] tglexp;
         tabMode=new DefaultTableModel(null,judul){
               @Override public boolean isCellEditable(int rowIndex, int colIndex){
                 boolean a = false;
-                if ((colIndex==0)||(colIndex==4)||(colIndex==5)||(colIndex==7)||(colIndex==8)||(colIndex==14)||(colIndex==15)) {
+                if ((colIndex==0)||(colIndex==4)||(colIndex==5)||(colIndex==7)||(colIndex==8)||(colIndex==11)||(colIndex==12)||(colIndex==13)||(colIndex==14)||(colIndex==15)) {
                     a=true;
                 }
                 return a;
@@ -79,11 +84,11 @@ private String[] tglexp;
         tbDokter.setPreferredScrollableViewportSize(new Dimension(800,800));
         tbDokter.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-       for (int i = 0; i < 15; i++) {
+       for (int i = 0; i < 16; i++) {
     TableColumn column = tbDokter.getColumnModel().getColumn(i);
     if(i==0){ column.setPreferredWidth(42); }         // Jml
     else if(i==1){ column.setPreferredWidth(90); }    // Kode
-    else if(i==2){ column.setPreferredWidth(190); }   // Nama
+    else if(i==2){ column.setPreferredWidth(330); }   // Nama
     else if(i==3){ column.setPreferredWidth(50); }    // Satuan
     else if(i==4){ column.setPreferredWidth(22); }    // G (checkbox)
     else if(i==5){ column.setPreferredWidth(90); }    // Harga(Rp)
@@ -96,7 +101,7 @@ private String[] tglexp;
     else if(i==12){ column.setPreferredWidth(90);}    // Grosir
     else if(i==13){ column.setPreferredWidth(90);} // Retail
     else if(i==14){ column.setPreferredWidth(90);}// No. Batch
-    else if(i==14){ column.setPreferredWidth(120);}// exp
+    else if(i==15){ column.setPreferredWidth(110);}// exp
 }
         warna.kolom=0;
         tbDokter.setDefaultRenderer(Object.class,warna);
@@ -197,10 +202,10 @@ private String[] tglexp;
             @Override
             public void windowClosed(WindowEvent e) {
                 if(akses.getform().equals("TokoPemesanan")){
-                    if(form.petugas.getTable().getSelectedRow()!= -1){                   
+                    if(form.petugas.getTable().getSelectedRow()!= -1){
                         kdptg.setText(form.petugas.getTable().getValueAt(form.petugas.getTable().getSelectedRow(),0).toString());
                         nmptg.setText(form.petugas.getTable().getValueAt(form.petugas.getTable().getSelectedRow(),1).toString());
-                    }  
+                    }
                     kdptg.requestFocus();
                 }
             }
@@ -212,8 +217,9 @@ private String[] tglexp;
             public void windowActivated(WindowEvent e) {}
             @Override
             public void windowDeactivated(WindowEvent e) {}
-        }); 
-           
+        });
+
+        initListenerHargaEnter(); // aktifkan listener konversi harga & G-flag
     }
 
     /** This method is called from within the constructor to
@@ -325,7 +331,10 @@ private String[] tglexp;
         ));
         tbDokter.setToolTipText("Masukkan jumlah pengajuan di ujung paling kiri pada warna biru kemudian geser kanan");
         tbDokter.setComponentPopupMenu(Popup);
+        tbDokter.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        tbDokter.setGridColor(new java.awt.Color(0, 0, 0));
         tbDokter.setName("tbDokter"); // NOI18N
+        tbDokter.setRowHeight(25);
         tbDokter.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tbDokterMouseClicked(evt);
@@ -843,6 +852,7 @@ private void KdKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TKdKey
     );
 
     if (reply == JOptionPane.YES_OPTION) {
+        writeLog(); // tulis log sebelum proses simpan
         Sequel.AutoComitFalse();
         sukses = true;
 
@@ -872,9 +882,34 @@ private void KdKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TKdKey
             jml = tbDokter.getRowCount();
 
             for (i = 0; i < jml; i++) {
-                setKonversi(i);
-
                 if (Valid.SetAngka(tbDokter.getValueAt(i, 0).toString()) > 0) {
+
+                    boolean cekG_debug = Boolean.TRUE.equals(tbDokter.getValueAt(i, 4));
+                    logSimpan("=== SIMPAN BARIS [" + i + "] | Faktur: " + NoFaktur.getText() + " ===");
+                    logSimpan("  Kode     : " + tbDokter.getValueAt(i, 1));
+                    logSimpan("  Nama     : " + tbDokter.getValueAt(i, 2));
+                    logSimpan("  Satuan   : " + tbDokter.getValueAt(i, 3));
+                    logSimpan("  G        : " + cekG_debug);
+                    logSimpan("  Qty      : " + tbDokter.getValueAt(i, 0));
+                    logSimpan("  H.Beli   : " + tbDokter.getValueAt(i, 5));
+                    logSimpan("  Subtotal : " + tbDokter.getValueAt(i, 6));
+                    logSimpan("  Disk%    : " + tbDokter.getValueAt(i, 7));
+                    logSimpan("  Diskon   : " + tbDokter.getValueAt(i, 8));
+                    logSimpan("  Total    : " + tbDokter.getValueAt(i, 9));
+                    logSimpan("  Dasar    : " + tbDokter.getValueAt(i, 10));
+                    logSimpan("  Dist     : " + tbDokter.getValueAt(i, 11));
+                    logSimpan("  Grosir   : " + tbDokter.getValueAt(i, 12));
+                    logSimpan("  Retail   : " + tbDokter.getValueAt(i, 13));
+                    logSimpan("  Batch    : " + tbDokter.getValueAt(i, 14));
+                    logSimpan("  Expire   : " + tbDokter.getValueAt(i, 15));
+                    if (cekG_debug) {
+                        double hBeliSimpan = Double.parseDouble(tbDokter.getValueAt(i, 5).toString());
+                        double ppnPct      = Double.parseDouble(tppn.getText().isEmpty() ? "0" : tppn.getText());
+                        logSimpan("  [G=true] h_beli→DB : " + (hBeliSimpan + (ppnPct/100)*hBeliSimpan));
+                        logSimpan("  [G=true] dasar→DB  : " + tbDokter.getValueAt(i, 10));
+                        logSimpan("  [G=true] grosir→DB : " + tbDokter.getValueAt(i, 12));
+                        logSimpan("  [G=true] retail→DB : " + tbDokter.getValueAt(i, 13));
+                    }
 
                     // ✅ INSERT detail pesan (tgl_expire aman NULL)
                     if (insertDetailPesan(i)) {
@@ -959,20 +994,27 @@ private void KdKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TKdKey
         if (sukses) {
             Sequel.Commit();
 
-            jml = tbDokter.getRowCount();
-            for (i = 0; i < jml; i++) {
-                tbDokter.setValueAt("", i, 0);
-                tbDokter.setValueAt(false, i, 4);
-                tbDokter.setValueAt(0, i, 6);
-                tbDokter.setValueAt(0, i, 7);
-                tbDokter.setValueAt(0, i, 8);
-                tbDokter.setValueAt(0, i, 9);
-                tbDokter.setValueAt(0, i, 10);
-                tbDokter.setValueAt(0, i, 11);
-                tbDokter.setValueAt(0, i, 12);
-                tbDokter.setValueAt(0, i, 13);
-                tbDokter.setValueAt("", i, 14);
-                tbDokter.setValueAt("", i, 15);
+            // Gunakan variabel lokal + flag agar listener tidak terpicu
+            // dan global i/jml tidak ditimpa oleh getData() di dalam listener
+            int rowCount = tabMode.getRowCount();
+            sedangUpdateHarga = true;
+            try {
+                for (int r = 0; r < rowCount; r++) {
+                    tabMode.setValueAt("", r, 0);
+                    tabMode.setValueAt(false, r, 4);
+                    tabMode.setValueAt(0, r, 6);
+                    tabMode.setValueAt(0, r, 7);
+                    tabMode.setValueAt(0, r, 8);
+                    tabMode.setValueAt(0, r, 9);
+                    tabMode.setValueAt(0, r, 10);
+                    tabMode.setValueAt(0, r, 11);
+                    tabMode.setValueAt(0, r, 12);
+                    tabMode.setValueAt(0, r, 13);
+                    tabMode.setValueAt("", r, 14);
+                    tabMode.setValueAt("", r, 15);
+                }
+            } finally {
+                sedangUpdateHarga = false;
             }
 
             Meterai.setText("0");
@@ -1032,32 +1074,37 @@ private void BtnCari1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_
 }//GEN-LAST:event_BtnCari1KeyPressed
 
 private void ppBersihkanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ppBersihkanActionPerformed
-            for(i=0;i<tbDokter.getRowCount();i++){ 
-                tbDokter.setValueAt("",i,0);
-                tbDokter.setValueAt(false,i,4);
-                tbDokter.setValueAt(0,i,6);
-                tbDokter.setValueAt(0,i,7);
-                tbDokter.setValueAt(0,i,8);
-                tbDokter.setValueAt(0,i,9);
-                tbDokter.setValueAt(0,i,10);
-                tbDokter.setValueAt(0,i,11);
-                tbDokter.setValueAt(0,i,12);
-                tbDokter.setValueAt(0,i,13);
+        int rowCount = tabMode.getRowCount();
+        sedangUpdateHarga = true;
+        try {
+            for (int r = 0; r < rowCount; r++) {
+                tabMode.setValueAt("",    r, 0);
+                tabMode.setValueAt(false, r, 4);
+                tabMode.setValueAt(0,     r, 6);
+                tabMode.setValueAt(0,     r, 7);
+                tabMode.setValueAt(0,     r, 8);
+                tabMode.setValueAt(0,     r, 9);
+                tabMode.setValueAt(0,     r, 10);
+                tabMode.setValueAt(0,     r, 11);
+                tabMode.setValueAt(0,     r, 12);
+                tabMode.setValueAt(0,     r, 13);
             }
+        } finally {
+            sedangUpdateHarga = false;
+        }
 }//GEN-LAST:event_ppBersihkanActionPerformed
 
 private void tbDokterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbDokterMouseClicked
         if(tbDokter.getRowCount()!=0){
             try {
-                   if((tbDokter.getSelectedColumn()==1)||(tbDokter.getSelectedColumn()==5)||(tbDokter.getSelectedColumn()==6)||(tbDokter.getSelectedColumn()==8)){                       
-                        //setKonversi(tbDokter.getSelectedRow());
+                   int selCol = tbDokter.getSelectedColumn();
+                   int selRow = tbDokter.getSelectedRow();
+                   if((selCol==1)||(selCol==5)||(selCol==6)||(selCol==8)){
                         getData();
-                        
-                   }else if(tbDokter.getSelectedColumn()==7){
-                       //setKonversi(tbDokter.getSelectedRow());
-                       tbDokter.setValueAt(Math.round(Double.parseDouble(tbDokter.getValueAt(tbDokter.getSelectedRow(),6).toString())*
-                               (Double.parseDouble(tbDokter.getValueAt(tbDokter.getSelectedRow(),7).toString())/100)),tbDokter.getSelectedRow(),8);
-                       recalcRowByG(row);
+                   }else if(selCol==7){
+                       tbDokter.setValueAt(Math.round(Double.parseDouble(tbDokter.getValueAt(selRow,6).toString())*
+                               (Double.parseDouble(tbDokter.getValueAt(selRow,7).toString())/100)),selRow,8);
+                       recalcRowByG(selRow);
                        getData();
                    }
             } catch (java.lang.NullPointerException e) {
@@ -1068,28 +1115,35 @@ private void tbDokterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:ev
 private void tbDokterKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tbDokterKeyPressed
         if(tbDokter.getRowCount()!=0){
             if(evt.getKeyCode()==KeyEvent.VK_ENTER){
-                try {                  
-                   if((tbDokter.getSelectedColumn()==1)||(tbDokter.getSelectedColumn()==2)||(tbDokter.getSelectedColumn()==5)||(tbDokter.getSelectedColumn()==6)||(tbDokter.getSelectedColumn()==8)){                       
-                        //setKonversi(tbDokter.getSelectedRow());
-                        
-                        getData();  
+                try {
+                   int selCol = tbDokter.getSelectedColumn();
+                   int selRow = tbDokter.getSelectedRow();
+                   if (selCol == COL_HARGA) {
+                       // Enter di kolom harga: update dasar, recalc grosir & retail
+                       konversiHargaBaru(selRow);
+                       getData();
+                   } else if (selCol == COL_DIST) {
+                       // Enter di kolom distributor: hitung grosir & retail dari distributor
+                       konversiDariDistributor(selRow);
+                       getData();
+                   } else if((selCol==1)||(selCol==2)||(selCol==6)||(selCol==8)){
+                        getData();
                         TCari.setText("");
                         TCari.requestFocus();
-                   }else if(tbDokter.getSelectedColumn()==7){
-                       //setKonversi(tbDokter.getSelectedRow());
-                       if(Double.parseDouble(tbDokter.getValueAt(tbDokter.getSelectedRow(),7).toString())>0){
-                           tbDokter.setValueAt(Math.round(Double.parseDouble(tbDokter.getValueAt(tbDokter.getSelectedRow(),6).toString())*
-                               (Double.parseDouble(tbDokter.getValueAt(tbDokter.getSelectedRow(),7).toString())/100)),tbDokter.getSelectedRow(),8);
+                   } else if(selCol==7){
+                       if(Double.parseDouble(tbDokter.getValueAt(selRow,7).toString())>0){
+                           tbDokter.setValueAt(Math.round(Double.parseDouble(tbDokter.getValueAt(selRow,6).toString())*
+                               (Double.parseDouble(tbDokter.getValueAt(selRow,7).toString())/100)),selRow,8);
                        }
-                       recalcRowByG(row);
+                       recalcRowByG(selRow);
                        getData();
                    }
                 } catch (java.lang.NullPointerException e) {
                 }
             }else if(evt.getKeyCode()==KeyEvent.VK_DELETE){
-                i=tbDokter.getSelectedRow();
-                if(i!= -1){
-                    tbDokter.setValueAt("", i,0);
+                int delRow = tbDokter.getSelectedRow();
+                if(delRow != -1){
+                    tbDokter.setValueAt("", delRow, 0);
                 }
             }else if(evt.getKeyCode()==KeyEvent.VK_SHIFT){
                 TCari.setText("");
@@ -1217,7 +1271,6 @@ private void btnPetugasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
 
     private void tbDokterPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_tbDokterPropertyChange
         if(this.isVisible()==true){
-            recalcRowByG(row);  
             getData();
         }
     }//GEN-LAST:event_tbDokterPropertyChange
@@ -1298,13 +1351,24 @@ private void btnPetugasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         int r = e.getFirstRow();
         int c = e.getColumn();
 
-        // kolom 0 = jumlah, kolom 1 = kode
-        if (c == 0 || c == 1) {
+        if (c == COL_GFLAG) {
+            // G dicentang → langsung konversi harga dengan h_beli yang ada
             sedangUpdateHarga = true;
             try {
-                boolean force = (c == 1); // kalau kode berubah, paksa ambil master
+                if (Boolean.TRUE.equals(tabMode.getValueAt(r, COL_GFLAG))) {
+                    konversiHargaBaru(r);
+                    getData();
+                }
+            } finally {
+                sedangUpdateHarga = false;
+            }
+        } else if (c == 0 || c == 1) {
+            // kolom 0 = jumlah, kolom 1 = kode → ambil harga dari master
+            sedangUpdateHarga = true;
+            try {
+                boolean force = (c == 1);
                 ambilHargaMasterTokobarang(r, force);
-                getData(); // hitung ulang subtotal/total
+                getData();
             } finally {
                 sedangUpdateHarga = false;
             }
@@ -1827,10 +1891,11 @@ private void ambilHargaMasterTokobarang(int row, boolean force) {
         }
     }
     
-    private void setKonversi(int baris){ 
+    private void setKonversi(int baris){
         try{
             if(Valid.SetAngka(tbDokter.getValueAt(baris,0).toString())>0){
-                if(tbDokter.getValueAt(baris,4).toString().equals("true")){
+                // FIX BUG #1: gunakan Boolean.TRUE.equals() untuk hindari NullPointerException
+                if(Boolean.TRUE.equals(tbDokter.getValueAt(baris,4))){
                     try {
                         rs=koneksi.prepareStatement("select * from tokosetharga").executeQuery();
                         if(rs.next()){
@@ -1851,22 +1916,37 @@ private void ambilHargaMasterTokobarang(int row, boolean force) {
                             tbDokter.setValueAt(Valid.roundUp(hargappn+(hargappn*(rs.getDouble("grosir")/100)),100),baris,12);
                             tbDokter.setValueAt(Valid.roundUp(hargappn+(hargappn*(rs.getDouble("retail")/100)),100),baris,13);
                         }else{
-                            tbDokter.setValueAt(false,baris,4);                                    
-                            JOptionPane.showMessageDialog(null,"Pengaturan harga umum masih kosong..!!");
+                            tbDokter.setValueAt(false,baris,4);
+                            JOptionPane.showMessageDialog(null,
+                                "Pengaturan harga umum masih kosong!\n\n" +
+                                "Langkah yang harus dilakukan:\n" +
+                                "1. Buka menu Master → Pengaturan Harga Toko\n" +
+                                "2. Isi persentase markup Distributor, Grosir, dan Retail\n" +
+                                "3. Simpan pengaturan, lalu coba lagi.");
                             TCari.requestFocus();
+                            fungsi.TelegramNotifier.sendError(
+                                "Pemesanan Toko", akses.getkode(),
+                                "tokosetharga kosong - konversi harga gagal",
+                                "Baris ke-" + (baris+1) + " | Kode: " + s(tbDokter.getValueAt(baris,1))
+                            );
                         }
                     } catch (Exception e) {
-                        System.out.println("Notifikasi : "+e);
+                        System.out.println("setKonversi error: " + e);
+                        fungsi.TelegramNotifier.sendError(
+                            "Pemesanan Toko", akses.getkode(),
+                            "Exception di setKonversi: " + e.getMessage(),
+                            "Kode: " + s(tbDokter.getValueAt(baris,1))
+                        );
                     } finally{
                         if(rs!=null){
-                            rs.close();
+                            try { rs.close(); } catch(Exception ex){}
                         }
                     }
                 }
             }
         }catch(Exception e){
-            System.out.println("Notifikasi : "+e);
-        } 
+            System.out.println("setKonversi outer error: " + e);
+        }
     }
 //    private double safeNum(JTextField tf){ 
 //    try { return Double.parseDouble(tf.getText().replace(",","").trim()); } 
@@ -1978,6 +2058,193 @@ private void recalcRowByG(int row){
     setVal(row, COL_TOTAL, sub - drp);
 }
 
+/**
+ * Saat G dicentang atau Enter di kolom Harga (col 5):
+ * - Update dasar = h_beli baru
+ * - Panggil konversiDariDistributor untuk hitung grosir & retail
+ */
+private void konversiHargaBaru(int baris) {
+    if (baris < 0 || baris >= tabMode.getRowCount()) return;
+    if (!Boolean.TRUE.equals(tbDokter.getValueAt(baris, COL_GFLAG))) return;
+
+    double hBeli = numObj(tbDokter.getValueAt(baris, COL_HARGA));
+    if (hBeli <= 0) return;
+
+    // Update dasar = h_beli baru
+    sedangUpdateHarga = true;
+    try {
+        setVal(baris, COL_DASAR, hBeli);
+    } finally {
+        sedangUpdateHarga = false;
+    }
+
+    // Hitung grosir & retail dari distributor yang ada di col 11
+    konversiDariDistributor(baris);
+}
+
+/**
+ * Hitung grosir & retail dari harga distributor (harga per BOX).
+ * Dipanggil saat Enter di kolom Distributor (col 11) atau setelah konversiHargaBaru.
+ *
+ *   grosir = roundUp(distributor / isi,       100)  → per STRIP
+ *   retail = roundUp(distributor / kapasitas, 100)  → per TABLET
+ *
+ * isi & kapasitas diambil dari tokobarang.
+ */
+private void konversiDariDistributor(int baris) {
+    if (baris < 0 || baris >= tabMode.getRowCount()) return;
+    if (!Boolean.TRUE.equals(tbDokter.getValueAt(baris, COL_GFLAG))) return;
+
+    double dist = numObj(tbDokter.getValueAt(baris, COL_DIST));
+    if (dist <= 0) return;
+
+    String kode = s(tbDokter.getValueAt(baris, COL_KODE));
+    if (kode.isEmpty()) return;
+
+    PreparedStatement psK = null;
+    ResultSet rsK = null;
+    try {
+        psK = koneksi.prepareStatement(
+            "SELECT isi, kapasitas FROM tokobarang WHERE kode_brng=? LIMIT 1"
+        );
+        psK.setString(1, kode);
+        rsK = psK.executeQuery();
+        if (!rsK.next()) return;
+
+        int isi = Math.max(1, rsK.getInt("isi"));
+        int kap = Math.max(1, rsK.getInt("kapasitas")); // TOTAL tablet per BOX
+
+        double hargaGros = roundUp(dist / isi, 100); // per STRIP
+        double hargaRetl = roundUp(dist / kap, 100); // per TABLET
+
+        sedangUpdateHarga = true;
+        try {
+            setVal(baris, COL_GROS, hargaGros);
+            setVal(baris, COL_RETL, hargaRetl);
+        } finally {
+            sedangUpdateHarga = false;
+        }
+
+    } catch (Exception e) {
+        System.out.println("konversiDariDistributor: " + e);
+        fungsi.TelegramNotifier.sendError(
+            "Pemesanan Toko", akses.getkode(),
+            "Exception di konversiDariDistributor: " + e.getMessage(),
+            "Kode: " + kode
+        );
+    } finally {
+        try { if (rsK != null) rsK.close(); } catch (Exception ex) {}
+        try { if (psK != null) psK.close(); } catch (Exception ex) {}
+    }
+}
+
+/**
+ * Tulis log transaksi ke file lokal sebelum simpan.
+ * File: logs/pemesanan_toko_YYYYMMDD.txt
+ */
+private void writeLog() {
+    try {
+        String tgl = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        String jam = new SimpleDateFormat("HH:mm:ss").format(new Date());
+        File dir = new File("logs");
+        if (!dir.exists()) dir.mkdirs();
+        File logFile = new File(dir, "pemesanan_toko_" + tgl + ".txt");
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(logFile, true))) {
+            bw.write("==========================================================");
+            bw.newLine();
+            bw.write("[" + jam + "] SIMPAN PEMESANAN TOKO");
+            bw.newLine();
+            bw.write("No.Faktur : " + NoFaktur.getText());
+            bw.newLine();
+            bw.write("Supplier  : " + kdsup.getText() + " - " + nmsup.getText());
+            bw.newLine();
+            bw.write("Petugas   : " + kdptg.getText() + " - " + nmptg.getText());
+            bw.newLine();
+            bw.write("No.Order  : " + NoOrder.getText());
+            bw.newLine();
+            bw.write("PPN %     : " + tppn.getText());
+            bw.newLine();
+            bw.write("Meterai   : " + Meterai.getText());
+            bw.newLine();
+            bw.write("Total     : " + ttl);
+            bw.newLine();
+            bw.write("----------------------------------------------------------");
+            bw.newLine();
+
+            // Header tabel
+            bw.write(String.format("%-3s %-8s %-30s %-5s %-5s %10s %10s %10s %10s %10s %10s",
+                "G", "Kode", "Nama", "Sat", "Jml",
+                "H.Beli", "Dasar", "Distributor", "Grosir", "Retail", "Total"));
+            bw.newLine();
+
+            int n = tabMode.getRowCount();
+            for (int r = 0; r < n; r++) {
+                double qty = numObj(tabMode.getValueAt(r, COL_JML));
+                if (qty <= 0) continue;
+                boolean cekG = Boolean.TRUE.equals(tabMode.getValueAt(r, COL_GFLAG));
+                String gStr   = cekG ? "[G]" : "   ";
+                String kode   = s(tabMode.getValueAt(r, COL_KODE));
+                String nama   = s(tabMode.getValueAt(r, COL_NAMA));
+                String sat    = s(tabMode.getValueAt(r, COL_SAT));
+                double hbeli  = numObj(tabMode.getValueAt(r, COL_HARGA));
+                double dasar  = numObj(tabMode.getValueAt(r, COL_DASAR));
+                double dist   = numObj(tabMode.getValueAt(r, COL_DIST));
+                double gros   = numObj(tabMode.getValueAt(r, COL_GROS));
+                double retl   = numObj(tabMode.getValueAt(r, COL_RETL));
+                double total  = numObj(tabMode.getValueAt(r, COL_TOTAL));
+
+                System.out.printf("[LOG] %s %-8s %-30s %-5s qty=%.0f hbeli=%.0f dasar=%.0f dist=%.0f gros=%.0f retl=%.0f total=%.0f%n",
+                    gStr, kode, nama.length()>30?nama.substring(0,30):nama,
+                    sat, qty, hbeli, dasar, dist, gros, retl, total);
+
+                bw.write(String.format("%-3s %-8s %-30s %-5s %5.0f %10.0f %10.0f %10.0f %10.0f %10.0f %10.0f",
+                    gStr, kode, nama.length()>30?nama.substring(0,30):nama,
+                    sat, qty, hbeli, dasar, dist, gros, retl, total));
+                bw.newLine();
+            }
+            bw.write("==========================================================");
+            bw.newLine();
+            bw.newLine();
+        }
+        System.out.println("[LOG] Log tersimpan: " + logFile.getAbsolutePath());
+
+        // Kirim ringkasan transaksi ke Telegram
+        int totalG = 0;
+        StringBuilder detailG = new StringBuilder();
+        for (int r = 0; r < tabMode.getRowCount(); r++) {
+            if (Boolean.TRUE.equals(tabMode.getValueAt(r, COL_GFLAG)) &&
+                numObj(tabMode.getValueAt(r, COL_JML)) > 0) {
+                totalG++;
+                String nm   = s(tabMode.getValueAt(r, COL_NAMA));
+                double dist = numObj(tabMode.getValueAt(r, COL_DIST));
+                double gros = numObj(tabMode.getValueAt(r, COL_GROS));
+                double retl = numObj(tabMode.getValueAt(r, COL_RETL));
+                double dasr = numObj(tabMode.getValueAt(r, COL_DASAR));
+                detailG.append("\n  • ").append(nm.length() > 25 ? nm.substring(0, 25) : nm)
+                       .append("\n    Dasar: ").append(String.format("%,.0f", dasr))
+                       .append(" | Dist: ").append(String.format("%,.0f", dist))
+                       .append(" | Grosir: ").append(String.format("%,.0f", gros))
+                       .append(" | Retail: ").append(String.format("%,.0f", retl));
+            }
+        }
+        String infoMsg = "Faktur: " + NoFaktur.getText()
+            + " | Supplier: " + nmsup.getText()
+            + " | Total: Rp " + String.format("%,.0f", ttl)
+            + " | Item update harga: " + totalG
+            + (detailG.length() > 0 ? "\n\nHarga diupdate:" + detailG.toString() : "");
+        fungsi.TelegramNotifier.sendInfo("Pemesanan Toko", akses.getkode(), infoMsg);
+
+    } catch (Exception e) {
+        System.out.println("[LOG ERROR] writeLog: " + e);
+        fungsi.TelegramNotifier.sendError(
+            "Pemesanan Toko", akses.getkode(),
+            "Gagal menulis log transaksi: " + e.getMessage(),
+            "Faktur: " + NoFaktur.getText()
+        );
+    }
+}
+
 private double safeDiv(double a, double b){ return (b==0)? 0 : a/b; }
 private double clampPos(double v){ return Double.isFinite(v) ? v : 0; }
 
@@ -2018,6 +2285,23 @@ private static class PercentSet {
 //private String s(Object v) {
 //    return (v == null) ? "" : v.toString().trim();
 //}
+
+private void logSimpan(String msg) {
+    System.out.println(msg);
+    try {
+        File dir = new File("logs");
+        if (!dir.exists()) dir.mkdirs();
+        String tgl = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        File logFile = new File("logs/pemesanan_" + tgl + ".log");
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(logFile, true))) {
+            String waktu = new SimpleDateFormat("HH:mm:ss").format(new Date());
+            bw.write("[" + waktu + "] " + msg);
+            bw.newLine();
+        }
+    } catch (Exception ex) {
+        System.out.println("logSimpan error: " + ex.getMessage());
+    }
+}
 
 private String normalizeMysqlDate(Object v) {
     if (v == null) return null;

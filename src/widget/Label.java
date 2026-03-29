@@ -25,4 +25,6 @@ public class Label extends usu.widget.Label {
         setHorizontalTextPosition(CENTER);
         setVerticalTextPosition(CENTER);
     }
+
+   
 }

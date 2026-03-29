@@ -725,19 +725,19 @@ private void ppBersihkanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
                 });
             }
             pstampil = koneksi.prepareStatement(
-    "SELECT tb.kode_brng, tb.nama_brng, tj.nm_jenis, " +
-    "       tb.kode_sat2, " +
-    "       COALESCE(tb.retail,0) AS harga, " +  // harga dari retail
-    "       COALESCE(tb.stok,0)*COALESCE(tb.isi,1)*COALESCE(tb.kapasitas,1) AS stok_total " + // stok = stok*isi*kapasitas
-    "FROM tokobarang tb " +
-    "INNER JOIN tokojenisbarang tj ON tb.jenis = tj.kd_jenis " +
-    "WHERE tb.status='1' AND ( " + // pakai kurung supaya OR tidak 'lepas' dari status & filter
-    "      tb.kode_brng LIKE ? OR " +
-    "      tb.nama_brng LIKE ? OR " +
-    "      tb.kode_sat2  LIKE ? OR " +     // cari di satuan kecil (bukan kode_sat besar)
-    "      tj.nm_jenis   LIKE ? " +
-    ") ORDER BY tb.nama_brng"
-);
+                "SELECT tb.kode_brng, tb.nama_brng, tj.nm_jenis, " +
+                "       tb.kode_sat2, " +
+                "       COALESCE(tb.retail,0) AS harga, " +
+                "       COALESCE(tb.stok,0) * COALESCE(tb.kapasitas,1) AS stok_total " + // ✅ stok TAB
+                "FROM tokobarang tb " +
+                "INNER JOIN tokojenisbarang tj ON tb.jenis = tj.kd_jenis " +
+                "WHERE tb.status='1' AND ( " +
+                "      tb.kode_brng LIKE ? OR " +
+                "      tb.nama_brng LIKE ? OR " +
+                "      tb.kode_sat2  LIKE ? OR " +
+                "      tj.nm_jenis   LIKE ? " +
+                ") ORDER BY tb.nama_brng"
+            );
 
 try {
     String key = "%" + TCari.getText().trim() + "%";
@@ -831,7 +831,18 @@ try {
     private double getStokDasar(String kodeBrg, double realInput) {
     double isi       = Sequel.cariIsiAngka("SELECT COALESCE(isi,1) FROM tokobarang WHERE kode_brng=?", kodeBrg);
     double kapasitas = Sequel.cariIsiAngka("SELECT COALESCE(kapasitas,1) FROM tokobarang WHERE kode_brng=?", kodeBrg);
-    return realInput / (isi * kapasitas);
+
+    double faktor = kapasitas;
+    double hasil = realInput / faktor;
+
+    System.out.println("DEBUG OPANAME: kode=" + kodeBrg
+        + " input=" + realInput
+        + " isi=" + isi
+        + " kapasitas=" + kapasitas
+        + " faktor=" + faktor
+        + " hasil=" + hasil);
+
+    return hasil;
 }
          
     public void isCek(){

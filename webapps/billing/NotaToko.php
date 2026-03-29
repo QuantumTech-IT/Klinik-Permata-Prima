@@ -22,6 +22,11 @@
                 $member     = validTeks4(str_replace("_"," ",$_GET['member']),70); 
                 $besarppn   = validTeks4(str_replace("_"," ",$_GET['besarppn']),20);
                 $ongkir     = validTeks4(str_replace("_"," ",$_GET['ongkir']),20);  
+                $norawat    = getOne("select ifnull(no_rawat,'') from tokopenjualan where nota_jual='$nonota' limit 1");
+                $notabilling= "";
+                if($norawat!=""){
+                    $notabilling = getOne("select ifnull(no_nota,'') from nota_jalan where no_rawat='$norawat' limit 1");
+                }
 
                 $_sql = "SELECT temporary_toko.no,temporary_toko.temp1,temporary_toko.temp2,temporary_toko.temp3,temporary_toko.temp4,temporary_toko.temp5,temporary_toko.temp6,temporary_toko.temp7, temporary_toko.temp8, temporary_toko.temp9, temporary_toko.temp10, temporary_toko.temp11, temporary_toko.temp12, temporary_toko.temp13 from temporary_toko order by temporary_toko.no asc";            
                 $hasil=bukaquery($_sql);
@@ -150,7 +155,51 @@
                                               <td align='right'><font color='000000' size='2'  face='Tahoma'>Jumlah Total+Ongkir+PPN</font></td>
                                               <td align='right'><font color='000000' size='2'  face='Tahoma'>".formatDuit2($ttlpesan+$besarppn)."</font></td>
                                               <td></td>
-                                            </tr>  
+                                            </tr>";
+                                    if($norawat!=""){
+                                        $_sqlbilling = "select billing.nm_perawatan,billing.totalbiaya,billing.biaya,billing.jumlah,billing.tambahan,billing.status ".
+                                                       "from billing where billing.no_rawat='$norawat' ".
+                                                       "and billing.status not in ('-','Dokter','Perawat','Tagihan','TtlObat','TtlLaborat','TtlOperasi','TtlRadiologi','TtlTambahan','TtlPotongan','TtlRalan Dokter','TtlRalan Paramedis','TtlRalan Dokter Paramedis','TtlKamar','TtlRetur Obat','TtlResep Pulang') ".
+                                                       "and (billing.totalbiaya<>0 or billing.biaya<>0 or billing.jumlah<>0 or billing.tambahan<>0) ".
+                                                       "order by billing.noindex asc";
+                                        $hasilbilling=bukaquery($_sqlbilling);
+                                        if(mysqli_num_rows($hasilbilling)!=0){
+                                            echo "<tr class='isi14'>
+                                                    <td colspan='4'><hr/>
+                                                        <table width='100%' cellpadding='0' cellspacing='0'>
+                                                            <tr class='isi14'>
+                                                                <td colspan='3' align='left'><font color='000000' size='2' face='Tahoma'><b>Rincian Billing</b></font></td>
+                                                            </tr>
+                                                            <tr class='isi14'>
+                                                                <td width='50%'><font color='000000' size='2' face='Tahoma'>No.Rawat : $norawat</font></td>
+                                                                <td width='50%' colspan='2' align='right'><font color='000000' size='2' face='Tahoma'>No.Nota Billing : ".($notabilling==""?"-":$notabilling)."</font></td>
+                                                            </tr>
+                                                            <tr class='isi'>
+                                                                <td width='5%' align='center'><font color='000000' size='2' face='Tahoma'>No</font></td>
+                                                                <td width='75%' align='left'><font color='000000' size='2' face='Tahoma'>Item Billing</font></td>
+                                                                <td width='20%' align='right'><font color='000000' size='2' face='Tahoma'>Total</font></td>
+                                                            </tr>";
+                                            $i2=1;
+                                            $ttlbilling=0;
+                                            while($barisbilling = mysqli_fetch_array($hasilbilling)) {
+                                                $ttlbilling = $ttlbilling + $barisbilling["totalbiaya"];
+                                                echo "<tr class='isi'>
+                                                        <td><font color='000000' size='2' face='Tahoma'>$i2</font></td>
+                                                        <td><font color='000000' size='2' face='Tahoma'>".$barisbilling["nm_perawatan"]."</font></td>
+                                                        <td align='right'><font color='000000' size='2' face='Tahoma'>".formatDuit2($barisbilling["totalbiaya"])."</font></td>
+                                                      </tr>";
+                                                $i2++;
+                                            }
+                                            echo "          <tr class='isi14'>
+                                                                <td colspan='2' align='right'><font color='000000' size='2' face='Tahoma'><b>Total Billing</b></font></td>
+                                                                <td align='right'><font color='000000' size='2' face='Tahoma'><b>".formatDuit2($ttlbilling)."</b></font></td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                  </tr>";
+                                        }
+                                    }
+                                    echo "  
                                   </table>
                               </td>
                             </tr>

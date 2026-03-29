@@ -547,22 +547,54 @@ double totalPiutang = 0; // ini nanti kamu isi di isHitung()
 public void tampil(){        
     try {
         Valid.tabelKosong(tabMode);
-        ps = koneksi.prepareStatement(
+
+        String base =
             "SELECT " +
             "  tp.tgl_jual, tp.nota_jual, tdj.kode_brng, tb.nama_brng, ks.satuan, " +
             "  tdj.h_jual, tdj.jumlah, tdj.subtotal, tdj.dis, tdj.bsr_dis, " +
-            "  tdj.tambahan, tdj.total, tdj.h_beli, " +
-            "  (tdj.h_beli * tdj.jumlah) AS total_asal, " +
-            "  (tdj.total - (tdj.h_beli * tdj.jumlah)) AS keuntungan " +
+            "  tdj.tambahan, tdj.total, " +
+            "  CASE " +
+            "    WHEN tdj.kode_sat = tb.kode_sat1 THEN IFNULL(tb.h_beli,0) " +
+            "    WHEN tdj.kode_sat = tb.kode_sat2 THEN " +
+            "      (CASE WHEN IFNULL(tb.isi,0) > 0 THEN IFNULL(tb.h_beli,0) / tb.isi ELSE 0 END) " +
+            "    ELSE " +
+            "      (CASE WHEN IFNULL(tb.kapasitas,0) > 0 THEN IFNULL(tb.h_beli,0) / tb.kapasitas ELSE 0 END) " +
+            "  END AS h_beli_satuan " +
             "FROM tokopenjualan tp " +
             "INNER JOIN toko_detail_jual tdj ON tp.nota_jual = tdj.nota_jual " +
             "INNER JOIN tokobarang tb ON tdj.kode_brng = tb.kode_brng " +
             "INNER JOIN kodesatuan ks ON tdj.kode_sat = ks.kode_sat " +
             "WHERE tp.tgl_jual BETWEEN ? AND ? " +
             (TCari.getText().trim().equals("") ? "" :
-                " AND (tb.nama_brng LIKE ? OR tp.nota_jual LIKE ? OR tdj.kode_brng LIKE ? ) ") +
-            "ORDER BY tp.tgl_jual, tp.nota_jual"
-        );
+                " AND (tb.nama_brng LIKE ? OR tp.nota_jual LIKE ? OR tdj.kode_brng LIKE ? ) ");
+
+        String sql =
+             "SELECT x.*, " +
+    "  (x.h_beli_satuan * x.jumlah) AS total_beli, " +
+    "  (x.total - (x.h_beli_satuan * x.jumlah)) AS keuntungan " +
+    "FROM ( " +
+    "  SELECT " +
+    "    tp.tgl_jual, tp.nota_jual, tdj.kode_brng, tb.nama_brng, ks.satuan, " +
+    "    tdj.h_jual, tdj.jumlah, tdj.subtotal, tdj.dis, tdj.bsr_dis, " +
+    "    tdj.tambahan, tdj.total, " +
+    "    ROUND( " +
+    "      CASE " +
+    "        WHEN (tdj.kode_sat = tb.kode_sat1 OR ks.satuan = tb.kode_sat1) THEN IFNULL(tb.h_beli,0) " +
+    "        WHEN (tdj.kode_sat = tb.kode_sat2 OR ks.satuan = tb.kode_sat2) THEN IFNULL(tb.h_beli,0) / NULLIF(tb.isi,0) " +
+    "        ELSE IFNULL(tb.h_beli,0) / NULLIF(tb.kapasitas,0) " +
+    "      END, 2 " +
+    "    ) AS h_beli_satuan " +
+    "  FROM tokopenjualan tp " +
+    "  INNER JOIN toko_detail_jual tdj ON tp.nota_jual = tdj.nota_jual " +
+    "  INNER JOIN tokobarang tb ON tdj.kode_brng = tb.kode_brng " +
+    "  INNER JOIN kodesatuan ks ON tdj.kode_sat = ks.kode_sat " +
+    "  WHERE tp.tgl_jual BETWEEN ? AND ? " +
+    (TCari.getText().trim().equals("") ? "" :
+      " AND (tb.nama_brng LIKE ? OR tp.nota_jual LIKE ? OR tdj.kode_brng LIKE ?) ") +
+    ") x " +
+    "ORDER BY x.tgl_jual, x.nota_jual";
+
+        ps = koneksi.prepareStatement(sql);
 
         ps.setString(1, Valid.SetTgl(Tgl1.getSelectedItem()+""));
         ps.setString(2, Valid.SetTgl(Tgl2.getSelectedItem()+""));
@@ -573,32 +605,52 @@ public void tampil(){
         }
 
         rs = ps.executeQuery();
+
         totalpenjualan = 0;
         totalTuslah = 0;
 
+        // tambahan total kalau kamu mau ditampilkan di footer:
+        double totalJual = 0;
+        double totalBeli = 0;
+        double totalUntung = 0;
+
         while(rs.next()){
-            double jualMurni = rs.getDouble("subtotal"); // tanpa tuslah
-            double tuslah = rs.getDouble("tambahan");
+            double jualMurni = rs.getDouble("subtotal");
+            double tuslah    = rs.getDouble("tambahan");
+
             totalpenjualan += jualMurni;
             totalTuslah += tuslah;
 
+            double tJual  = rs.getDouble("total");
+            double tBeli  = rs.getDouble("total_beli");
+            double untung = rs.getDouble("keuntungan");
+
+            totalJual += tJual;
+            totalBeli += tBeli;
+            totalUntung += untung;
+
             tabMode.addRow(new Object[]{
-                rs.getString("tgl_jual"),
-                rs.getString("nota_jual"),
-                rs.getString("kode_brng") + ", " + rs.getString("nama_brng"),
-                rs.getString("satuan"),
-                rs.getDouble("h_jual"),
-                rs.getDouble("jumlah"),
-                rs.getDouble("subtotal"),
-                rs.getDouble("dis"),
-                rs.getDouble("bsr_dis"),
-                rs.getDouble("tambahan"),
-                rs.getDouble("total"),
-                rs.getDouble("h_beli"),
-                rs.getDouble("total_asal"),
-                rs.getDouble("keuntungan")
-            });
+    rs.getString("tgl_jual"),
+    rs.getString("nota_jual"),
+    rs.getString("kode_brng") + ", " + rs.getString("nama_brng"),
+    rs.getString("satuan"),
+    rs.getDouble("h_jual"),
+    rs.getDouble("jumlah"),
+    rs.getDouble("subtotal"),
+    rs.getDouble("dis"),
+    rs.getDouble("bsr_dis"),
+    rs.getDouble("tambahan"),
+    rs.getDouble("total"),
+    rs.getDouble("h_beli_satuan"),
+    rs.getDouble("total_beli"),
+    rs.getDouble("keuntungan")
+});
         }
+
+        // kalau kamu punya label footer:
+        // LTotalJual.setText(Valid.SetAngka(totalJual));
+        // LTotalBeli.setText(Valid.SetAngka(totalBeli));
+        // LTotalUntung.setText(Valid.SetAngka(totalUntung));
 
     } catch (Exception e) {
         System.out.println("Notif tampil : " + e);
@@ -611,6 +663,73 @@ public void tampil(){
 
     isHitung();
 }
+//public void tampil(){        
+//    try {
+//        Valid.tabelKosong(tabMode);
+//        ps = koneksi.prepareStatement(
+//            "SELECT " +
+//            "  tp.tgl_jual, tp.nota_jual, tdj.kode_brng, tb.nama_brng, ks.satuan, " +
+//            "  tdj.h_jual, tdj.jumlah, tdj.subtotal, tdj.dis, tdj.bsr_dis, " +
+//            "  tdj.tambahan, tdj.total, tdj.h_beli, " +
+//            "  (tdj.h_beli * tdj.jumlah) AS total_asal, " +
+//            "  (tdj.total - (tdj.h_beli * tdj.jumlah)) AS keuntungan " +
+//            "FROM tokopenjualan tp " +
+//            "INNER JOIN toko_detail_jual tdj ON tp.nota_jual = tdj.nota_jual " +
+//            "INNER JOIN tokobarang tb ON tdj.kode_brng = tb.kode_brng " +
+//            "INNER JOIN kodesatuan ks ON tdj.kode_sat = ks.kode_sat " +
+//            "WHERE tp.tgl_jual BETWEEN ? AND ? " +
+//            (TCari.getText().trim().equals("") ? "" :
+//                " AND (tb.nama_brng LIKE ? OR tp.nota_jual LIKE ? OR tdj.kode_brng LIKE ? ) ") +
+//            "ORDER BY tp.tgl_jual, tp.nota_jual"
+//        );
+//
+//        ps.setString(1, Valid.SetTgl(Tgl1.getSelectedItem()+""));
+//        ps.setString(2, Valid.SetTgl(Tgl2.getSelectedItem()+""));
+//        if(!TCari.getText().trim().equals("")){
+//            ps.setString(3,"%"+TCari.getText()+"%");
+//            ps.setString(4,"%"+TCari.getText()+"%");
+//            ps.setString(5,"%"+TCari.getText()+"%");
+//        }
+//
+//        rs = ps.executeQuery();
+//        totalpenjualan = 0;
+//        totalTuslah = 0;
+//
+//        while(rs.next()){
+//            double jualMurni = rs.getDouble("subtotal"); // tanpa tuslah
+//            double tuslah = rs.getDouble("tambahan");
+//            totalpenjualan += jualMurni;
+//            totalTuslah += tuslah;
+//
+//            tabMode.addRow(new Object[]{
+//                rs.getString("tgl_jual"),
+//                rs.getString("nota_jual"),
+//                rs.getString("kode_brng") + ", " + rs.getString("nama_brng"),
+//                rs.getString("satuan"),
+//                rs.getDouble("h_jual"),
+//                rs.getDouble("jumlah"),
+//                rs.getDouble("subtotal"),
+//                rs.getDouble("dis"),
+//                rs.getDouble("bsr_dis"),
+//                rs.getDouble("tambahan"),
+//                rs.getDouble("total"),
+//                rs.getDouble("h_beli"),
+//                rs.getDouble("total_asal"),
+//                rs.getDouble("keuntungan")
+//            });
+//        }
+//
+//    } catch (Exception e) {
+//        System.out.println("Notif tampil : " + e);
+//    } finally {
+//        try {
+//            if (rs != null) rs.close();
+//            if (ps != null) ps.close();
+//        } catch (Exception e) {}
+//    }
+//
+//    isHitung();
+//}
 //    public void tampil(){        
 //        try {
 //            Valid.tabelKosong(tabMode);
@@ -707,7 +826,7 @@ public void tampil(){
     double totalAkhir = totalpenjualan + totalTuslah + totalpiutang;
 
     Total.setText(
-        "Total Keuntungan = Keuntungan Barang Penjualan + Keuntungan Barang Piutang + Tuslah "
+        "Total Keuntungan test = Keuntungan Barang Penjualan + Keuntungan Barang Piutang + Tuslah "
         + "= " + Valid.SetAngka(totalpenjualan)
         + " + " + Valid.SetAngka(totalpiutang)
         + " + " + Valid.SetAngka(totalTuslah)
