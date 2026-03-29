@@ -13,6 +13,7 @@ import fungsi.sekuel;
 import fungsi.validasi;
 import fungsi.akses;
 import inventory.DlgBarang;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.KeyAdapter;
@@ -24,8 +25,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.Timer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -57,6 +62,17 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     private JsonNode root;
     private int i = 0;
     private String link = "", json = "";
+    private final Color requiredEmptyColor = new Color(255, 241, 241);
+    private final Color requiredLabelInvalidColor = new Color(170, 0, 0);
+    private final Color requiredLabelValidColor = new Color(0, 128, 0);
+    private final Icon requiredValidIcon = new ImageIcon(getClass().getResource("/picture/accept.png"));
+    private final Icon requiredInvalidIcon = new ImageIcon(getClass().getResource("/picture/cross.png"));
+    private Color requiredDefaultColor;
+    private Timer formAnimator;
+    private static final int FORM_EXPANDED_HEIGHT = 275;
+    private static final int FORM_COLLAPSED_HEIGHT = 20;
+    private static final int FORM_ANIMATION_STEP = 20;
+    private static final int FORM_ANIMATION_DELAY = 10;
 
     /**
      * Creates new form DlgJnsPerawatanRalan
@@ -166,23 +182,17 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
             TCari.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
                 @Override
                 public void insertUpdate(DocumentEvent e) {
-                    if (TCari.getText().length() > 2) {
-                        tampil();
-                    }
+                    handleCariCepat();
                 }
 
                 @Override
                 public void removeUpdate(DocumentEvent e) {
-                    if (TCari.getText().length() > 2) {
-                        tampil();
-                    }
+                    handleCariCepat();
                 }
 
                 @Override
                 public void changedUpdate(DocumentEvent e) {
-                    if (TCari.getText().length() > 2) {
-                        tampil();
-                    }
+                    handleCariCepat();
                 }
             });
         }
@@ -216,6 +226,7 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
             public void windowClosed(WindowEvent e) {
                 if (referensi.getTable().getSelectedRow() != -1) {
                     link = koneksiDB.URLKFAV2SATUSEHAT() + "/products?identifier=kfa&code=" + referensi.getTable().getValueAt(referensi.getTable().getSelectedRow(), 0).toString();
+                    setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     try {
                         headers = new HttpHeaders();
                         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -239,9 +250,13 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
                             RouteCode.setText(root.path("rute_pemberian").path("code").asText());
                             RouteSystem.setText("http://www.whocc.no/atc");
                             RouteDisplay.setText(root.path("rute_pemberian").path("name").asText());
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Detail referensi KFA tidak ditemukan, silakan pilih data referensi lain.");
                         }
                     } catch (Exception x) {
                         System.out.println("Notif : " + x);
+                    } finally {
+                        setCursor(Cursor.getDefaultCursor());
                     }
                 }
                 KFACode.requestFocus();
@@ -317,6 +332,7 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
 
         ChkInput.setSelected(false);
         isForm();
+        applyUXDefaults();
     }
 
     /**
@@ -1047,6 +1063,7 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
             emptTeks();
             LCount.setText("" + tabMode.getRowCount());
         }
+        refreshActionState();
     }//GEN-LAST:event_BtnHapusActionPerformed
 
     private void BtnHapusKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_BtnHapusKeyPressed
@@ -1178,7 +1195,9 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     }//GEN-LAST:event_TCariKeyPressed
 
     private void BtnCariActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnCariActionPerformed
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         tampil();
+        this.setCursor(Cursor.getDefaultCursor());
     }//GEN-LAST:event_BtnCariActionPerformed
 
     private void BtnCariKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_BtnCariKeyPressed
@@ -1190,14 +1209,20 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     }//GEN-LAST:event_BtnCariKeyPressed
 
     private void BtnAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnAllActionPerformed
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         TCari.setText("");
-        tampil();
+        if (!koneksiDB.CARICEPAT().equals("aktif")) {
+            tampil();
+        }
+        this.setCursor(Cursor.getDefaultCursor());
     }//GEN-LAST:event_BtnAllActionPerformed
 
     private void BtnAllKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_BtnAllKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
             TCari.setText("");
-            tampil();
+            if (!koneksiDB.CARICEPAT().equals("aktif")) {
+                tampil();
+            }
         } else {
             Valid.pindah(evt, BtnPrint, BtnKeluar);
         }
@@ -1229,6 +1254,7 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
 
     private void KodeBarangKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_KodeBarangKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            boolean ditemukan = false;
             try (PreparedStatement ps = koneksi.prepareStatement(
                 "select tokobarang.nama_brng, kodesatuan.satuan, kategori_barang.nama as nama_kategori from tokobarang "
                 + "join kodesatuan on tokobarang.kode_sat = kodesatuan.kode_sat join kategori_barang on "
@@ -1237,10 +1263,17 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
                 ps.setString(1, KodeBarang.getText());
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
+                        ditemukan = true;
                         NamaBarang.setText(rs.getString("nama_brng"));
                         Satuan.setText(rs.getString("satuan"));
                         Kategori.setText(rs.getString("nama_kategori"));
                     }
+                }
+                if (!ditemukan) {
+                    NamaBarang.setText("");
+                    Satuan.setText("");
+                    Kategori.setText("");
+                    JOptionPane.showMessageDialog(null, "Kode barang " + KodeBarang.getText() + " tidak ditemukan.");
                 }
             } catch (Exception e) {
                 System.out.println("Notif : " + e);
@@ -1299,7 +1332,7 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     }//GEN-LAST:event_RouteDisplayKeyPressed
 
     private void KFACodeKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_KFACodeKeyPressed
-        // TODO add your handling code here:
+        Valid.pindah(evt, btnCariKFA, KFASystem);
     }//GEN-LAST:event_KFACodeKeyPressed
 
     private void btnCariKFAActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCariKFAActionPerformed
@@ -1324,7 +1357,9 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     }//GEN-LAST:event_btnNumerActionPerformed
 
     private void btnNumerKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnNumerKeyPressed
-        // TODO add your handling code here:
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            btnNumerActionPerformed(null);
+        }
     }//GEN-LAST:event_btnNumerKeyPressed
 
     private void btnDenomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDenomActionPerformed
@@ -1335,7 +1370,9 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     }//GEN-LAST:event_btnDenomActionPerformed
 
     private void btnDenomKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnDenomKeyPressed
-        // TODO add your handling code here:
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            btnDenomActionPerformed(null);
+        }
     }//GEN-LAST:event_btnDenomKeyPressed
 
     private void btnRouteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRouteActionPerformed
@@ -1346,11 +1383,14 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     }//GEN-LAST:event_btnRouteActionPerformed
 
     private void btnRouteKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnRouteKeyPressed
-        // TODO add your handling code here:
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            btnRouteActionPerformed(null);
+        }
     }//GEN-LAST:event_btnRouteKeyPressed
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         tampil();
+        TCari.requestFocus();
     }//GEN-LAST:event_formWindowOpened
 
     /**
@@ -1466,6 +1506,7 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
             System.out.println("Notif : " + e);
         }
         LCount.setText(String.valueOf(tabMode.getRowCount()));
+        refreshActionState();
     }
 
     public void emptTeks() {
@@ -1490,10 +1531,15 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
         isForm();
         KodeBarang.requestFocus();
         tbJnsPerawatan.clearSelection();
+        refreshActionState();
     }
 
     private void getData() {
         if (tbJnsPerawatan.getSelectedRow() != -1) {
+            if (!ChkInput.isSelected()) {
+                ChkInput.setSelected(true);
+                isForm();
+            }
             KFACode.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(), 0).toString());
             KFASystem.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(), 1).toString());
             KodeBarang.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(), 2).toString());
@@ -1511,14 +1557,12 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
             RouteCode.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(), 14).toString());
             RouteSystem.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(), 15).toString());
             RouteDisplay.setText(tbJnsPerawatan.getValueAt(tbJnsPerawatan.getSelectedRow(), 16).toString());
+            refreshActionState();
         }
     }
 
     public void isCek() {
-        BtnSimpan.setEnabled(akses.getsatu_sehat_mapping_obat());
-        BtnHapus.setEnabled(akses.getsatu_sehat_mapping_obat());
-        BtnEdit.setEnabled(akses.getsatu_sehat_mapping_obat());
-        BtnPrint.setEnabled(akses.getsatu_sehat_mapping_obat());
+        refreshActionState();
     }
 
     public JTable getTable() {
@@ -1526,16 +1570,162 @@ public final class SatuSehatMapingObatAlkes2 extends javax.swing.JDialog {
     }
 
     private void isForm() {
-        if (ChkInput.isSelected() == true) {
-            ChkInput.setVisible(false);
-            PanelInput.setPreferredSize(new Dimension(WIDTH, 275));
-            FormInput.setVisible(true);
-            ChkInput.setVisible(true);
-        } else if (ChkInput.isSelected() == false) {
-            ChkInput.setVisible(false);
-            PanelInput.setPreferredSize(new Dimension(WIDTH, 20));
-            FormInput.setVisible(false);
-            ChkInput.setVisible(true);
+        boolean showInput = ChkInput.isSelected();
+        ChkInput.setText(showInput ? ".: Input Data Mapping (Klik untuk Sembunyikan)" : ".: Input Data Mapping (Klik untuk Tampilkan)");
+        animateFormPanel(showInput);
+    }
+
+    private void applyUXDefaults() {
+        tbJnsPerawatan.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tbJnsPerawatan.setRowHeight(22);
+        tbJnsPerawatan.getTableHeader().setReorderingAllowed(false);
+        TCari.setToolTipText("Ketik minimal 3 karakter untuk pencarian cepat, atau kosongkan untuk menampilkan semua data.");
+        KodeBarang.setToolTipText("Tekan Enter setelah isi kode barang untuk memuat detail barang.");
+        btnCariKFA.setToolTipText("Cari referensi KFA dan isi field mapping secara otomatis.");
+        btnNumer.setToolTipText("Cari referensi numerator.");
+        btnDenom.setToolTipText("Cari referensi denominator.");
+        btnRoute.setToolTipText("Cari referensi route.");
+        requiredDefaultColor = KFACode.getBackground();
+        initRealtimeValidation();
+        validateRequiredFields();
+        refreshActionState();
+    }
+
+    private void handleCariCepat() {
+        String keyword = TCari.getText().trim();
+        if (keyword.isEmpty() || keyword.length() > 2) {
+            tampil();
         }
+    }
+
+    private void refreshActionState() {
+        boolean canManage = akses.getsatu_sehat_mapping_obat();
+        boolean hasSelection = tbJnsPerawatan.getSelectedRow() > -1;
+        BtnSimpan.setEnabled(canManage);
+        BtnEdit.setEnabled(canManage && hasSelection);
+        BtnHapus.setEnabled(canManage && hasSelection);
+        BtnPrint.setEnabled(canManage && tabMode.getRowCount() > 0);
+    }
+
+    private void animateFormPanel(boolean expanded) {
+        final int targetHeight = expanded ? FORM_EXPANDED_HEIGHT : FORM_COLLAPSED_HEIGHT;
+        if (formAnimator != null && formAnimator.isRunning()) {
+            formAnimator.stop();
+        }
+        FormInput.setVisible(true);
+        formAnimator = new Timer(FORM_ANIMATION_DELAY, null);
+        formAnimator.addActionListener(evt -> {
+            int currentHeight = PanelInput.getPreferredSize().height;
+            if (currentHeight == targetHeight) {
+                ((Timer) evt.getSource()).stop();
+                FormInput.setVisible(expanded);
+                PanelInput.revalidate();
+                internalFrame1.revalidate();
+                internalFrame1.repaint();
+                return;
+            }
+            int direction = currentHeight < targetHeight ? 1 : -1;
+            int nextHeight = currentHeight + (FORM_ANIMATION_STEP * direction);
+            if ((direction > 0 && nextHeight > targetHeight) || (direction < 0 && nextHeight < targetHeight)) {
+                nextHeight = targetHeight;
+            }
+            PanelInput.setPreferredSize(new Dimension(WIDTH, nextHeight));
+            PanelInput.revalidate();
+            internalFrame1.revalidate();
+            internalFrame1.repaint();
+        });
+        formAnimator.start();
+    }
+
+    private void initRealtimeValidation() {
+        for (widget.TextBox field : getRequiredFields()) {
+            field.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    validateRequiredField(field);
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    validateRequiredField(field);
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    validateRequiredField(field);
+                }
+            });
+        }
+    }
+
+    private widget.TextBox[] getRequiredFields() {
+        return new widget.TextBox[] {
+            KFACode, KFASystem, KodeBarang, KFADisplay, FormCode, FormSystem, FormDisplay, NumeratorCode,
+            NumeratorSystem, DenominatorCode, DenominatorSystem, RouteCode, RouteSystem, RouteDisplay
+        };
+    }
+
+    private void validateRequiredFields() {
+        for (widget.TextBox field : getRequiredFields()) {
+            validateRequiredField(field);
+        }
+    }
+
+    private void validateRequiredField(widget.TextBox field) {
+        boolean valid = !field.getText().trim().isEmpty();
+        if (!valid) {
+            field.setBackground(requiredEmptyColor);
+        } else {
+            field.setBackground(requiredDefaultColor);
+        }
+        updateRequiredLabelIndicator(field, valid);
+    }
+
+    private void updateRequiredLabelIndicator(widget.TextBox field, boolean valid) {
+        widget.Label label = getRequiredLabel(field);
+        if (label == null) {
+            return;
+        }
+        label.setText(getRequiredLabelBaseText(field));
+        label.setForeground(valid ? requiredLabelValidColor : requiredLabelInvalidColor);
+        label.setIcon(valid ? requiredValidIcon : requiredInvalidIcon);
+        label.setIconTextGap(4);
+        label.setToolTipText(valid ? "Field valid" : "Field wajib diisi");
+    }
+
+    private widget.Label getRequiredLabel(widget.TextBox field) {
+        if (field == KodeBarang) return jLabel9;
+        if (field == KFACode) return jLabel19;
+        if (field == KFASystem) return jLabel4;
+        if (field == KFADisplay) return jLabel10;
+        if (field == FormCode) return jLabel5;
+        if (field == FormSystem) return jLabel11;
+        if (field == FormDisplay) return jLabel12;
+        if (field == NumeratorCode) return jLabel8;
+        if (field == NumeratorSystem) return jLabel14;
+        if (field == DenominatorCode) return jLabel13;
+        if (field == DenominatorSystem) return jLabel15;
+        if (field == RouteCode) return jLabel16;
+        if (field == RouteSystem) return jLabel17;
+        if (field == RouteDisplay) return jLabel18;
+        return null;
+    }
+
+    private String getRequiredLabelBaseText(widget.TextBox field) {
+        if (field == KodeBarang) return "Obat/Alkes :";
+        if (field == KFACode) return "KFA Code :";
+        if (field == KFASystem) return "KFA System :";
+        if (field == KFADisplay) return "KFA Display :";
+        if (field == FormCode) return "Form Code :";
+        if (field == FormSystem) return "Form System :";
+        if (field == FormDisplay) return "Form Display :";
+        if (field == NumeratorCode) return "Numerator Code :";
+        if (field == NumeratorSystem) return "Numerator System :";
+        if (field == DenominatorCode) return "Denominator Code :";
+        if (field == DenominatorSystem) return "Denominator System :";
+        if (field == RouteCode) return "Route Code :";
+        if (field == RouteSystem) return "Route System :";
+        if (field == RouteDisplay) return "Route Display :";
+        return "";
     }
 }

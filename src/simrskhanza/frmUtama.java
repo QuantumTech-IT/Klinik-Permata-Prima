@@ -475,7 +475,7 @@ import bridging.SatuSehatKirimObservationTTV;
 import bridging.SatuSehatKirimProcedure;
 import bridging.SatuSehatKirimVaksin;
 import bridging.SatuSehatMapingLokasi;
-import bridging.SatuSehatMapingObatAlkes;
+import bridging.SatuSehatMapingObatAlkes2;
 import bridging.SatuSehatMapingOrganisasi;
 import bridging.SatuSehatMapingVaksin;
 import bridging.SatuSehatReferensiPasien;
@@ -1194,7 +1194,6 @@ public class frmUtama extends javax.swing.JFrame {
         edPwd = new widget.PasswordBox();
         ModalAwal = new widget.TextBox();
         label18 = new widget.Label();
-        BtnSeek4 = new widget.Button();
         BtnLogin = new widget.Button();
         BtnCancel = new widget.Button();
         DlgHome = new javax.swing.JDialog();
@@ -1849,21 +1848,6 @@ public class frmUtama extends javax.swing.JFrame {
         panelGlass1.add(label18);
         label18.setBounds(10, 70, 90, 23);
 
-        BtnSeek4.setForeground(new java.awt.Color(51, 255, 51));
-        BtnSeek4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/picture/budget24.png"))); // NOI18N
-        BtnSeek4.setMnemonic('5');
-        BtnSeek4.setToolTipText("ALt+5");
-        BtnSeek4.setGlassColor(new java.awt.Color(102, 255, 204));
-        BtnSeek4.setName("BtnSeek4"); // NOI18N
-        BtnSeek4.setPreferredSize(new java.awt.Dimension(28, 23));
-        BtnSeek4.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                BtnSeek4ActionPerformed(evt);
-            }
-        });
-        panelGlass1.add(BtnSeek4);
-        BtnSeek4.setBounds(280, 70, 28, 23);
-
         internalFrame3.add(panelGlass1);
         panelGlass1.setBounds(10, 30, 330, 110);
 
@@ -1999,7 +1983,7 @@ public class frmUtama extends javax.swing.JFrame {
 
         tanggal.setEditable(false);
         tanggal.setForeground(new java.awt.Color(50, 70, 50));
-        tanggal.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "29/12/2025" }));
+        tanggal.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "01/01/2026" }));
         tanggal.setDisplayFormat("dd/MM/yyyy");
         tanggal.setName("tanggal"); // NOI18N
         tanggal.setOpaque(false);
@@ -8335,15 +8319,8 @@ public class frmUtama extends javax.swing.JFrame {
 
     switch (BtnLog.getText().trim()) {
         case "Log Out":
-            // tutup sesi kasir user yang login
-            try {
-                String nip = akses.getkode();
-                if (nip != null && !nip.trim().isEmpty()) {
-                    tutupShiftKasir(nip);
-                }
-            } catch (Exception ex) {
-                System.out.println("[WARN] tutupShiftKasir gagal: " + ex.getMessage());
-            }
+            // ❌ Jangan tutup shift di sini.
+            // Shift hanya ditutup saat tombol "Simpan Tutup Kasir" (update jam_tutup)
 
             // reset session modal
             akses.setModalAwal(0.0);
@@ -8381,23 +8358,25 @@ public class frmUtama extends javax.swing.JFrame {
             break;
 
         case "Log In":
-            // cek global modal hari ini (tanpa NIP)
-            boolean modalAda = isModalSudahAdaHariIni();
+            // ====== cek SHIFT OPEN GLOBAL hari ini dari toko_kasir_shift ======
+            String tgl = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
 
-            // kalau modal sudah ada -> hide input modal
-            setKomponenModalVisible(!modalAda);
+            ShiftOpenInfo open = getShiftOpenGlobal(tgl);
 
-            // optional: bersihkan field
-            if (!modalAda) {
+            if (open != null) {
+                // shift masih OPEN -> modal sudah ada -> HIDE input modal
+                ModalAwal.setText(Valid.SetAngka2(open.modalAwal));
+                setKomponenModalVisible(false);
+            } else {
+                // shift belum ada / sudah ditutup -> SHOW input modal
                 ModalAwal.setText("");
+                setKomponenModalVisible(true);
                 ModalAwal.setEnabled(true);
             }
 
-              DlgLogin.setSize(360, 210); 
-            
-            // update label info + hide/show modal
-            //refreshInfoModalLogin();
-            
+            // ❌ jangan setSize kalau kamu pakai pack() di setKomponenModalVisible
+            // DlgLogin.setSize(360, 210);
+
             DlgLogin.setLocationRelativeTo(null);
             DlgLogin.setVisible(true);
             edAdmin.requestFocus();
@@ -8406,7 +8385,197 @@ public class frmUtama extends javax.swing.JFrame {
     }//GEN-LAST:event_BtnLogActionPerformed
 
     private void BtnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnLoginActionPerformed
-          if (edAdmin.getText().trim().equals("")) {
+//          if (edAdmin.getText().trim().equals("")) {
+//        Valid.textKosong(edAdmin, "ID User");
+//        return;
+//    } else if (edPwd.getText().trim().equals("")) {
+//        Valid.textKosong(edPwd, "Password");
+//        return;
+//    }
+//
+//          
+//    String nipUser = edAdmin.getText().trim();
+//
+//    // ===== modal global per hari =====
+//    boolean modalAda = isModalSudahAdaHariIni();
+//    double modalDipakai;
+//
+//    if (modalAda) {
+//        // modal sudah ada -> pakai modal global, sembunyikan input
+//        Double m = getModalGlobalHariIni();
+//        modalDipakai = (m == null ? 0.0 : m);
+//
+//        akses.setModalAwal(modalDipakai);
+//        akses.setModalAwalText(Valid.SetAngka2(modalDipakai));
+//
+//        setKomponenModalVisible(false);
+//    } else {
+//        // belum ada -> wajib isi modal
+//        String modalStr = ModalAwal.getText().trim();
+//        double modalAwal = Valid.SetAngka(modalStr);
+//
+//        if (modalStr.isEmpty() || modalAwal <= 0) {
+//            JOptionPane.showMessageDialog(DlgLogin,
+//                    "Modal Awal wajib diisi dan harus > 0.",
+//                    "Validasi", JOptionPane.WARNING_MESSAGE);
+//            ModalAwal.requestFocus();
+//            return;
+//        }
+//
+//        modalDipakai = modalAwal;
+//        akses.setModalAwal(modalDipakai);
+//        akses.setModalAwalText(modalStr);
+//    }
+//
+//    try {
+//        // autentikasi
+//        akses.setData(edAdmin.getText(), edPwd.getText());
+//
+//        if (akses.getjml1() >= 1) {
+//            // ===== ADMIN UTAMA =====
+//            BtnMenu.setEnabled(true);
+//            BtnToolReg.setEnabled(true);
+//            BtnToolKamnap.setEnabled(true);
+//            BtnToolKasir.setEnabled(true);
+//            btnToolIGD.setEnabled(true);
+//
+//            btnPermintaanLab.setEnabled(true);
+//            btnPermintaanLabPA.setEnabled(true);
+//            btnPermintaanLabMB.setEnabled(true);
+//            btnLaboratorium.setEnabled(true);
+//            btnLaboratoriumPA.setEnabled(true);
+//            btnLaboratoriumMB.setEnabled(true);
+//            btnPermintaanRadiologi.setEnabled(true);
+//            btnPeriksaRadiologi.setEnabled(true);
+//
+//            btnInputPenjualan.setEnabled(true);
+//            btnDataPenjualan.setEnabled(true);
+//            btnDataPenyerahanDarah.setEnabled(true);
+//            btnDaftarPermintaanResep.setEnabled(true);
+//            btnResepObatDepan.setEnabled(true);
+//
+//            MnGantiPassword.setEnabled(false);
+//            MnPengajuanCutiPegawai.setEnabled(false);
+//
+//            // buka sesi user (sekali)
+//            // kalau modal global sudah ada -> modal_awal untuk row user = 0 (biar ketahuan siapa input modal)
+//            double modalRow = modalAda ? 0.0 : akses.getModalAwal();
+//            bukaSesiKasirSekali(nipUser, modalRow);
+//
+//            DlgLogin.dispose();
+//            BtnLog.setText("Log Out");
+//            MnLogin.setText("Log Out");
+//            lblStts.setText("Admin : ");
+//            lblUser.setText("Admin Utama");
+//
+//            if (AKTIFKANTRACKSQL.equals("yes")) {
+//                Sequel.menyimpan("tracker", "'Admin Utama',current_date(),current_time()", "Login");
+//            }
+//
+//        } else if (akses.getjml2() >= 1) {
+//            // ===== USER BIASA =====
+//            BtnMenu.setEnabled(true);
+//
+//            // buka sesi user (sekali)
+//            double modalRow = modalAda ? 0.0 : akses.getModalAwal();
+//            bukaSesiKasirSekali(nipUser, modalRow);
+//
+//            DlgLogin.dispose();
+//            BtnLog.setText("Log Out");
+//            MnLogin.setText("Log Out");
+//            lblStts.setText("Admin : ");
+//            lblUser.setText(akses.getkode());
+//
+//            MnGantiPassword.setEnabled(true);
+//            MnPengajuanCutiPegawai.setEnabled(true);
+//
+//            BtnToolReg.setEnabled(akses.getregistrasi());
+//            if ((akses.getkamar_inap() == true) || (akses.getbilling_ranap() == true) || (akses.gettindakan_ranap() == true)) {
+//                BtnToolKamnap.setEnabled(true);
+//            } else {
+//                BtnToolKamnap.setEnabled(akses.getkamar_inap());
+//            }
+//
+//            if ((akses.getkasir_ralan() == true) || (akses.getbilling_ralan() == true)) {
+//                BtnToolKasir.setEnabled(true);
+//            } else {
+//                BtnToolKasir.setEnabled(akses.getkasir_ralan());
+//            }
+//
+//            if ((akses.getpermintaan_radiologi() == true) || (akses.getperiksa_radiologi() == true)) {
+//                btnPermintaanRadiologi.setEnabled(true);
+//            } else {
+//                btnPermintaanRadiologi.setEnabled(akses.getpermintaan_radiologi());
+//            }
+//
+//            if ((akses.getpermintaan_lab() == true) || (akses.getperiksa_lab() == true) ||
+//                    (akses.getpemeriksaan_lab_pa() == true) || (akses.getpemeriksaan_lab_mb() == true)) {
+//                btnPermintaanLab.setEnabled(true);
+//                btnPermintaanLabPA.setEnabled(true);
+//                btnPermintaanLabMB.setEnabled(true);
+//            } else {
+//                btnPermintaanLab.setEnabled(akses.getpermintaan_lab());
+//                btnPermintaanLabPA.setEnabled(akses.getpermintaan_lab());
+//                btnPermintaanLabMB.setEnabled(akses.getpermintaan_lab());
+//            }
+//
+//            btnToolIGD.setEnabled(akses.getigd());
+//            btnLaboratorium.setEnabled(akses.getperiksa_lab());
+//            btnLaboratoriumPA.setEnabled(akses.getpemeriksaan_lab_pa());
+//            btnLaboratoriumMB.setEnabled(akses.getpemeriksaan_lab_pa());
+//            btnPeriksaRadiologi.setEnabled(akses.getperiksa_radiologi());
+//
+//            btnInputPenjualan.setEnabled(akses.getpenjualan_obat());
+//            btnDataPenjualan.setEnabled(akses.getpenjualan_obat());
+//            btnDataPenyerahanDarah.setEnabled(akses.getutd_penyerahan_darah());
+//            btnDaftarPermintaanResep.setEnabled(akses.getresep_dokter());
+//            btnResepObatDepan.setEnabled(akses.getresep_obat());
+//
+//            if (AKTIFKANTRACKSQL.equals("yes")) {
+//                Sequel.menyimpan("tracker", "'" + edAdmin.getText() + "',current_date(),current_time()", "Login");
+//            }
+//
+//        } else {
+//            // ===== LOGIN GAGAL =====
+//            JOptionPane.showMessageDialog(null, "Maaf, Gagal login. ID User atau password ada yang salah ...!");
+//
+//            BtnToolReg.setEnabled(false);
+//            BtnToolKamnap.setEnabled(false);
+//            BtnToolKasir.setEnabled(false);
+//            MnGantiPassword.setEnabled(false);
+//            MnPengajuanCutiPegawai.setEnabled(false);
+//            btnToolIGD.setEnabled(false);
+//
+//            btnPermintaanLab.setEnabled(false);
+//            btnPermintaanLabPA.setEnabled(false);
+//            btnPermintaanLabMB.setEnabled(false);
+//            btnLaboratorium.setEnabled(false);
+//            btnLaboratoriumPA.setEnabled(false);
+//            btnLaboratoriumMB.setEnabled(false);
+//            btnPermintaanRadiologi.setEnabled(false);
+//            btnPeriksaRadiologi.setEnabled(false);
+//
+//            btnInputPenjualan.setEnabled(false);
+//            btnDataPenjualan.setEnabled(false);
+//            btnDataPenyerahanDarah.setEnabled(false);
+//            btnDaftarPermintaanResep.setEnabled(false);
+//            btnResepObatDepan.setEnabled(false);
+//
+//            edAdmin.setText("");
+//            edPwd.setText("");
+//            BtnMenu.setEnabled(false);
+//
+//            edAdmin.requestFocus();
+//            BtnLog.setText("Log In");
+//            MnLogin.setText("Log In");
+//            lblStts.setText("Status Admin : ");
+//            lblUser.setText("Log Out");
+//        }
+//
+//    } catch (Exception e) {
+//        System.out.println("Notifikasi : " + e);
+//    }
+if (edAdmin.getText().trim().equals("")) {
         Valid.textKosong(edAdmin, "ID User");
         return;
     } else if (edPwd.getText().trim().equals("")) {
@@ -8416,42 +8585,18 @@ public class frmUtama extends javax.swing.JFrame {
 
     String nipUser = edAdmin.getText().trim();
 
-    // ===== modal global per hari =====
-    boolean modalAda = isModalSudahAdaHariIni();
-    double modalDipakai;
-
-    if (modalAda) {
-        // modal sudah ada -> pakai modal global, sembunyikan input
-        Double m = getModalGlobalHariIni();
-        modalDipakai = (m == null ? 0.0 : m);
-
-        akses.setModalAwal(modalDipakai);
-        akses.setModalAwalText(Valid.SetAngka2(modalDipakai));
-
-        setKomponenModalVisible(false);
-    } else {
-        // belum ada -> wajib isi modal
-        String modalStr = ModalAwal.getText().trim();
-        double modalAwal = Valid.SetAngka(modalStr);
-
-        if (modalStr.isEmpty() || modalAwal <= 0) {
-            JOptionPane.showMessageDialog(DlgLogin,
-                    "Modal Awal wajib diisi dan harus > 0.",
-                    "Validasi", JOptionPane.WARNING_MESSAGE);
-            ModalAwal.requestFocus();
-            return;
-        }
-
-        modalDipakai = modalAwal;
-        akses.setModalAwal(modalDipakai);
-        akses.setModalAwalText(modalStr);
-    }
-
     try {
-        // autentikasi
+        // 1) AUTENTIKASI DULU
         akses.setData(edAdmin.getText(), edPwd.getText());
 
         if (akses.getjml1() >= 1) {
+            // 2) SHIFT OPEN GLOBAL + AMBIL MODAL (SETELAH LOGIN SUKSES)
+            Double modalDipakai = ensureShiftOpenAndGetModalGlobal(nipUser);
+            if (modalDipakai == null) return;
+
+            akses.setModalAwal(modalDipakai);
+            akses.setModalAwalText(Valid.SetAngka2(modalDipakai));
+
             // ===== ADMIN UTAMA =====
             BtnMenu.setEnabled(true);
             BtnToolReg.setEnabled(true);
@@ -8477,12 +8622,7 @@ public class frmUtama extends javax.swing.JFrame {
             MnGantiPassword.setEnabled(false);
             MnPengajuanCutiPegawai.setEnabled(false);
 
-            // buka sesi user (sekali)
-            // kalau modal global sudah ada -> modal_awal untuk row user = 0 (biar ketahuan siapa input modal)
-            double modalRow = modalAda ? 0.0 : akses.getModalAwal();
-            bukaSesiKasirSekali(nipUser, modalRow);
-
-            DlgLogin.dispose();
+            DlgLogin.setVisible(false); // ✅ jangan dispose
             BtnLog.setText("Log Out");
             MnLogin.setText("Log Out");
             lblStts.setText("Admin : ");
@@ -8493,14 +8633,17 @@ public class frmUtama extends javax.swing.JFrame {
             }
 
         } else if (akses.getjml2() >= 1) {
+            // 2) SHIFT OPEN GLOBAL + AMBIL MODAL (SETELAH LOGIN SUKSES)
+            Double modalDipakai = ensureShiftOpenAndGetModalGlobal(nipUser);
+            if (modalDipakai == null) return;
+
+            akses.setModalAwal(modalDipakai);
+            akses.setModalAwalText(Valid.SetAngka2(modalDipakai));
+
             // ===== USER BIASA =====
             BtnMenu.setEnabled(true);
 
-            // buka sesi user (sekali)
-            double modalRow = modalAda ? 0.0 : akses.getModalAwal();
-            bukaSesiKasirSekali(nipUser, modalRow);
-
-            DlgLogin.dispose();
+            DlgLogin.setVisible(false); // ✅ jangan dispose
             BtnLog.setText("Log Out");
             MnLogin.setText("Log Out");
             lblStts.setText("Admin : ");
@@ -8556,45 +8699,15 @@ public class frmUtama extends javax.swing.JFrame {
             }
 
         } else {
-            // ===== LOGIN GAGAL =====
             JOptionPane.showMessageDialog(null, "Maaf, Gagal login. ID User atau password ada yang salah ...!");
-
-            BtnToolReg.setEnabled(false);
-            BtnToolKamnap.setEnabled(false);
-            BtnToolKasir.setEnabled(false);
-            MnGantiPassword.setEnabled(false);
-            MnPengajuanCutiPegawai.setEnabled(false);
-            btnToolIGD.setEnabled(false);
-
-            btnPermintaanLab.setEnabled(false);
-            btnPermintaanLabPA.setEnabled(false);
-            btnPermintaanLabMB.setEnabled(false);
-            btnLaboratorium.setEnabled(false);
-            btnLaboratoriumPA.setEnabled(false);
-            btnLaboratoriumMB.setEnabled(false);
-            btnPermintaanRadiologi.setEnabled(false);
-            btnPeriksaRadiologi.setEnabled(false);
-
-            btnInputPenjualan.setEnabled(false);
-            btnDataPenjualan.setEnabled(false);
-            btnDataPenyerahanDarah.setEnabled(false);
-            btnDaftarPermintaanResep.setEnabled(false);
-            btnResepObatDepan.setEnabled(false);
-
-            edAdmin.setText("");
-            edPwd.setText("");
-            BtnMenu.setEnabled(false);
-
-            edAdmin.requestFocus();
-            BtnLog.setText("Log In");
-            MnLogin.setText("Log In");
-            lblStts.setText("Status Admin : ");
-            lblUser.setText("Log Out");
+            // ... bagian disable button (biarkan seperti punyamu)
         }
 
     } catch (Exception e) {
         System.out.println("Notifikasi : " + e);
     }
+
+
     }//GEN-LAST:event_BtnLoginActionPerformed
 
     private void BtnToolKamnapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnToolKamnapActionPerformed
@@ -11194,7 +11307,7 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
         FlayMenu.add(btnPenjualanToko);
         FlayMenu.add(btnStokOpnameToko);
         FlayMenu.add(btnPiutangToko);
-        FlayMenu.add(btnKeuntunganBarangToko);
+        //FlayMenu.add(btnKeuntunganBarangToko);
         FlayMenu.add(btnPendapatanHarianToko);
         FlayMenu.add(btnPenjualanHarianToko);
         FlayMenu.add(btnBayarPiutangToko);
@@ -11211,7 +11324,7 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
         btnPenjualanToko.setEnabled(akses.gettoko_penjualan());
         btnStokOpnameToko.setEnabled(akses.getstok_opname_toko());
         btnPiutangToko.setEnabled(akses.gettoko_piutang());
-        btnKeuntunganBarangToko.setEnabled(akses.gettoko_keuntungan_barang());
+        //btnKeuntunganBarangToko.setEnabled(akses.gettoko_keuntungan_barang());
         btnPendapatanHarianToko.setEnabled(akses.gettoko_pendapatan_harian());
         btnPenjualanHarianToko.setEnabled(akses.gettoko_penjualan_harian());
         btnBayarPiutangToko.setEnabled(akses.gettoko_bayar_piutang());
@@ -14756,15 +14869,6 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
         Valid.panggilUrl("antrianmobilejkn.php");
         this.setCursor(Cursor.getDefaultCursor());
     }//GEN-LAST:event_MnInfoMobileJKNActionPerformed
-
-    private void BtnSeek4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnSeek4ActionPerformed
-        InputModalAwal.setText(Sequel.cariIsi("select modal_awal from set_modal_payment"));
-        WindowModalAwal.setSize(500,80);
-        WindowModalAwal.setLocationRelativeTo(ModalAwal);
-        InputModalAwal.requestFocus();
-        WindowModalAwal.setAlwaysOnTop(false);
-        WindowModalAwal.setVisible(true);
-    }//GEN-LAST:event_BtnSeek4ActionPerformed
 
     private void InputModalAwalKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_InputModalAwalKeyPressed
         Valid.pindah(evt,BtnCloseIn,TCari);
@@ -21229,7 +21333,7 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
         isTutup();
         DlgHome.dispose();
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        SatuSehatMapingObatAlkes aplikasi=new SatuSehatMapingObatAlkes(this,false);
+        SatuSehatMapingObatAlkes2 aplikasi=new SatuSehatMapingObatAlkes2(this,false);
         aplikasi.isCek();
         aplikasi.setSize(PanelUtama.getWidth(), PanelUtama.getHeight());
         aplikasi.setLocationRelativeTo(PanelUtama);
@@ -21344,7 +21448,6 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
     private widget.ButtonBig BtnLog;
     private widget.Button BtnLogin;
     private widget.ButtonBig BtnMenu;
-    private widget.Button BtnSeek4;
     private widget.Button BtnSimpan2;
     private widget.ButtonBig BtnToolJualObat;
     private widget.ButtonBig BtnToolKamnap;
@@ -43539,7 +43642,8 @@ private boolean requireModalAwal(String userNip) {
     }
 }
 
- // --- cek apakah kasir sudah punya shift hari ini ---
+ 
+// --- cek apakah kasir sudah punya shift hari ini ---
 private Double getModalAktifHariIni(String nip) {
     String sql =
         "SELECT COALESCE(MAX(modal_awal),0) " +
@@ -43587,17 +43691,20 @@ private void bukaShiftKasir(String nip) {
 //}
 private void setKomponenModalVisible(boolean visible) {
     ModalAwal.setVisible(visible);
-    BtnSeek4.setVisible(visible);
+    //BtnSeek4.setVisible(visible);
     label18.setVisible(visible);
-    if (visible) {
-        ModalAwal.setEnabled(true);
-        BtnSeek4.setEnabled(true);
-        label18.setEnabled(true);
-    }
-     DlgLogin.pack();                 // hitung ulang ukuran sesuai komponen yang tampil
+
+    ModalAwal.setEnabled(visible);
+    //BtnSeek4.setEnabled(visible);
+    label18.setEnabled(visible);
+
+    // refresh layout saja
+    DlgLogin.getContentPane().revalidate();
+    DlgLogin.getContentPane().repaint();
+
+    // pakai ukuran fix (pilih tinggi sesuai ada/tidaknya modal)
+    DlgLogin.setSize(360, visible ? 250 : 210);
     DlgLogin.setLocationRelativeTo(null);
-    DlgLogin.revalidate();
-    DlgLogin.repaint();
 }
 
 /** Modal global sudah ada hari ini? (tanpa NIP) */
@@ -43732,5 +43839,233 @@ private String getNamaPetugasByNip(String nip) {
 //        DlgLogin.setSize(360, 210);
 //    }
 //}
+// =========================================================
+//                HELPER: SHIFT OPEN & MODAL
+// =========================================================
+private String tglHariIni() {
+    return new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+}
 
+private Double getModalShiftOpenHariIni(String tgl, String nip) {
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+        ps = koneksi.prepareStatement(
+            "SELECT modal_awal FROM toko_kasir_shift " +
+            "WHERE tgl=? AND nip=? AND jam_tutup IS NULL " +
+            "ORDER BY id DESC LIMIT 1"
+        );
+        ps.setString(1, tgl);
+        ps.setString(2, nip);
+        rs = ps.executeQuery();
+        if (rs.next()) {
+            return rs.getDouble(1); // DB kamu modal_awal bentuknya 3200000.00
+        }
+    } catch (Exception e) {
+        System.out.println("Notifikasi getModalShiftOpenHariIni: " + e);
+    } finally {
+        try { if (rs != null) rs.close(); } catch (Exception e) {}
+        try { if (ps != null) ps.close(); } catch (Exception e) {}
+    }
+    return null;
+}
+
+private boolean bukaShiftBaru(String tgl, String nip, double modalAwal) {
+    PreparedStatement ps = null;
+    try {
+        ps = koneksi.prepareStatement(
+            "INSERT INTO toko_kasir_shift (tgl, jam_buka, nip, modal_awal) " +
+            "VALUES (?, CURTIME(), ?, ?)"
+        );
+        ps.setString(1, tgl);
+        ps.setString(2, nip);
+        ps.setDouble(3, modalAwal);
+        ps.executeUpdate();
+        return true;
+    } catch (Exception e) {
+        System.out.println("Notifikasi bukaShiftBaru: " + e);
+        return false;
+    } finally {
+        try { if (ps != null) ps.close(); } catch (Exception e) {}
+    }
+}
+
+/**
+ * Jika shift OPEN ada -> pakai modal DB & sembunyikan input modal.
+ * Jika tidak ada -> wajib input modal -> insert shift baru -> sembunyikan input.
+ */
+private Double ensureShiftOpenAndGetModal(String nipUser) {
+    String tgl = tglHariIni();
+
+    // 1) cek shift OPEN
+    Double mDb = getModalShiftOpenHariIni(tgl, nipUser);
+    if (mDb != null && mDb > 0) {
+        ModalAwal.setText(Valid.SetAngka2(mDb));
+        setKomponenModalVisible(false);
+        return mDb;
+    }
+
+    // 2) shift belum ada / sudah ditutup => wajib input modal
+    setKomponenModalVisible(true);
+
+    String modalStr = ModalAwal.getText().trim();
+    double modalAwal = Valid.SetAngka(modalStr);
+
+    if (modalStr.isEmpty() || modalAwal <= 0) {
+        JOptionPane.showMessageDialog(DlgLogin,
+                "Shift belum dibuka atau sudah ditutup.\nModal Awal wajib diisi dan harus > 0.",
+                "Validasi", JOptionPane.WARNING_MESSAGE);
+        ModalAwal.requestFocus();
+        return null;
+    }
+
+    // 3) buat shift baru (OPEN)
+    if (!bukaShiftBaru(tgl, nipUser, modalAwal)) {
+        JOptionPane.showMessageDialog(DlgLogin,
+                "Gagal membuka shift baru. Cek koneksi/DB.",
+                "Error", JOptionPane.ERROR_MESSAGE);
+        return null;
+    }
+
+    setKomponenModalVisible(false);
+    return modalAwal;
+}
+
+private Integer getShiftOpenIdGlobal(String tgl){
+    try (PreparedStatement ps = koneksi.prepareStatement(
+        "SELECT id FROM toko_kasir_shift " +
+        "WHERE tgl=? AND jam_tutup IS NULL " +
+        "ORDER BY id DESC LIMIT 1"
+    )) {
+        ps.setString(1, tgl);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        }
+    } catch (Exception e) {
+        System.out.println("Notifikasi getShiftOpenIdGlobal: " + e);
+    }
+    return null;
+}
+
+private Double getModalShiftOpenGlobal(String tgl){
+    try (PreparedStatement ps = koneksi.prepareStatement(
+        "SELECT modal_awal FROM toko_kasir_shift " +
+        "WHERE tgl=? AND jam_tutup IS NULL " +
+        "ORDER BY id DESC LIMIT 1"
+    )) {
+        ps.setString(1, tgl);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getDouble(1);
+        }
+    } catch (Exception e) {
+        System.out.println("Notifikasi getModalShiftOpenGlobal: " + e);
+    }
+    return null;
+}
+
+
+
+private static class ShiftOpenInfo {
+    int id;
+    String nipPembuka;
+    double modalAwal;
+}
+
+private ShiftOpenInfo getShiftOpenGlobal(String tgl) {
+    try (PreparedStatement ps = koneksi.prepareStatement(
+        "SELECT id, nip, modal_awal " +
+        "FROM toko_kasir_shift " +
+        "WHERE tgl=? AND jam_tutup IS NULL " +
+        "ORDER BY id DESC LIMIT 1"
+    )) {
+        ps.setString(1, tgl);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                ShiftOpenInfo info = new ShiftOpenInfo();
+                info.id = rs.getInt("id");
+                info.nipPembuka = rs.getString("nip");
+                info.modalAwal = rs.getDouble("modal_awal");
+                return info;
+            }
+        }
+    } catch (Exception e) {
+        System.out.println("Notifikasi getShiftOpenGlobal: " + e);
+    }
+    return null;
+}
+private boolean insertShiftBaruGlobalSafe(String tgl, String pembuka, double modal) {
+    String sql =
+        "INSERT INTO toko_kasir_shift (tgl, jam_buka, nip, modal_awal) " +
+        "SELECT ?, CURTIME(), ?, ? " +
+        "WHERE NOT EXISTS (" +
+        "  SELECT 1 FROM toko_kasir_shift WHERE tgl=? AND jam_tutup IS NULL" +
+        ")";
+    try (PreparedStatement ps = koneksi.prepareStatement(sql)) {
+        ps.setString(1, tgl);
+        ps.setString(2, pembuka);
+        ps.setDouble(3, modal);
+        ps.setString(4, tgl);
+        ps.executeUpdate();
+        return true;
+    } catch (Exception e) {
+        System.out.println("Notifikasi insertShiftBaruGlobalSafe: " + e);
+        return false;
+    }
+}
+private Double ensureShiftOpenAndGetModalGlobal(String pembukaNip) {
+    String tgl = tglHariIni();
+
+    // 1) kalau sudah ada SHIFT OPEN global -> ambil modal, hide input
+    ShiftOpenInfo open = getShiftOpenGlobal(tgl);
+    if (open != null) {
+        ModalAwal.setText(Valid.SetAngka2(open.modalAwal));
+        setKomponenModalVisible(false);
+        return open.modalAwal;
+    }
+
+    // 2) belum ada OPEN -> wajib input modal -> insert 1 baris global OPEN
+    setKomponenModalVisible(true);
+
+    String modalStr = ModalAwal.getText().trim();
+    double modalAwal = Valid.SetAngka(modalStr);
+
+    if (modalStr.isEmpty() || modalAwal <= 0) {
+        JOptionPane.showMessageDialog(DlgLogin,
+            "Shift belum dibuka / sudah ditutup.\nModal Awal wajib diisi dan harus > 0.",
+            "Validasi", JOptionPane.WARNING_MESSAGE);
+        ModalAwal.requestFocus();
+        return null;
+    }
+
+    if (!insertShiftBaruGlobalSafe(tgl, pembukaNip, modalAwal)) {
+        // kalau gagal karena race (sudah keburu dibuat user lain) -> ambil lagi
+        ShiftOpenInfo open2 = getShiftOpenGlobal(tgl);
+        if (open2 != null) {
+            ModalAwal.setText(Valid.SetAngka2(open2.modalAwal));
+            setKomponenModalVisible(false);
+            return open2.modalAwal;
+        }
+
+        JOptionPane.showMessageDialog(DlgLogin,
+            "Gagal membuka shift baru. Cek DB/koneksi.",
+            "Error", JOptionPane.ERROR_MESSAGE);
+        return null;
+    }
+
+    setKomponenModalVisible(false);
+    return modalAwal;
+}
+private void tutupShiftGlobalHariIni() {
+    String tgl = tglHariIni();
+    try (PreparedStatement ps = koneksi.prepareStatement(
+        "UPDATE toko_kasir_shift SET jam_tutup=CURTIME() " +
+        "WHERE tgl=? AND jam_tutup IS NULL " +
+        "ORDER BY id DESC LIMIT 1"
+    )) {
+        ps.setString(1, tgl);
+        ps.executeUpdate();
+    } catch (Exception e) {
+        System.out.println("Gagal tutupShiftGlobalHariIni: " + e);
+    }
+}
 }

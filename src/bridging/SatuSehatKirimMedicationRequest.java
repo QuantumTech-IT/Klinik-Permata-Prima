@@ -34,6 +34,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpStatusCodeException;
 
 /**
  *
@@ -652,30 +653,58 @@ public final class SatuSehatKirimMedicationRequest extends javax.swing.JDialog {
                         }
                     } catch (Exception e) {
                         signa2="1";
-                    } 
-                    if(tbObat.getValueAt(i,27).toString().equals("")){
-                        try{
-                            headers = new HttpHeaders();
-                            headers.setContentType(MediaType.APPLICATION_JSON);
-                            headers.add("Authorization", "Bearer "+api.TokenSatuSehat());
-                            String rawAuth = tbObat.getValueAt(i,21).toString();
-rawAuth = rawAuth.replace(" ", "T");
-if (rawAuth.length() >= 19) {
-    rawAuth = rawAuth.substring(0, 19);
-}
-String authoredOn = rawAuth + "+07:00";
+                    }
+
+                    String token="";
+                    String idMedicationRequest="";
+                    String noResep=tbObat.getValueAt(i,25).toString();
+                    String kodeBrng=tbObat.getValueAt(i,11).toString();
+                    String noRacik=tbObat.getValueAt(i,27).toString();
+                    boolean racikan=!noRacik.equals("");
+                    String identifierSystemResep="http://sys-ids.kemkes.go.id/prescription/"+koneksiDB.IDSATUSEHAT();
+                    String identifierSystemItem="http://sys-ids.kemkes.go.id/prescription-item/"+koneksiDB.IDSATUSEHAT();
+                    String identifierValueResep=racikan?noResep+"-"+noRacik:noResep;
+
+                    try{
+                        headers = new HttpHeaders();
+                        headers.setContentType(MediaType.APPLICATION_JSON);
+                        token=api.TokenSatuSehat();
+                        headers.add("Authorization", "Bearer "+token);
+
+                        // Cek dulu data existing di SATUSEHAT agar tidak duplikat saat retry
+                        idMedicationRequest=cariMedicationRequestByIdentifier(identifierSystemResep,identifierValueResep,identifierSystemItem,kodeBrng,token);
+                        if(!idMedicationRequest.equals("")){
+                            System.out.println("Notifikasi Duplicate-Guard : MedicationRequest ditemukan di SATUSEHAT, id="+idMedicationRequest);
+                            boolean tersimpanLokal=racikan?
+                                simpanMedicationRequestRacikanLocal(noResep,kodeBrng,noRacik,idMedicationRequest):
+                                simpanMedicationRequestLocal(noResep,kodeBrng,idMedicationRequest);
+                            if(tersimpanLokal){
+                                tbObat.setValueAt(idMedicationRequest,i,26);
+                                tbObat.setValueAt(false,i,0);
+                            }
+                            continue;
+                        }
+
+                        String rawAuth = tbObat.getValueAt(i,21).toString();
+                        rawAuth = rawAuth.replace(" ", "T");
+                        if(rawAuth.length()>=19){
+                            rawAuth = rawAuth.substring(0, 19);
+                        }
+                        String authoredOn = rawAuth + "+07:00";
+
+                        if(!racikan){
                             json = "{" +
                                         "\"resourceType\": \"MedicationRequest\"," +
                                         "\"identifier\": [" +
                                             "{" +
-                                                "\"system\": \"http://sys-ids.kemkes.go.id/prescription/"+koneksiDB.IDSATUSEHAT()+"\"," +
+                                                "\"system\": \""+identifierSystemResep+"\"," +
                                                 "\"use\": \"official\"," +
-                                                "\"value\": \""+tbObat.getValueAt(i,25).toString()+"\"" +
+                                                "\"value\": \""+identifierValueResep+"\"" +
                                             "}," +
                                             "{" +
-                                                "\"system\": \"http://sys-ids.kemkes.go.id/prescription-item/"+koneksiDB.IDSATUSEHAT()+"\"," +
+                                                "\"system\": \""+identifierSystemItem+"\"," +
                                                 "\"use\": \"official\"," +
-                                                "\"value\": \""+tbObat.getValueAt(i,11).toString()+"\"" +
+                                                "\"value\": \""+kodeBrng+"\"" +
                                             "}" +
                                         "]," +
                                         "\"status\": \"completed\"," +
@@ -751,47 +780,19 @@ String authoredOn = rawAuth + "+07:00";
                                             "}" +
                                         "}" +
                                     "}";
-                            System.out.println("URL : "+link+"/MedicationRequest");
-                            System.out.println("Request JSON : "+json);
-                            requestEntity = new HttpEntity(json,headers);
-                            json=api.getRest().exchange(link+"/MedicationRequest", HttpMethod.POST, requestEntity, String.class).getBody();
-                            System.out.println("Result JSON : "+json);
-                            root = mapper.readTree(json);
-                            response = root.path("id");
-                            if(!response.asText().equals("")){
-                                if(Sequel.menyimpantf2("satu_sehat_medicationrequest","?,?,?","Obat/Alkes",3,new String[]{
-                                    tbObat.getValueAt(i,25).toString(),tbObat.getValueAt(i,11).toString(),response.asText()
-                                })==true){
-                                    tbObat.setValueAt(response.asText(),i,26);
-                                    tbObat.setValueAt(false,i,0);
-                                }
-                            }
-                        }catch(Exception e){
-                            System.out.println("Notifikasi Bridging : "+e);
-                        }
-                    }else if(!tbObat.getValueAt(i,27).toString().equals("")){
-                        try{
-                            headers = new HttpHeaders();
-                            headers.setContentType(MediaType.APPLICATION_JSON);
-                            headers.add("Authorization", "Bearer "+api.TokenSatuSehat());
-                            String rawAuth = tbObat.getValueAt(i,21).toString();
-rawAuth = rawAuth.replace(" ", "T");
-if (rawAuth.length() >= 19) {
-    rawAuth = rawAuth.substring(0, 19);
-}
-String authoredOn = rawAuth + "+07:00";
+                        }else{
                             json = "{" +
                                         "\"resourceType\": \"MedicationRequest\"," +
                                         "\"identifier\": [" +
                                             "{" +
-                                                "\"system\": \"http://sys-ids.kemkes.go.id/prescription/"+koneksiDB.IDSATUSEHAT()+"\"," +
+                                                "\"system\": \""+identifierSystemResep+"\"," +
                                                 "\"use\": \"official\"," +
-                                                "\"value\": \""+tbObat.getValueAt(i,25).toString()+"-"+tbObat.getValueAt(i,27).toString()+"\"" +
+                                                "\"value\": \""+identifierValueResep+"\"" +
                                             "}," +
                                             "{" +
-                                                "\"system\": \"http://sys-ids.kemkes.go.id/prescription-item/"+koneksiDB.IDSATUSEHAT()+"\"," +
+                                                "\"system\": \""+identifierSystemItem+"\"," +
                                                 "\"use\": \"official\"," +
-                                                "\"value\": \""+tbObat.getValueAt(i,11).toString()+"\"" +
+                                                "\"value\": \""+kodeBrng+"\"" +
                                             "}" +
                                         "]," +
                                         "\"status\": \"completed\"," +
@@ -864,23 +865,50 @@ String authoredOn = rawAuth + "+07:00";
                                             "}" +
                                         "}" +
                                     "}";
-                            System.out.println("URL : "+link+"/MedicationRequest");
-                            System.out.println("Request JSON : "+json);
-                            requestEntity = new HttpEntity(json,headers);
-                            json=api.getRest().exchange(link+"/MedicationRequest", HttpMethod.POST, requestEntity, String.class).getBody();
-                            System.out.println("Result JSON : "+json);
-                            root = mapper.readTree(json);
-                            response = root.path("id");
-                            if(!response.asText().equals("")){
-                                if(Sequel.menyimpantf2("satu_sehat_medicationrequest_racikan","?,?,?,?","Obat/Alkes",4,new String[]{
-                                    tbObat.getValueAt(i,25).toString(),tbObat.getValueAt(i,11).toString(),tbObat.getValueAt(i,11).toString(),response.asText()
-                                })==true){
-                                    tbObat.setValueAt(response.asText(),i,26);
-                                    tbObat.setValueAt(false,i,0);
-                                }
+                        }
+
+                        System.out.println("URL : "+link+"/MedicationRequest");
+                        System.out.println("Request JSON : "+json);
+                        requestEntity = new HttpEntity(json,headers);
+                        json=api.getRest().exchange(link+"/MedicationRequest", HttpMethod.POST, requestEntity, String.class).getBody();
+                        System.out.println("Result JSON : "+json);
+                        root = mapper.readTree(json);
+                        response = root.path("id");
+                        if(!response.asText().equals("")){
+                            boolean tersimpanLokal=racikan?
+                                simpanMedicationRequestRacikanLocal(noResep,kodeBrng,noRacik,response.asText()):
+                                simpanMedicationRequestLocal(noResep,kodeBrng,response.asText());
+                            if(tersimpanLokal){
+                                tbObat.setValueAt(response.asText(),i,26);
+                                tbObat.setValueAt(false,i,0);
                             }
-                        }catch(Exception e){
-                            System.out.println("Notifikasi Bridging : "+e);
+                        }
+                    }catch(Exception e){
+                        String detailError=pesanErrorSatusehat(e);
+                        boolean duplicateTertangani=false;
+                        if(detailError.toLowerCase().contains("\"code\":\"duplicate\"") || detailError.toLowerCase().contains("found duplicate")){
+                            try{
+                                if(token.equals("")){
+                                    token=api.TokenSatuSehat();
+                                }
+                                idMedicationRequest=cariMedicationRequestByIdentifier(identifierSystemResep,identifierValueResep,identifierSystemItem,kodeBrng,token);
+                                if(!idMedicationRequest.equals("")){
+                                    System.out.println("Notifikasi Duplicate Fallback : MedicationRequest ditemukan, id="+idMedicationRequest);
+                                    boolean tersimpanLokal=racikan?
+                                        simpanMedicationRequestRacikanLocal(noResep,kodeBrng,noRacik,idMedicationRequest):
+                                        simpanMedicationRequestLocal(noResep,kodeBrng,idMedicationRequest);
+                                    if(tersimpanLokal){
+                                        tbObat.setValueAt(idMedicationRequest,i,26);
+                                        tbObat.setValueAt(false,i,0);
+                                        duplicateTertangani=true;
+                                    }
+                                }
+                            }catch(Exception ex){
+                                System.out.println("Notifikasi Bridging (duplicate fallback) : "+pesanErrorSatusehat(ex));
+                            }
+                        }
+                        if(!duplicateTertangani){
+                            System.out.println("Notifikasi Bridging : "+detailError);
                         }
                     }
                 } catch (Exception e) {
@@ -1032,7 +1060,7 @@ String authoredOn = rawAuth + "+07:00";
                             System.out.println("Result JSON : "+json);
                             tbObat.setValueAt(false,i,0);
                         }catch(Exception e){
-                            System.out.println("Notifikasi Bridging : "+e);
+                            System.out.println("Notifikasi Bridging : "+pesanErrorSatusehat(e));
                         }
                     }else if(!tbObat.getValueAt(i,27).toString().equals("")){
                         try{
@@ -1139,7 +1167,7 @@ System.out.println("AUTHORED ON JSON: " + authoredOn);
                             System.out.println("Result JSON : "+json);
                             tbObat.setValueAt(false,i,0);
                         }catch(Exception e){
-                            System.out.println("Notifikasi Bridging : "+e);
+                            System.out.println("Notifikasi Bridging : "+pesanErrorSatusehat(e));
                         }
                     }
                 } catch (Exception e) {
@@ -1453,4 +1481,112 @@ System.out.println("AUTHORED ON JSON: " + authoredOn);
     public JTable getTable(){
         return tbObat;
     }
+    
+    private String cariMedicationRequestByIdentifier(String identifierSystemResep,String identifierValueResep,String identifierSystemItem,String identifierValueItem,String token){
+        String idMedicationRequest="";
+        try{
+            headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add("Authorization", "Bearer "+token);
+            requestEntity = new HttpEntity(headers);
+            
+            String[] kandidatQuery = new String[]{
+                link+"/MedicationRequest?identifier="+identifierSystemResep+"|"+identifierValueResep+"&identifier="+identifierSystemItem+"|"+identifierValueItem,
+                link+"/MedicationRequest?identifier="+identifierSystemResep+"|"+identifierValueResep,
+                link+"/MedicationRequest?identifier="+identifierSystemItem+"|"+identifierValueItem,
+                link+"/MedicationRequest?identifier="+identifierValueResep+"&identifier="+identifierValueItem,
+                link+"/MedicationRequest?identifier="+identifierValueResep,
+                link+"/MedicationRequest?identifier="+identifierValueItem
+            };
+            for(String urlCari : kandidatQuery){
+                try{
+                    String hasil = api.getRest().exchange(urlCari, HttpMethod.GET, requestEntity, String.class).getBody();
+                    JsonNode bundle = mapper.readTree(hasil);
+                    JsonNode entry = bundle.path("entry");
+                    if(entry.isArray()&&(entry.size()>0)){
+                        for(JsonNode node : entry){
+                            JsonNode resource = node.path("resource");
+                            if(resourceHasIdentifier(resource, identifierSystemResep, identifierValueResep) && resourceHasIdentifier(resource, identifierSystemItem, identifierValueItem)){
+                                idMedicationRequest = resource.path("id").asText();
+                                break;
+                            }
+                        }
+                        if(idMedicationRequest.equals("")){
+                            for(JsonNode node : entry){
+                                JsonNode resource = node.path("resource");
+                                if(resourceHasIdentifier(resource, identifierSystemResep, identifierValueResep)){
+                                    idMedicationRequest = resource.path("id").asText();
+                                    break;
+                                }
+                            }
+                        }
+                        if(!idMedicationRequest.equals("")){
+                            break;
+                        }
+                    }
+                }catch(Exception ex){
+                    System.out.println("Notifikasi Cari MedicationRequest : "+pesanErrorSatusehat(ex));
+                }
+            }
+        }catch(Exception e){
+            System.out.println("Notifikasi Cari MedicationRequest : "+pesanErrorSatusehat(e));
+        }
+        return idMedicationRequest;
+    }
+    
+    private boolean resourceHasIdentifier(JsonNode resource,String system,String value){
+        if(resource==null){
+            return false;
+        }
+        JsonNode identifiers = resource.path("identifier");
+        if(!identifiers.isArray()){
+            return false;
+        }
+        for(JsonNode idNode : identifiers){
+            if(system.equals(idNode.path("system").asText()) && value.equals(idNode.path("value").asText())){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private boolean simpanMedicationRequestLocal(String noResep,String kodeBrng,String idMedicationRequest){
+        boolean sukses=false;
+        try(PreparedStatement psLocal = koneksi.prepareStatement(
+                "insert into satu_sehat_medicationrequest(no_resep,kode_brng,id_medicationrequest) values(?,?,?) "+
+                "on duplicate key update id_medicationrequest=values(id_medicationrequest)")){
+            psLocal.setString(1,noResep);
+            psLocal.setString(2,kodeBrng);
+            psLocal.setString(3,idMedicationRequest);
+            sukses=psLocal.executeUpdate()>0;
+        }catch(Exception e){
+            System.out.println("Notifikasi Simpan MedicationRequest Lokal : "+e);
+        }
+        return sukses;
+    }
+    
+    private boolean simpanMedicationRequestRacikanLocal(String noResep,String kodeBrng,String noRacik,String idMedicationRequest){
+        boolean sukses=false;
+        try(PreparedStatement psLocal = koneksi.prepareStatement(
+                "insert into satu_sehat_medicationrequest_racikan(no_resep,kode_brng,no_racik,id_medicationrequest) values(?,?,?,?) "+
+                "on duplicate key update id_medicationrequest=values(id_medicationrequest)")){
+            psLocal.setString(1,noResep);
+            psLocal.setString(2,kodeBrng);
+            psLocal.setString(3,noRacik);
+            psLocal.setString(4,idMedicationRequest);
+            sukses=psLocal.executeUpdate()>0;
+        }catch(Exception e){
+            System.out.println("Notifikasi Simpan MedicationRequest Racikan Lokal : "+e);
+        }
+        return sukses;
+    }
+    
+    private String pesanErrorSatusehat(Exception e){
+        if(e instanceof HttpStatusCodeException){
+            HttpStatusCodeException ex=(HttpStatusCodeException)e;
+            return ex.getStatusCode()+" Body : "+ex.getResponseBodyAsString();
+        }
+        return e.toString();
+    }
 }
+
