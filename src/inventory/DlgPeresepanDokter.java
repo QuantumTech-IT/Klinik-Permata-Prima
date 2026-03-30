@@ -5794,7 +5794,7 @@ private void refreshByActiveTab(String keyword) {
             lblPilih.setText("\u2726  " + selNama[0] + "  (" + selKode[0] + ")");
             lblPilih.setForeground(clrPrimary);
             lblPilih.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
-            if (tfSatuan.getText().trim().isEmpty()) tfSatuan.setText(selSatuan[0]);
+            tfSatuan.setText(selSatuan[0]);
             tfJml.requestFocus(); tfJml.selectAll();
         });
 
